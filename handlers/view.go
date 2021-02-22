@@ -57,14 +57,14 @@ func Overview(c *gin.Context) {
 		c.HTML(http.StatusBadRequest, "overview.html", gin.H{
 			"currPageCSS": "css/overview.css",
 			"title":       title,
-			"err":         "<strong>Oops ... </strong><br>Please reload the page and try again",
+			"err":         "<strong>Oops ... </strong><br>There is no articles in this category",
 		})
 	} else {
 		if len(dbFormatArticle) == 0 {
 			c.HTML(http.StatusOK, "overview.html", gin.H{
 				"currPageCSS": "css/overview.css",
 				"title":       title,
-				"err":         "<strong>Oops ... </strong><br>No new articles in the past 7 days",
+				"err":         "<strong>Oops ... </strong><br>There is no articles in this category",
 			})
 			return
 		}
@@ -105,7 +105,6 @@ func Browse(c *gin.Context) {
 		})
 	} else {
 		article := ArticleFormatDBToDetailed(dbFormatArticle)
-		// c.Header("Location", "/about") // With Location header, response.redirected will become true
 		c.HTML(http.StatusOK, "browse.html", gin.H{
 			"currPageCSS": "css/browse.css",
 			"success":     true,

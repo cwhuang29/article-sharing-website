@@ -38,18 +38,18 @@
                 var titles = document.querySelectorAll('.title');
                 titles[titles.length - 1].innerHTML = title;
 
-                var subtitle = "{{ .Subtitle }}".replaceAll(' ', '&nbsp;');
-                var subtitles = document.querySelectorAll('.subtitle');
-                subtitles[subtitles.length - 1].innerHTML = subtitle;
+                if (isMobile) {
+                    var subtitle = "{{ .Subtitle }}".replaceAll(' ', '&nbsp;');
+                    var subtitles = document.querySelectorAll('.subtitle');
+                    subtitles[subtitles.length - 1].innerHTML = subtitle;
+                }
 
                 var content;
                 var content_tag = document.querySelectorAll('.overview-content');
                 var img = /<img.*>/.exec("{{ .Content }}"); // Note that there is a <p></p> tag surrounded 
                 var img_add_class = '<img class="article-list-img-h" ';
                 if (img != null) {
-                    var calibrate_if_no_subtitle =  "{{ .Subtitle }}" ? "" : "margin-top: 38px;";
-                    var img_tag = `<div class="column is-5" style="text-align: center;">` + img_add_class + img[0].substring(4, img[0].length-4) + '</div>';
-                    // var img_tag = `<div class="column is-5" style="text-align: center; ${calibrate_if_no_subtitle}">` + img_add_class + img[0].substring(4, img[0].length-4) + '</div>';
+                    var img_tag = `<div class="column is-5" style="text-align: center;">` + img_add_class + img[0].substring(4, img[0].length-4) + '</div>'; // substring(): to remove "</p>"
                     content = '<div class="column is-7">' + '{{ .Content }}'.replaceAll(/<img.*>/g, '') + '</div>' + img_tag; // i: case insensitive. g: replace multiple occurrences
                 } else {
                     content = '<div class="column is-12">' + '{{ .Content }}'.replaceAll(/<img.*>/g, '') + '</div>';

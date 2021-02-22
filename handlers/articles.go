@@ -73,6 +73,7 @@ func CreateArticle(c *gin.Context) {
 
 	invalids := validateCreateArticle(newArticle)
 	if len(invalids) == 0 {
+		newArticle.Tags = removeDuplicateTags(newArticle.Tags)
 		dbFormatArticle := ArticleFormatDetailedToDB(newArticle)
 		id, res := databases.InsertArticleToDB(dbFormatArticle)
 		if res {

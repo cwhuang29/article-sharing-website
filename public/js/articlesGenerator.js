@@ -2,8 +2,8 @@ const TAGS_LIMIT = 5;
 const TAGS_CHAR_LIMIT = 20;
 const FILES_UPLOAD_LIMIT = 10;
 const errInputMsg = {
-    empty: "The value can't be empty.",
-    long: "The many words.",
+    empty: "This field can't be empty.",
+    long: "This field can have no more than 255 characters.",
     dateFormat: "The format of date should be yyyy-mm-dd.", // For safari which don't support input type date
     dateIllegal: "The date is illegal.",
     dateTooOld: "The date chosen should be greater than 1960-01-01.",
@@ -86,7 +86,8 @@ const getInputValue = easyMDE => {
     }).map(tag => {
         return tag.textContent.trim();
     });
-    var content = marked(easyMDE.value().replace(/(!\[.*\]\(.*\))/g, "\n\n$1\n\n")); // Insert newlines (one newline is NOT enough) into head and tail of images and links
+    // var content = marked(easyMDE.value().replace(/(!\[.*\]\(.*\))/g, "\n\n$1\n\n")); // Insert newlines (one newline is NOT enough) into head and tail of images and links
+    var content = easyMDE.value();
 
     return [title, subtitle, date, authors, category, tags, content];
 };
@@ -97,14 +98,14 @@ const validateInput = (title, subtitle, date, authors, category, tags, content) 
     if (title.length == 0) {
         canSubmit = false;
         document.getElementById('err_msg_title').innerText = errInputMsg.empty;
-    } else if (title.split(' ').length > 20) {
+    } else if (title.length > 255) {
         canSubmit = false;
         document.getElementById('err_msg_title').innerText = errInputMsg.long;
     } else {
         document.getElementById('err_msg_title').innerText = "";
     }
 
-    if (subtitle.split(' ').length > 20) { // Subtitle can be empty
+    if (subtitle.length > 255) { // Subtitle can be empty
         canSubmit = false;
         document.getElementById('err_msg_subtitle').innerText = errInputMsg.long;
     } else {
