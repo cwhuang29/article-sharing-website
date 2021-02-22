@@ -1,0 +1,15 @@
+app:
+  name: inews
+  port: 8080
+  env: local
+  debug: true
+  author: cwhuang
+  log: log
+
+database:
+  driver: mysql # mysql, sqlite
+  host: 127.0.0.1
+  port: 3306
+  database: inews
+  username: user01
+  password: a1234567

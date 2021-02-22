@@ -1,0 +1,39 @@
+{{ define "error_message_notification" }}
+<div class="notification is-danger is-light has-text-centered">
+  <button class="delete"></button>
+  <div id="notification_message"></div>
+  <!-- Content will be inserted dynamically by JS -->
+</div>
+<style>
+    .notification {
+        display: none;
+        box-shadow: 3px 5px 4px 1px #555555;
+        position: fixed;
+        width: 350px;
+        margin-left: -175px;
+        height: 86px;
+        margin-top: -43px;
+        left: 50%;
+        top: 50%;
+        z-index: 999;
+    }
+</style>
+<script>
+    const notification_message_tag = document.querySelector('#notification_message');
+    const showErrMsg = (msg) => {
+        notification_message_tag.innerHTML = msg;
+        notification_message_tag.parentNode.style.display='block';
+    };
+    const hideErrMsg = (e) => {
+        notification_message_tag.innerHTML = '';
+        e.target.parentNode.style.display = 'none';
+    };
+    document.querySelector('.notification .delete').addEventListener('click', hideErrMsg);
+    // (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+    //     const $notification = $delete.parentNode;
+    //     $delete.addEventListener('click', () => {
+    //         $notification.parentNode.removeChild($notification);
+    //     });
+    // });
+</script>
+{{ end }}

@@ -1,0 +1,21 @@
+{{ define "three_images" }}
+<div class="block px-2" style="max-width: 90%; max-height: 500px; overflow-y: hidden; margin-left: auto; margin-right: auto; overflow-x: hidden;">
+    <div class="columns is-centered">
+        <div class="column is-one-third">
+            <figure class="image is-16by9">
+                <img src="{{ .threeImagesSrc01 }}">
+            </figure>
+        </div>
+        <div class="column is-one-third">
+            <figure class="image is-16by9">
+                <img src="{{ .threeImagesSrc02 }}">
+            </figure>
+        </div>
+        <div class="column is-one-third">
+            <figure class="image is-16by9">
+                <img src="{{ .threeImagesSrc03 }}">
+            </figure>
+        </div>
+    </div>
+</div>
+{{ end }}

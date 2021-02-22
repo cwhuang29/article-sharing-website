@@ -1,0 +1,33 @@
+{{ define "notice_message_notification" }}
+<div class="notification is-link has-text-centered">
+  <button class="delete"></button>
+  <div id="notification_message_notice"></div>
+  <!-- Content will be inserted dynamically by JS -->
+</div>
+<style>
+    .notification.is-link {
+        display: none;
+        box-shadow: 3px 5px 4px 1px #555555;
+        position: fixed;
+        width: 350px;
+        margin-left: -175px;
+        height: 86px;
+        margin-top: -43px;
+        left: 50%;
+        top: 50%;
+        z-index: 999;
+    }
+</style>
+<script>
+    const notification_message_tag_notice = document.querySelector('#notification_message_notice');
+    const showNoticeMsg = (msg) => {
+        notification_message_tag_notice.innerHTML = msg;
+        notification_message_tag_notice.parentNode.style.display='block';
+    };
+    const hideNoticeMsg = (e) => {
+        notification_message_tag_notice.innerHTML = '';
+        e.target.parentNode.style.display = 'none';
+    };
+    document.querySelector('.notification.is-link .delete').addEventListener('click', hideNoticeMsg);
+</script>
+{{ end }}

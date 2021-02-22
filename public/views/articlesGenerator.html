@@ -1,0 +1,162 @@
+{{ template "header" . }}
+<body>
+    {{ template "navbar" . }}
+    <div class="block"></div>
+    {{ template "error_message_notification" . }}
+    <div class="main_padding_container">
+        <div class="block" style="text-align: center">
+            <h2 class="title is-2 has-text-warning">{{ .title  }}</h2>
+        </div>
+
+        <div class="field">
+          <label class="label">Title</label>
+          <div class="control">
+            <!-- <input class="input is-success" type="text" placeholder="News title"> -->
+            <!-- <input class="input is-danger" type="email" placeholder="Email input" value="hello@"> -->
+            <input class="input" type="text" name="title" placeholder="News title (max: 20 words)">
+          </div>
+          <!-- <p class="help is-success">This username is available</p> -->
+          <p class="help is-danger" id="err_msg_title"></p>
+        </div>
+
+        <div class="field">
+          <label class="label">Subtitle</label>
+          <div class="control">
+            <input class="input" type="text" name="subtitle" placeholder="News subtitle (max: 40 words)">
+          </div>
+          <p class="help is-danger" id="err_msg_subtitle"></p>
+        </div>
+
+        <div class="field">
+          <label class="label">Date</label>
+          <input class="input" type="date" name="date" value="2021-01-01" min="1960-01-01" max="2040-12-31">
+          <p class="help is-danger" id="err_msg_date"></p>
+        </div>
+
+        <div class="field">
+          <label class="label">Author</label>
+            <div id='authors'>
+              <input type='checkbox' name='authors' id='authors[0]' value='Irene'/>
+              <label for='authors[0]'> Irene&nbsp;&nbsp;&nbsp; </label>
+              <input type='checkbox' name='authors' id='authors[1]' value='Jasia'/>
+              <label for='authors[1]'> Jasia&nbsp;&nbsp;&nbsp; </label>
+              <input type='checkbox' name='authors' id='authors[2]' value='Yoto'/>
+              <label for='authors[2]'> Yoto&nbsp;&nbsp;&nbsp; </label>
+            </div>
+            <p class="help is-danger" id="err_msg_authors"></p>
+        </div>
+
+        <div class="field">
+          <label class="label">Category</label>
+          <div class="control">
+            <div class="select">
+              <select name="category">
+                <option>Medication</option>
+                <option>Pharma</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+            <label class="label">Tags</label>
+            <div class="columns">
+              <div class="column is-one-quarter">
+                <div class="control">
+                  <input class="input" name="tags" type="text" placeholder="Tags of the news">
+                  <p class="help">Shift + enter to create a new tag</p>
+                  <p class="help is-danger" id="err_msg_tags"></p>
+                </div>
+              </div>
+              <div id="tags-list" class="column" style="margin-top: 4px; cursor: default">
+                  <!-- <span class="tag is-warning is-medium" name="tags">Hello<button class="delete is-small"></button></span> -->
+              </div>
+            </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Content</label>
+          <div class="control">
+			<textarea class="textarea" name="content" id="content-text-area"></textarea>
+            <p class="help is-danger" id="err_msg_content" style="margin-top: -27px;"></p>
+          </div>
+        </div>
+
+        <div id='fileInputGroups' class="block">
+          <div class='file has-name is-warning is-small pb-1'>
+            <label class='file-label'>
+              <input class='file-input' type='file' name='resume'>
+              <span class='file-cta'>
+                <span class='file-icon'> 📂 </span>
+                <span class='file-label'>Upload images</span>
+              </span>
+              <span class='file-name'>No image uploaded</span>
+            </label>
+          </div>
+        </div>
+
+        <!--        
+        <div id="file-js-example" class="file has-name">
+          <label class="file-label">
+            <input class="file-input" type="file" name="resume">
+            <span class="file-cta">
+              <span class="file-icon">
+                <i class="fas fa-upload"></i>
+              </span>
+              <span class="file-label">
+                Choose a file…
+              </span>
+            </span>
+            <span class="file-name">
+              No file uploaded
+            </span>
+          </label>
+        </div>
+            <script>
+              const fileInput = document.querySelector('#file-js-example input[type=file]');
+              fileInput.onchange = () => {
+                if (fileInput.files.length > 0) {
+                  const fileName = document.querySelector('#file-js-example .file-name');
+                  fileName.textContent = fileInput.files[0].name;
+                }
+              }
+            </script>
+            -->
+
+        <!---
+        <div class="field">
+          <div class="control">
+            <label class="radio">
+              <input type="radio" name="question"> Yes
+            </label>
+            <label class="radio">
+              <input type="radio" name="question"> No
+            </label>
+          </div>
+        </div>
+        -->
+
+        {{ if eq .function "create" }}
+            <div class="field">
+              <div class="control">
+                <button class="button is-warning " id="submit_button">Submit</button>
+              </div>
+            </div>
+        {{ else if eq .function "update" }}
+            <div class="field is-grouped">
+              <div class="control">
+                <button class="button is-warning" id="submit_button">Submit</button>
+              </div>
+              <div class="control">
+                <button class="button is-warning is-light">Cancel</button>
+              </div>
+            </div>
+        {{ end }}
+
+    </div>
+    {{ template "footer" . }}
+    <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
+	<script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script> <!--  Parse md to html -->
+    <script src="/js/articlesGenerator.js"></script>
+</body>

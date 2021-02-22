@@ -1,0 +1,14 @@
+/* .instagram { */
+/*     background-image: url("../assets/instagram.svg"); */
+/*     background-size: 24px 24px; */
+/*     background-repeat: no-repeat; */
+/* } */
+
+footer {
+    /* background-color: var(--main-bg-color) !important; */
+}
+
+.footer_link:hover {
+    color: hsl(0, 0%, 38%) !important; 
+    /* filter: contrast(500%); */
+}
