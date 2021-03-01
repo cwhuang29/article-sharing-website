@@ -3,27 +3,42 @@ An article sharing website developed by Go.
 
 ## Overview
 This project does not rely on any frontend framework, so it is a good entry point for backend engineers who want to build a whole website. With basic knowledge of JavaScript and CSS, You can start developing!
-<br>
-I chose [gin](https://github.com/gin-gonic/gin) as the backend web framework for its simplicity and high performance (it is also the most popular framework in Go, see [Top Go Web Frameworks](https://github.com/mingrammer/go-web-framework-stars).
-<br>
+
+I chose [gin](https://github.com/gin-gonic/gin) as the backend web framework for its simplicity and high performance (it is also the most popular framework in Go, see [Top Go Web Frameworks](https://github.com/mingrammer/go-web-framework-stars)).
+
 For database ORM, I chose [gorm](https://github.com/go-gorm/gorm). It is a full-featured ORM with great community support and [easy to follow documentation](https://gorm.io/docs/).
-Besides, if you chose `sqlite` as the database driver, then you can get rid of the database burden (the data will be stored in a file `tmp.db` in the root of project) and focus on the backend development part.
+Besides, if you choose `sqlite` as the database driver, then you can get rid of the setting database burden (the data will be stored in a file `tmp.db` in the root of project) and focus on the backend development.
+
+The admin users are created by the following mechanism:
+1. Write down their emails in `config.yml`
+2. Setup web server
+3. Register with these corresponding emails on the website
 
 ## Setup
-As the register feature is not yet implemented, there is a fake user registered with email `admin@gmail.com` and password `a1234567`. This will be removed in the future.
-<br>
-For the same reason, the upload article function is hidden from the website interface. Nevertheless, you can open the webpage via `http://127.0.0.1/admin/create/article`.
-<br>
+The credentials are stored in `config.yml`. Some of them are not yet implemented, but the most important fields are `app.port`, `database`, and `admin.email`.  If set `database.driver` to `sqlite`, then `database.host` and `database.port` can be ignored.
+
+There are three environment variables that can be overwritten, which are `APP_PORT`, `DB_PORT`, and `DB_HOST`.
 
 #### Local
-If you want to use `MySQL` as the database driver, you have to create a database in advance and set the corresponding database name, username, and password in `config.yml`.
-```
-go build -o web cmd/main.go
-APP_PORT=8080 DB_HOST=127.0.0.1 ./web
+```bash
+export APP_PORT=8080
+export DB_PORT=3306
+export DB_HOST=127.0.0.1
+go run cmd/main.go
 ```
 
 #### Docker
+1. Build
+* Development
+```bash
+docker build . --target builder -t cwhuang29/article-sharing-website:dev
 ```
+* Production
+```bash
+docker build . -t cwhuang29/article-sharing-website:prod
+```
+2. Run
+```bash
 docker run -d \
     --name db \
     -e MYSQL_DATABASE=inews \
@@ -36,22 +51,51 @@ docker run -d \
 docker run -d \
     --name web \
     --link db:db \
-    -e APP_PORT=80\
+    -e APP_PORT=80 \
+    -e DB_PORT=3306 \
     -e DB_HOST=db \
     -p 80:80 \
-    cwhuang29/article-sharing-website:v1
+    cwhuang29/article-sharing-website:prod
+```
+
+### Others
+To dump the database, run
+```bash
+docker exec -it db mysqldump -u user01 -pa1234567 inews > data.sql
+```
+
+If you want to host the website on AWS EC2, run the following script to install Docker and MySQL
+```bash
+# Install Docker
+sudo yum update -y
+sudo amazon-linux-extras install docker
+sudo service docker start
+sudo usermod -a -G docker ec2-user
+# Logout and log back in
+
+# Install MySQL
+sudo yum -y install mysql
 ```
 
 ## TODO
-- [ ] Register
-- [ ] Support Google login
-- [ ] Logout
-- [ ] Search articles based on tags (currently only the category tags have this feature)
-- [ ] Pagination (in the article overview page)
-- [ ] Logger
-- [ ] Likes/Dislikes buttons
-- [ ] Preview feature (before submitting the article)
-- [ ] Security issues about uploading files (e.g. check files type andfiles size)
+- [x]  Register
+- [x]  Logout
+- [x]  Modify articles
+- [x]  Delete articles
+- [x]  Optimize Docker builds
+- [ ]  Pagination
+- [ ]  Logger
+- [ ]  CSRF token
+- [ ]  Reset password
+- [ ]  Support Google login
+- [ ]  Login Throttling
+- [ ]  Search articles based on tags
+- [ ]  Like/Save buttons
+- [ ]  Admin overview page (e.g. show statistics)
+- [ ]  Preview feature (before submitting the article)
+- [ ]  Security issues about uploading files (e.g. check files type and files size)
+- [ ]  Support CLI
+- [ ]  Optimize create articles method (improve the way to upload texts and images)
 
 ## Demo
 Here is a live demo: [inews](http://18.179.7.226/) (hosting on AWS)
