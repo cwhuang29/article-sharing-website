@@ -3,6 +3,7 @@
     {{ template "navbar" . }}
     <div class="block"></div>
     {{ template "error_message_notification" . }}
+    {{ template "notice_message_notification" . }}
     <div class="main_padding_container">
         <div class="block" style="text-align: center">
             <h2 class="title is-2 has-text-warning">{{ .title  }}</h2>
@@ -11,11 +12,8 @@
         <div class="field">
           <label class="label">Title</label>
           <div class="control">
-            <!-- <input class="input is-success" type="text" placeholder="News title"> -->
-            <!-- <input class="input is-danger" type="email" placeholder="Email input" value="hello@"> -->
             <input class="input" type="text" name="title" placeholder="News title (max: 20 words)">
           </div>
-          <!-- <p class="help is-success">This username is available</p> -->
           <p class="help is-danger" id="err_msg_title"></p>
         </div>
 
@@ -95,47 +93,6 @@
           </div>
         </div>
 
-        <!--        
-        <div id="file-js-example" class="file has-name">
-          <label class="file-label">
-            <input class="file-input" type="file" name="resume">
-            <span class="file-cta">
-              <span class="file-icon">
-                <i class="fas fa-upload"></i>
-              </span>
-              <span class="file-label">
-                Choose a file…
-              </span>
-            </span>
-            <span class="file-name">
-              No file uploaded
-            </span>
-          </label>
-        </div>
-            <script>
-              const fileInput = document.querySelector('#file-js-example input[type=file]');
-              fileInput.onchange = () => {
-                if (fileInput.files.length > 0) {
-                  const fileName = document.querySelector('#file-js-example .file-name');
-                  fileName.textContent = fileInput.files[0].name;
-                }
-              }
-            </script>
-            -->
-
-        <!---
-        <div class="field">
-          <div class="control">
-            <label class="radio">
-              <input type="radio" name="question"> Yes
-            </label>
-            <label class="radio">
-              <input type="radio" name="question"> No
-            </label>
-          </div>
-        </div>
-        -->
-
         {{ if eq .function "create" }}
             <div class="field">
               <div class="control">
@@ -145,18 +102,45 @@
         {{ else if eq .function "update" }}
             <div class="field is-grouped">
               <div class="control">
-                <button class="button is-warning" id="submit_button">Submit</button>
+                <button class="button is-warning" id="save_button">Save</button>
               </div>
               <div class="control">
-                <button class="button is-warning is-light">Cancel</button>
+                <button class="button is-warning is-light" id="cancel_button">Cancel</button>
               </div>
             </div>
-        {{ end }}
+            <script>
+                showNoticeMsg("<div><strong>To remove images, just remove their paths in the parentheses.</strong></div>");
 
+                document.getElementsByName("title")[0].value = '{{ .articleTitle }}';
+                document.getElementsByName("subtitle")[0].value = '{{ .subtitle }}';
+                document.getElementsByName("date")[0].value = '{{ .date }}';
+                var authorList = {{ .author }}; // To make an array type variable, don't quote it
+                [...document.getElementsByName("authors")].forEach((ele, idx) => {
+                    if (authorList.includes(ele.value)) {
+                        document.getElementsByName("authors")[idx].checked = true;
+                    }
+                });
+                var cate = '{{ .category }}';
+                [...document.getElementsByName("category")[0]].forEach((ele, idx) => {
+                    if (ele.value.toLowerCase() == cate) {
+                        document.getElementsByName("category")[0].selectedIndex = idx;
+                    }
+                });
+                var tags = {{ .tags }};
+                var tagsHTMLHead = '<span class="tag is-warning is-medium" name="tags" style="margin-right: 9px;">';
+                var tagsHTMLTail = '<button class="delete is-small"></button></span>';
+                var tagsBody = "";
+                tags.forEach((ele) => {
+                    tagsBody += tagsHTMLHead + ele + tagsHTMLTail;
+                });
+                document.getElementById("tags-list").innerHTML = tagsBody;
+                document.getElementsByName("content")[0].value = '{{ .content }}';
+            </script>
+        {{ end }}
     </div>
     {{ template "footer" . }}
     <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
 	<script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script> <!--  Parse md to html -->
-    <script src="/js/articlesGenerator.js"></script>
+    <script src="/js/editor.js"></script>
 </body>

@@ -9,18 +9,36 @@ import (
 	"time"
 )
 
-// router.GET("/welcome", func(c *gin.Context) { // The request responds to a url matching:  /welcome?firstname=Jane&lastname=Doe
-// 	firstname := c.DefaultQuery("firstname", "Guest")
-// 	lastname := c.Query("lastname") // shortcut for c.Request.URL.Query().Get("lastname")
-// 	c.String(http.StatusOK, "Hello %s %s", firstname, lastname)
-// })
-
 func About(c *gin.Context) {
 	c.HTML(http.StatusOK, "about.html", gin.H{"currPageCSS": "css/about.css"}) // Call the HTML method of the Context to render a template
 }
 
+func CheckPermission(c *gin.Context) {
+	yes := isAdmin(c)
+	if !yes {
+		errMsg := "<div><strong>You are not allowed to perform this action</strong><p>Login if you are administrator.</p></div>"
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"err": errMsg})
+		return
+	}
+
+	id := checkParaId(c, "articleId")
+	if id == 0 {
+		errMsg := "<div><p><strong>Article ID is an integer</strong></p><p>Please try again.</p></div>"
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"err": errMsg})
+		return
+	}
+
+	if succeed := databases.IsArticleExists(id); succeed != true {
+		errMsg := "<div><p><strong>Article ID Not Found</strong></p><p>Please try again.</p></div>"
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"err": errMsg})
+		return
+	}
+
+	c.Status(http.StatusOK)
+}
+
 func WeeklyUpdate(c *gin.Context) {
-	today := time.Now().Truncate(24 * time.Hour)
+	today := time.Now().UTC().Truncate(24 * time.Hour)
 	sevenDaysAgo := today.AddDate(0, 0, -7)
 
 	dbFormatArticle := databases.GetArticlesInNDays(sevenDaysAgo)
@@ -33,7 +51,7 @@ func WeeklyUpdate(c *gin.Context) {
 	} else {
 		var articleList []OverviewArticle
 		for _, a := range dbFormatArticle {
-			articleList = append(articleList, ArticleFormatDBToOverview(a))
+			articleList = append(articleList, articleFormatDBToOverview(a))
 		}
 		c.HTML(http.StatusOK, "overview.html", gin.H{
 			"currPageCSS": "css/overview.css",
@@ -48,6 +66,8 @@ func Overview(c *gin.Context) {
 	limit := 10
 	category := "pharma"
 	title := "Pharma News"
+
+	// fmt.Println(c.FullPath()) // If frontend trigger this route via window.location.href="/articles/browse?articleId=1", then c.FullPath() is /articles/browse
 	if c.FullPath() == "/articles/medication" {
 		category = "medication"
 		title = "Medication Related News"
@@ -70,7 +90,7 @@ func Overview(c *gin.Context) {
 		}
 		var articleList []OverviewArticle
 		for _, a := range dbFormatArticle {
-			articleList = append(articleList, ArticleFormatDBToOverview(a))
+			articleList = append(articleList, articleFormatDBToOverview(a))
 		}
 		c.HTML(http.StatusOK, "overview.html", gin.H{
 			"currPageCSS": "css/overview.css",
@@ -86,10 +106,9 @@ func Browse(c *gin.Context) {
 		return
 	}
 
-	// fmt.Println(c.FullPath()) // Frontend trigger this route via window.location.href="/articles/browse?articleId=1" -> c.FullPath() is /articles/browse
 	id, err := strconv.Atoi(c.Query("articleId"))
 	if err != nil || id <= 0 {
-		err := fmt.Errorf("<div><p><strong>Article Not Found</strong></p><p>Go back to previous page and try again</p></div>")
+		err := fmt.Errorf("<div><p><strong>Article Not Found</strong></p><p>Go back to previous page and try again.</p></div>")
 		// c.AbortWithStatusJSON(http.StatusBadRequest, err.Error())
 		c.HTML(http.StatusBadRequest, "browse.html", gin.H{
 			"currPageCSS": "css/browse.css",
@@ -98,13 +117,14 @@ func Browse(c *gin.Context) {
 		return
 	}
 
-	if dbFormatArticle, err := databases.GetArticleFullContent(id); err != nil {
+	if dbFormatArticle, succeed := databases.GetArticleFullContent(id); succeed != true {
+		errMsg := "<div><p><strong>Article ID Not Found</strong></p><p>Please try again.</p></div>"
 		c.HTML(http.StatusNotFound, "browse.html", gin.H{
 			"currPageCSS": "css/browse.css",
-			"err":         err.Error(),
+			"err":         errMsg,
 		})
 	} else {
-		article := ArticleFormatDBToDetailed(dbFormatArticle)
+		article := articleFormatDBToDetailed(dbFormatArticle, true)
 		c.HTML(http.StatusOK, "browse.html", gin.H{
 			"currPageCSS": "css/browse.css",
 			"success":     true,
