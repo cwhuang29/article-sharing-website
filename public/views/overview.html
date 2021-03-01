@@ -49,10 +49,15 @@
                 var img = /<img.*>/.exec("{{ .Content }}"); // Note that there is a <p></p> tag surrounded 
                 var img_add_class = '<img class="article-list-img-h" ';
                 if (img != null) {
-                    var img_tag = `<div class="column is-5" style="text-align: center;">` + img_add_class + img[0].substring(4, img[0].length-4) + '</div>'; // substring(): to remove "</p>"
-                    content = '<div class="column is-7">' + '{{ .Content }}'.replaceAll(/<img.*>/g, '') + '</div>' + img_tag; // i: case insensitive. g: replace multiple occurrences
+                    // If the image is embedded in a list, then it will be surrounded by <li></li> instead of <p></p>. Hence, the substring() method should be changed
+                    truncEnd = img[0].length - 4;
+                    if (img[0][img[0].length - 5] == '<'){
+                        truncEnd -= 1;
+                    }
+                    var img_tag = `<div class="column is-5" style="text-align: center;">` + img_add_class + img[0].substring(4, truncEnd) + '</div>'; // substring(): to remove "</p>"
+                    content = '<div class="column is-7">' + '{{ .Content }}'.replaceAll(/<img.*>/g, '').replaceAll(/<pre>/g, '').replaceAll(/<\/pre>/g, '') + '</div>' + img_tag; // i: case insensitive. g: replace multiple occurrences
                 } else {
-                    content = '<div class="column is-12">' + '{{ .Content }}'.replaceAll(/<img.*>/g, '') + '</div>';
+                    content = '<div class="column is-12">' + '{{ .Content }}'.replaceAll(/<img.*>/g, '').replaceAll(/<pre>/g, '').replaceAll(/<\/pre>/g, '') + '</div>';
                 }
                 content_tag[content_tag.length - 1].innerHTML = content;
             </script>

@@ -1,9 +1,7 @@
 app:
   name: inews
   port: 8080
-  env: local
   debug: true
-  author: cwhuang
   log: log
 
 database:
@@ -13,3 +11,8 @@ database:
   database: inews
   username: user01
   password: a1234567
+
+admin:
+  email:
+    - admin@gmail.com
+    - admin123@gmail.com

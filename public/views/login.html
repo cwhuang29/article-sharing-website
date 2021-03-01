@@ -9,7 +9,7 @@
             <h2 class="title is-2 has-text-warning">{{ .title  }}</h2>
         </div>
         <div class="field">
-          <p class="control has-icons-left has-icons-right">
+          <p class="control has-icons-left">
             <input class="input" name="email" inputmode="email" type="email" placeholder="Email">
             <span class="icon is-small is-left"><i class="far fa-envelope"></i></span>
             <!-- <span class="icon is-small is-right"><i class="fas fa-check"/></i></span> -->
@@ -26,9 +26,11 @@
         <div class="field">
           <p class="control">
             <button class="button is-warning" id="submit_button">Submit</button>
+            <a href="/register" class="button is-link ml-3">Register</a>
           </p>
         </div>
     </div>
+    <div style="padding-top: 190px"></div>
     {{ template "footer" . }}
     <script src="/js/login.js"></script>
 </body>

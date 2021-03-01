@@ -1,9 +1,6 @@
 package databases
 
 import (
-	"os"
-	"strconv"
-
 	"github.com/cwhuang29/article-sharing-website/config"
 	"github.com/cwhuang29/article-sharing-website/databases/models"
 	"gorm.io/driver/mysql"
@@ -32,21 +29,28 @@ func createTable() {
 	if !(db.Migrator().HasTable(&models.Login{})) {
 		db.Migrator().CreateTable(&models.Login{})
 	}
+	if !(db.Migrator().HasTable(&models.Admin{})) {
+		db.Migrator().CreateTable(&models.Admin{})
+	}
+}
+
+func registerAdminEmail(emails []string) {
+	for _, email := range emails {
+		obj := models.Admin{Email: email}
+		db.Create(&obj)
+	}
 }
 
 func Initial() error {
 	var err error
 
-	config := config.GetConfigDatabase()
+	cfg := config.GetConfig()
 
-	switch driver := config.Driver; driver {
+	dbConfig := cfg.Database
+	switch driver := dbConfig.Driver; driver {
 	case "mysql":
 		// dsn := "user:pwd@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
-		host := os.Getenv("DB_HOST")
-		if host != "" {
-			config.Host = host
-		}
-		dsn := config.Username + ":" + config.Password + "@tcp(" + config.Host + ":" + strconv.Itoa(config.Port) + ")/" + config.Database + "?charset=utf8mb4&parseTime=True"
+		dsn := dbConfig.Username + ":" + dbConfig.Password + "@tcp(" + dbConfig.Host + ":" + dbConfig.Port + ")/" + dbConfig.Database + "?charset=utf8mb4&parseTime=True"
 		if db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: true}); err != nil {
 			return err
 		}
@@ -59,5 +63,6 @@ func Initial() error {
 	}
 
 	createTable()
+	registerAdminEmail(cfg.Admin.Email)
 	return nil
 }

@@ -1,11 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"github.com/cwhuang29/article-sharing-website/config"
 	"github.com/cwhuang29/article-sharing-website/databases"
-	"github.com/cwhuang29/article-sharing-website/databases/models"
-	"github.com/cwhuang29/article-sharing-website/handlers"
 	"github.com/cwhuang29/article-sharing-website/routers"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -41,24 +38,6 @@ func setupDatabase() {
 	}
 }
 
-func createFakeUser() {
-	pwd, _ := handlers.HashPassword("a1234567")
-	user := models.User{
-		Name:      "admin",
-		Password:  string(pwd),
-		LastName:  "Huang",
-		FirstName: "Jimmy",
-		Gender:    "male",
-		Email:     "admin@gmail.com",
-		Major:     "Pharmacy",
-	}
-	_, err := databases.InsertUserToDB(user)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-}
-
 var rootCmd = &cobra.Command{
 	Use:   "article-sharing-website",
 	Short: "article-sharing-website",
@@ -66,7 +45,6 @@ var rootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		setupConfig()
 		setupDatabase()
-		createFakeUser()
 		routers.Router()
 	},
 }

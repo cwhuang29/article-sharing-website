@@ -1,0 +1,107 @@
+{{ template "header" . }}
+<body>
+    {{ template "navbar" . }}
+    {{ template "error_message_notification" . }}
+    {{ template "notice_message_notification" . }}
+    <div class="block"></div>
+    <div class="main_padding_container">
+        <div class="block" style="text-align: center">
+            <h2 class="title is-2 has-text-warning">{{ .title  }}</h2>
+        </div>
+        <div class="field">
+          <div class="columns">
+            <div class="column is-half">
+              <label class="label">First Name</label>
+              <div class="control">
+                <input class="input" type="text" name="first_name">
+              </div>
+              <p class="help is-danger" id="err_msg_first_name"></p>
+            </div>
+            <div class="column is-half">
+              <label class="label">Last Name</label>
+              <div class="control">
+                <input class="input" type="text" name="last_name">
+              </div>
+              <p class="help is-danger" id="err_msg_last_name"></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="columns">
+            <div class="column is-half">
+              <label class="label">Password</label>
+              <p class="control">
+                <input class="input" type="password" name="password">
+                <!-- <span class="icon is-small is-left"><i class="fas fa-lock"></i></span> -->
+              </p>
+              <p class="help is-danger" id="err_msg_password"></p>
+            </div>
+            <div class="column is-half">
+              <label class="label">Confirm Password</label>
+              <div class="control">
+                <input class="input" type="password" name="password_confirm">
+              </div>
+              <p class="help is-danger" id="err_msg_password_confirm"></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Email</label>
+          <p class="control has-icons-left">
+            <input class="input" name="email" inputmode="email" type="email"/>
+            <span class="icon is-small is-left"><i class="far fa-envelope"></i></span>
+          </p>
+          <p class="help is-danger" id="err_msg_email"> </p>
+        </div>
+
+        <div class="field">
+          <div class="columns">
+            <div class="column is-half">
+              <label class="label">Gender</label>
+              <div class="control">
+                <label class="radio"><input type="radio" name="gender" value="male">&nbsp;&nbsp;Male</label>
+                <label class="radio"><input type="radio" name="gender" value="female">&nbsp;&nbsp;Female</label>
+              </div>
+              <p class="help is-danger" id="err_msg_gender"> </p>
+            </div>
+            <div class="column is-half">
+              <label class="label">Major</label>
+              <div class="control">
+                <div class="select">
+                  <select name="major">
+                    <option></option>
+                    <option>藥學系 Pharmacy</option>
+                    <option>生科系 Life Sciences</option>
+                    <option>醫學系 Medicine</option>
+                    <option>牙醫系 Dentistry</option>
+                    <option>護理系 Nursing</option>
+                    <option>公共衛生學系 Public Health</option>
+                    <option>生物醫學工程學系 Biomedical engineering</option>
+                    <option>物理治療學系 Physical Therapy</option>
+                    <option>職能治療學系 Occupational Therapy</option>
+                    <option>醫務管理學系 Healthcare Administration</option>
+                    <option>保健營養學系 Nutrition and Health Sciences</option>
+                    <option>醫學影像暨放射科學系 Medical Imaging and Radiological Sciences</option>
+                    <option>醫學檢驗暨生物技術學系 Medical Laboratory Science and Biotechnology</option>
+                    <option>其他（三類組）Others</option>
+                    <option>其他（二類組）Others</option>
+                    <option>其他（一類組）Others</option>
+                  </select>
+                </div>
+                <p class="help is-danger" id="err_msg_major"> </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <p class="control">
+            <button class="button is-warning" id="submit_button">Submit</button>
+          </p>
+        </div>
+    </div>
+    {{ template "footer" . }}
+    <script src="/js/register.js"></script>
+</body>
+

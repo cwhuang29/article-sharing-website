@@ -2,11 +2,14 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/cwhuang29/article-sharing-website/databases"
 	"github.com/cwhuang29/article-sharing-website/databases/models"
 	"github.com/google/uuid"
 
@@ -19,17 +22,71 @@ var (
 	TagsLmit      = 5
 	TagsCharLmit  = 65 // TODO length of each emoji is about 13
 	ErrInputMsg   = map[string]string{
-		"empty":        "The field can't be empty.",
-		"long":         "This field can have no more than 255 characters.",
-		"dateTooOld":   "The date chosen should be greater than 1960-01-01.",
-		"dateFuture":   "The date chosen can't be in the future.",
-		"tagsTooMany":  "You can target up to 5 tags at a time.",
-		"tagsTooLong":  "Each tag can contain at most 20 charaters.",
-		"emailInvalid": "The email format is not correct.",
+		"empty":            "The field can't be empty.",
+		"long":             "This field can have no more than 255 characters.",
+		"dateTooOld":       "The date chosen should be greater than 1960-01-01.",
+		"dateFuture":       "The date chosen can't be in the future.",
+		"tagsTooMany":      "You can target up to 5 tags at a time.",
+		"tagsTooLong":      "Each tag can contain at most 20 charaters.",
+		"emailInvalid":     "The email format is not correct.",
+		"passwordTooShort": "Passwords must be at least 8 characters long.",
 	}
 	overviewContentLength = 800
 	emailRegex            = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 )
+
+func isAdmin(c *gin.Context) bool {
+	adminEmail, err := c.Cookie("is_admin")
+	if err != nil {
+		return false
+	}
+
+	if !databases.IsAdminUser(adminEmail) {
+		return false
+	}
+
+	return isLogin(c)
+}
+
+func isLogin(c *gin.Context) bool {
+	cookieEmail, err := c.Cookie("login_email")
+	if err != nil {
+		return false
+	}
+
+	cookieToken, err := c.Cookie("login_token")
+	if err != nil {
+		return false
+	}
+
+	loginCredentials := databases.GetLoginCredentials(cookieEmail)
+	if cookieEmail != loginCredentials.Email || cookieToken != loginCredentials.Token || isExpired(loginCredentials.LastLogin, loginCredentials.MaxAge) {
+		return false
+	}
+
+	return true
+}
+
+func isExpired(startTime time.Time, period int) bool {
+	now := time.Now().UTC().Truncate(time.Second)
+	if now.Sub(startTime).Seconds() > float64(period) {
+		return true
+	}
+	return false
+}
+
+func checkParaId(c *gin.Context, para string) int {
+	if c.Query("articleId") == "" {
+		return 0
+	}
+
+	id, err := strconv.Atoi(c.Query(para))
+	if err != nil || id <= 0 {
+		return 0
+	}
+
+	return id
+}
 
 /*
  * There are 3 kinds of format:
@@ -38,7 +95,7 @@ var (
  * 3. DB format
  */
 
-func ArticleFormatDetailedToDB(article Article) (db models.Article) {
+func articleFormatDetailedToDB(article Article) (db models.Article) {
 	t, _ := time.Parse("2006-01-02", article.Date)
 
 	db.Title = article.Title
@@ -51,27 +108,30 @@ func ArticleFormatDetailedToDB(article Article) (db models.Article) {
 	return
 }
 
-func ArticleFormatDBToOverview(article models.Article) (ov OverviewArticle) {
+func articleFormatDBToOverview(article models.Article) (ov OverviewArticle) {
 	ov.ID = article.ID
 	ov.Title = article.Title
 	ov.Subtitle = article.Subtitle
 	ov.Date = article.ReleaseDate.String()
 	ov.Authors = strings.Split(article.Author, ",")
 	ov.Category = article.Category
+
 	if article.Tag == "" {
 		ov.Tags = []string{} // length is 0
 	} else {
 		ov.Tags = strings.Split(article.Tag, ",") // len(strings.Split("", ",")) is 1 (so html/template will show an empty element) !!!
 	}
+
+	toParse := false
 	if len(article.Content) > overviewContentLength {
-		article.Content = parseMarkdownToHTML(article.Content, true)
+		toParse = true
 	}
-	// ov.Content = strings.ReplaceAll(article.Content, "\n", "<br>") // Done in frontend cause the respond will be escaped
+	article.Content = parseMarkdownToHTML(article.Content, toParse)
 	ov.Content = article.Content
 	return
 }
 
-func ArticleFormatDBToDetailed(article models.Article) (dt Article) {
+func articleFormatDBToDetailed(article models.Article, parseMarkdown bool) (dt Article) {
 	dt.Title = article.Title
 	dt.Subtitle = article.Subtitle
 	dt.Date = article.ReleaseDate.Format("2006-01-02")
@@ -82,7 +142,11 @@ func ArticleFormatDBToDetailed(article models.Article) (dt Article) {
 	} else {
 		dt.Tags = strings.Split(article.Tag, ",") // len(strings.Split("", ",")) is 1 (so html/template will show an empty element) !!!
 	}
-	dt.Content = parseMarkdownToHTML(article.Content, false)
+	if parseMarkdown {
+		dt.Content = parseMarkdownToHTML(article.Content, false)
+	} else {
+		dt.Content = article.Content
+	}
 	return
 }
 
@@ -110,7 +174,6 @@ func parseMarkdownToHTML(s string, truncate bool) string {
 		s = s[:trunc]
 	}
 	byteS := blackfriday.MarkdownCommon([]byte(s))
-	fmt.Println(string(byteS))
 	return string(byteS)
 }
 
@@ -118,10 +181,10 @@ func getUUID() string {
 	return uuid.NewString()
 }
 
-func HashPassword(password string) ([]byte, error) {
+func hashPassword(password string) ([]byte, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		err = fmt.Errorf("<div><p><strong>Some Severe Errors Occurred</strong></p><p>Please reload the page and try again</p></div>")
+		err = fmt.Errorf("<div><p><strong>Some Severe Errors Occurred</strong></p><p>Please reload the page and try again.</p></div>")
 	}
 	return hashedPassword, err
 }
@@ -129,7 +192,7 @@ func HashPassword(password string) ([]byte, error) {
 func compareHashAndPassword(hashedPassword, password []byte) error {
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 	if err != nil {
-		err = fmt.Errorf("<div><p><strong>Password Incorrect</strong></p><p>Please try again</p></div>")
+		err = fmt.Errorf("<div><p><strong>Password Incorrect</strong></p><p>Please try again.</p></div>")
 	}
 	return err
 }
@@ -170,16 +233,12 @@ func removeDuplicateValuesInSlice(t interface{}) []interface{} {
 	case reflect.Slice:
 		s := reflect.ValueOf(t)
 		unq := make(map[interface{}]bool)
-
 		for i := 0; i < s.Len(); i++ {
 			if _, ok := unq[s.Index(i).Interface()]; !ok {
 				unq[s.Index(i).Interface()] = true
 			}
 		}
 
-		switch reflect.TypeOf(t).String() {
-
-		}
 		keys := make([]interface{}, 0)
 		for key := range unq {
 			keys = append(keys, key)
@@ -190,10 +249,42 @@ func removeDuplicateValuesInSlice(t interface{}) []interface{} {
 	}
 }
 
-func validateCreateArticle(newArticle Article) (err map[string]interface{}) {
+func validaateUserFormat(newUser models.User) (err map[string]interface{}) {
 	err = make(map[string]interface{})
 
-	// fmt.Println(newArticle.Date, time.Now().Format("2006-01-02"), OldestDate, OldestDate.String(), OldestDate.Local().String())
+	if len(newUser.FirstName) == 0 {
+		err["first_name"] = ErrInputMsg["empty"]
+	}
+
+	if len(newUser.LastName) == 0 {
+		err["last_name"] = ErrInputMsg["empty"]
+	}
+
+	if len(newUser.Password) == 0 {
+		err["password"] = ErrInputMsg["empty"]
+	} else if len(newUser.Password) < 8 {
+		err["password"] = ErrInputMsg["passwordTooShort"]
+	}
+
+	if len(newUser.Email) == 0 {
+		err["email"] = ErrInputMsg["empty"]
+	}
+
+	if len(newUser.Gender) == 0 {
+		err["gender"] = ErrInputMsg["empty"]
+	}
+
+	if len(newUser.Major) == 0 {
+		err["major"] = ErrInputMsg["empty"]
+	}
+
+	return err
+}
+
+func validateArticleFormat(newArticle Article) (err map[string]interface{}) {
+	err = make(map[string]interface{})
+
+	// fmt.Println(newArticle.Date, time.Now().UTC().Format("2006-01-02"), OldestDate, OldestDate.String(), OldestDate.Local().String())
 	// 2020-01-01 2021-02-15 1960-01-01 00:00:00 +0000 UTC 1960-01-01 00:00:00 +0000 UTC 1960-01-01 08:00:00 +0800 CST
 
 	if len(newArticle.Title) == 0 {
@@ -209,7 +300,7 @@ func validateCreateArticle(newArticle Article) (err map[string]interface{}) {
 	if inpDate, dateErr := time.Parse("2006-01-02", newArticle.Date); dateErr != nil {
 		err["date"] = dateErr.Error()
 	} else {
-		// if time.Now().Sub(inpDate) < 0 {
+		// if time.Now().Truncate(time.Hour * 24).Sub(inpDate) < 0 {
 		//     err["date"] = ErrInputMsg["dateFuture"]
 		// }
 		if OldestDate.Sub(inpDate) > 0 {

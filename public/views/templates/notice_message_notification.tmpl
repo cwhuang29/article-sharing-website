@@ -7,15 +7,16 @@
 <style>
     .notification.is-link {
         display: none;
-        box-shadow: 3px 5px 4px 1px #555555;
+        box-shadow: 3px 5px 2px 1px #555555;
         position: fixed;
-        width: 350px;
-        margin-left: -175px;
+        width: 400px;
+        max-width: 90%; /* For mobile devices */
+        margin-left: max(-45%, -200px);
         height: 86px;
         margin-top: -43px;
         left: 50%;
         top: 50%;
-        z-index: 999;
+        z-index: 900;
     }
 </style>
 <script>

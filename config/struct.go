@@ -17,22 +17,25 @@ func (e *ConfigError) Error() string {
 type Config struct {
 	App      `yaml:"app,omitempty"`
 	Database `yaml:"database,omitempty"`
+	Admin    `yaml:"admin,omitempty"`
 }
 
 type App struct {
-	Name   string `yaml:"name,omitempty"`
-	Port   int    `yaml:"port,omitempty"`
-	Env    string `yaml:"env,omitempty"`
-	Debug  bool   `yaml:"debug,omitempty"`
-	Author string `yaml:"author,omitempty"`
-	Log    string `yaml:"log,omitempty"`
+	Name  string `yaml:"name,omitempty"`
+	Port  string `yaml:"port,omitempty"`
+	Debug bool   `yaml:"debug,omitempty"`
+	Log   string `yaml:"log,omitempty"`
 }
 
 type Database struct {
 	Driver   string `yaml:"driver,omitempty"`
 	Host     string `yaml:"host,omitempty"`
-	Port     int    `yaml:"port,omitempty"`
+	Port     string `yaml:"port,omitempty"`
 	Database string `yaml:"database,omitempty"`
 	Username string `yaml:"username,omitempty"`
 	Password string `yaml:"password,omitempty"`
+}
+
+type Admin struct {
+	Email []string `yaml:"email,omitempty"`
 }

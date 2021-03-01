@@ -5,18 +5,17 @@ import (
 )
 
 type User struct {
-	ID               int       `gorm:"primaryKey" json:"id"`
-	Name             string    `gorm:"unique;not null;size:20" json:"name" yaml:"name"`
-	Password         string    `gorm:"not null;size:100" json:"password" yaml:"password"`
-	LastName         string    `gorm:"size:20" json:"lastname" yaml:"lastname"`
-	FirstName        string    `gorm:"size:20" json:"firstname" yaml:"firstname"`
-	Gender           string    `gorm:"default:other" json:"gender" yaml:"gender"`
-	Email            string    `gorm:"unique;not null;size:255" json:"email" yaml:"email"`
-	Major            string    `gorm:"default:other" json:"major" yaml:"major"`
-	HighestEducation string    `gorm:"default:bachelor" json:"highest_education" yaml:"highestEducation"`
-	SubscribeEmail   bool      `gorm:"default:true" json:"subscribe_email" yaml:"subscribeEmail"`
-	CreatedAt        time.Time `gorm:"autoCreateTime" json:"-"`
-	UpdatedAt        time.Time `gorm:"autoUpdateTime" json:"-"`
+	ID             int       `gorm:"primaryKey" json:"id" yaml:"id"`
+	FirstName      string    `gorm:"size:50" json:"first_name" yaml:"firstName"`
+	LastName       string    `gorm:"size:50" json:"last_name" yaml:"lastName"`
+	Password       string    `gorm:"not null;size:100" json:"password" yaml:"password"`
+	Email          string    `gorm:"unique;not null;size:100" json:"email" yaml:"email"`
+	Gender         string    `gorm:"default:other" json:"gender" yaml:"gender"`
+	Major          string    `gorm:"default:other" json:"major" yaml:"major"`
+	SubscribeEmail bool      `gorm:"default:true" json:"subscribe_email" yaml:"subscribeEmail"`
+	Admin          bool      `gorm:"default:false" json:"admin" yaml:"admin"`
+	CreatedAt      time.Time `gorm:"autoCreateTime" json:"-"`
+	UpdatedAt      time.Time `gorm:"autoUpdateTime" json:"-"`
 }
 
 /*

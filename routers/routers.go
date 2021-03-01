@@ -1,10 +1,10 @@
 package routers
 
 import (
+	"github.com/cwhuang29/article-sharing-website/config"
 	"github.com/cwhuang29/article-sharing-website/handlers"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"os"
 )
 
 var (
@@ -15,8 +15,9 @@ var (
 		"public/views/about.html",
 		"public/views/browse.html",
 		"public/views/login.html",
+		"public/views/register.html",
 		"public/views/overview.html",
-		"public/views/articlesGenerator.html",
+		"public/views/editor.html",
 		"public/views/templates/header.tmpl",
 		"public/views/templates/navbar.tmpl",
 		"public/views/templates/footer.tmpl",
@@ -40,13 +41,15 @@ func loadAssets() {
 func addRoutes() {
 	admin := router.Group("/admin") // /overview/... -> /admin/overview/...
 	{
-		admin.GET("/overview", handlers.AdminOverview)
+		// admin.GET("/overview", handlers.AdminOverview)
+		admin.GET("/check-permisssion", handlers.CheckPermission)
 		admin.GET("/create/article", handlers.CreateArticleView)
-		admin.GET("/delete/article", handlers.DeleteArticleView)
 		admin.GET("/update/article", handlers.UpdateArticleView)
 
 		admin.POST("/create/article", handlers.CreateArticle)
 		admin.POST("/create/images", handlers.UploadImages)
+		admin.PUT("/update/article", handlers.UpdateArticle)
+		admin.DELETE("/delete/article", handlers.DeleteArticle)
 	}
 
 	articles := router.Group("/articles")
@@ -85,5 +88,5 @@ func Router() {
 
 	loadAssets()
 	addRoutes()
-	router.Run(":" + os.Getenv("APP_PORT"))
+	router.Run(":" + config.GetConfig().App.Port)
 }
