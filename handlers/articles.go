@@ -11,7 +11,7 @@ import (
 )
 
 func CreateArticleView(c *gin.Context) {
-	yes := isAdmin(c)
+	yes, _ := isLoginedAdmin(c)
 	if !yes {
 		c.JSON(http.StatusUnauthorized, gin.H{"err": "Unauthorized."})
 		return
@@ -25,7 +25,7 @@ func CreateArticleView(c *gin.Context) {
 }
 
 func UpdateArticleView(c *gin.Context) {
-	yes := isAdmin(c)
+	yes, _ := isLoginedAdmin(c)
 	if !yes {
 		errMsg := "<div><strong>You are not allowed to perform this action</strong><p>Login if you are administrator.</p></div>"
 		c.HTML(http.StatusUnauthorized, "browse.html", gin.H{
@@ -80,7 +80,7 @@ func UpdateArticleView(c *gin.Context) {
 }
 
 func CreateArticle(c *gin.Context) {
-	yes := isAdmin(c)
+	yes, _ := isLoginedAdmin(c)
 	if !yes {
 		c.JSON(http.StatusUnauthorized, gin.H{"err": "Unauthorized."})
 		return
@@ -110,7 +110,7 @@ func CreateArticle(c *gin.Context) {
 }
 
 func UploadImages(c *gin.Context) {
-	yes := isAdmin(c)
+	yes, _ := isLoginedAdmin(c)
 	if !yes {
 		c.JSON(http.StatusUnauthorized, gin.H{"err": "Unauthorized."})
 		return
@@ -159,7 +159,7 @@ func UploadImages(c *gin.Context) {
 }
 
 func UpdateArticle(c *gin.Context) {
-	yes := isAdmin(c)
+	yes, _ := isLoginedAdmin(c)
 	if !yes {
 		c.JSON(http.StatusUnauthorized, gin.H{"err": "Unauthorized."})
 		return
@@ -204,7 +204,7 @@ func UpdateArticle(c *gin.Context) {
 }
 
 func DeleteArticle(c *gin.Context) {
-	yes := isAdmin(c)
+	yes, _ := isLoginedAdmin(c)
 	if !yes {
 		c.JSON(http.StatusUnauthorized, gin.H{"err": "Unauthorized."})
 		return

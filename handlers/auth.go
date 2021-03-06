@@ -103,7 +103,7 @@ func LoginJSON(c *gin.Context) {
 
 	token := storeLoginToken(user.Email, loginMaxAge)
 	c.Header("Location", landingPage)
-	c.SetCookie("login_token", token, loginMaxAge, "/", domain, false, false)
+	c.SetCookie("login_token", token, loginMaxAge, "/", domain, false, true)
 	c.SetCookie("login_email", user.Email, loginMaxAge, "/", domain, false, false)
 	if user.Admin {
 		c.SetCookie("is_admin", user.Email, loginMaxAge, "/", domain, false, false)
@@ -112,13 +112,16 @@ func LoginJSON(c *gin.Context) {
 }
 
 func Logout(c *gin.Context) {
-	cookieEmail, err := c.Cookie("login_email")
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"err": "Invalid cookie."})
-		return
+	c.SetCookie("login_token", "", loginMaxAge, "/", domain, false, true)
+	c.SetCookie("login_email", "", loginMaxAge, "/", domain, false, true)
+
+	yes, email := isLoginedAdmin(c)
+	if yes {
+		c.SetCookie("is_admin", "", loginMaxAge, "/", domain, false, true)
 	}
 
-	clearLoginToken(cookieEmail)
+	clearLoginToken(email)
+
 	c.Header("Location", landingPage)
 	c.JSON(http.StatusResetContent, gin.H{})
 }

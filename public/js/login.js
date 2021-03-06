@@ -51,7 +51,6 @@ const loginFailed = async (resp) => {
     });
   } else {
     resp.json().then(function (data) {
-      c(data);
       showErrMsg(data.err);
       for (var key in data.errTags) {
         document.getElementById(`err_msg_${key}`).innerText = data.err[key];

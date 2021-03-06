@@ -35,36 +35,44 @@ var (
 	emailRegex            = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 )
 
-func isAdmin(c *gin.Context) bool {
+func isLoginedAdmin(c *gin.Context) (yes bool, adminEmail string) { // Currently, the admin cookie is set as well as login reladed cookies
 	adminEmail, err := c.Cookie("is_admin")
 	if err != nil {
-		return false
+		return
 	}
 
 	if !databases.IsAdminUser(adminEmail) {
-		return false
+		return
 	}
 
-	return isLogin(c)
+	yes, email := isLogin(c)
+	if yes == false || email != adminEmail {
+		adminEmail = ""
+		return
+	}
+	yes = true
+	return
 }
 
-func isLogin(c *gin.Context) bool {
+func isLogin(c *gin.Context) (yes bool, cookieEmail string) {
 	cookieEmail, err := c.Cookie("login_email")
 	if err != nil {
-		return false
+		return
 	}
 
 	cookieToken, err := c.Cookie("login_token")
 	if err != nil {
-		return false
+		return
 	}
 
 	loginCredentials := databases.GetLoginCredentials(cookieEmail)
 	if cookieEmail != loginCredentials.Email || cookieToken != loginCredentials.Token || isExpired(loginCredentials.LastLogin, loginCredentials.MaxAge) {
-		return false
+		cookieEmail = ""
+		return
 	}
 
-	return true
+	yes = true
+	return
 }
 
 func isExpired(startTime time.Time, period int) bool {
