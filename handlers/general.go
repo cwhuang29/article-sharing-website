@@ -14,7 +14,7 @@ func About(c *gin.Context) {
 }
 
 func CheckPermission(c *gin.Context) {
-	yes := isAdmin(c)
+	yes, _ := isLoginedAdmin(c)
 	if !yes {
 		errMsg := "<div><strong>You are not allowed to perform this action</strong><p>Login if you are administrator.</p></div>"
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"err": errMsg})
@@ -54,9 +54,10 @@ func WeeklyUpdate(c *gin.Context) {
 			articleList = append(articleList, articleFormatDBToOverview(a))
 		}
 		c.HTML(http.StatusOK, "overview.html", gin.H{
-			"currPageCSS": "css/overview.css",
-			"title":       "Weekly News",
-			"articleList": articleList,
+			"currPageCSS":  "css/overview.css",
+			"title":        "Weekly News",
+			"articleList":  articleList,
+			"initialCount": len(articleList),
 		})
 	}
 }
@@ -93,41 +94,15 @@ func FetchData(c *gin.Context) {
 }
 
 func Overview(c *gin.Context) {
-	category := "pharma"
-	title := "Pharma News"
-
 	// fmt.Println(c.FullPath()) // If frontend trigger this route via window.location.href="/articles/browse?articleId=1", then c.FullPath() is /articles/browse
+	title := "Pharma News"
 	if c.FullPath() == "/articles/medication" {
-		category = "medication"
 		title = "Medication Related News"
 	}
 
-	data, err := fetchData(category, 0, 10)
-	if err != nil {
-		c.HTML(http.StatusBadRequest, "overview.html", gin.H{
-			"currPageCSS":  "css/overview.css",
-			"title":        title,
-			"initialCount": 0,
-			"err":          err.Error(),
-		})
-		return
-	}
-
-	if len(data) == 0 {
-		c.HTML(http.StatusOK, "overview.html", gin.H{
-			"currPageCSS":  "css/overview.css",
-			"title":        title,
-			"initialCount": 0,
-			"err":          "<strong>Oops ... </strong><br>There is no articles in this category",
-		})
-		return
-	}
-
 	c.HTML(http.StatusOK, "overview.html", gin.H{
-		"currPageCSS":  "css/overview.css",
-		"title":        title,
-		"initialCount": len(data),
-		"articleList":  data,
+		"currPageCSS": "css/overview.css",
+		"title":       title,
 	})
 }
 

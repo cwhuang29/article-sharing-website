@@ -121,9 +121,20 @@ const fetchOlderContent = async (count) => {
   }
 };
 
+const fetchInitialContent = async () => {
+  if (offset == 0) {
+    await fetchOlderContent(0);
+    if (offset == 0) {
+      showNoticeMsg("<strong>Oops ... </strong><br>There is no articles in this category");
+    }
+  }
+};
+
 onDOMContentLoaded = (function () {
   lastArticlesParents = document.getElementsByClassName("articles-parent")[0];
   offset = Number(document.getElementById("articles-count").innerText) || 0; // offset == # means we'll skip # articles in next fetch
+
+  fetchInitialContent();
 
   document.getElementById("articles-container").addEventListener("click", (e) => {
     window.location.href = "/articles/browse?articleId=" + e.target.closest("div.tile.is-child").children[0].dataset.articleid;

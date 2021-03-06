@@ -11,6 +11,8 @@
         <div style="display:none" id="articles-count">{{ .initialCount }}</div>
         <div id="articles-container">
             <div class="articles-parent">
+            <!-- Notice: Below syntax is for weekly update page only (server will send all content in latest 7 days, which should not be too much).  -->
+            <!--         For other pages, server respond with no content, and clients will fetch data subsequently. -->
             {{ if .articleList }}
                 {{ range .articleList }}
                 <div class="tile is-ancestor">
@@ -66,7 +68,8 @@
                 {{ end }}
             {{ else }}
                 <script>
-                    showNoticeMsg('{{ .err }}');
+                    var err = '{{ .err }}';
+                    if (err != "" && err != null) showNoticeMsg(err);
                 </script>
             {{ end }}
             </div>
