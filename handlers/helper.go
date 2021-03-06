@@ -66,12 +66,20 @@ func isLogin(c *gin.Context) (yes bool, cookieEmail string) {
 	}
 
 	loginCredentials := databases.GetLoginCredentials(cookieEmail)
-	if cookieEmail != loginCredentials.Email || cookieToken != loginCredentials.Token || isExpired(loginCredentials.LastLogin, loginCredentials.MaxAge) {
+	if len(loginCredentials) == 0 {
 		cookieEmail = ""
 		return
 	}
 
-	yes = true
+	for i := 0; i < len(loginCredentials); i++ {
+		isEpr := isExpired(loginCredentials[i].LastLogin, loginCredentials[i].MaxAge)
+		if cookieEmail == loginCredentials[i].Email && cookieToken == loginCredentials[i].Token && !isEpr {
+			yes = true
+			return
+		}
+	}
+
+	cookieEmail = ""
 	return
 }
 

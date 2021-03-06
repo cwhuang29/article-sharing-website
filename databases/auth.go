@@ -31,34 +31,38 @@ func InsertUserToDB(user models.User) (int, bool) {
 }
 
 func InsertLoginToken(email string, token string, maxAge int) {
-	var loginToken models.Login
+	loginToken := models.Login{Email: email, Token: token, MaxAge: maxAge, LastLogin: time.Now().UTC()}
+	db.Create(&loginToken)
 
-	tx := db.Table("logins").Where("email  = ?", email).Find(&loginToken)
-	if tx.RowsAffected == 0 {
-		newTx := models.Login{
-			Email:     email,
-			Token:     token,
-			MaxAge:    maxAge,
-			LastLogin: time.Now().UTC(),
-		}
-		db.Create(&newTx)
-	}
-	loginToken.Token = token
-	loginToken.MaxAge = maxAge
-	loginToken.LastLogin = time.Now().UTC()
-	db.Save(&loginToken)
+	// Notice: In the beginning there is only one token per user,
+	// which is not user-friendly because when user login with cellphone, their web accounts will be logout.
+
+	// var loginToken models.Login
+	// tx := db.Table("logins").Where("email  = ?", email).Find(&loginToken)
+	// if tx.RowsAffected == 0 {
+	//     newTx := models.Login{
+	//         Email:     email,
+	//         Token:     token,
+	//         MaxAge:    maxAge,
+	//         LastLogin: time.Now().UTC(),
+	//     }
+	//     db.Create(&newTx)
+	// }
+	// loginToken.Token = token
+	// loginToken.MaxAge = maxAge
+	// loginToken.LastLogin = time.Now().UTC()
+	// db.Save(&loginToken)
 }
 
-func DeleteLoginToken(email string) {
-	var loginToken models.Login
+func DeleteLoginToken(email string, token string) {
+	db.Delete(&models.Login{}, "email = ? and token = ?", email, token)
 
-	tx := db.Table("logins").Where("email  = ?", email).Find(&loginToken)
-	if tx.RowsAffected != 0 {
-		db.Delete(&models.Login{}, "email = ?", email)
-	}
+	// Notice: Users may have multiple tokens based on different user agents they have logged in from, and those tokens must be removed from DB when expired
+	// It can be done at login, logout, or any other time. Currently I'll done this job when user logout
+	db.Exec("delete from logins where email = \"" + email + "\" and last_login + max_age - now() < 0")
 }
 
-func GetLoginCredentials(email string) (loginSession models.Login) {
+func GetLoginCredentials(email string) (loginSession []models.Login) {
 	db.Table("logins").Where("email  = ?", email).Find(&loginSession)
 	return
 }

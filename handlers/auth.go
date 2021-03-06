@@ -19,8 +19,10 @@ func storeLoginToken(email string, loginMaxAge int) (token string) {
 	return
 }
 
-func clearLoginToken(email string) {
-	databases.DeleteLoginToken(email)
+func clearLoginToken(email string, token string) {
+	// Notice: Users may have multiple tokens based on different user agents they have logged in from, and those tokens must be removed from DB when expired
+	// It can be done at login, logout, or any other time. Currently I'll done this job when user logout
+	databases.DeleteLoginToken(email, token)
 }
 
 func RegisterView(c *gin.Context) {
@@ -112,15 +114,21 @@ func LoginJSON(c *gin.Context) {
 }
 
 func Logout(c *gin.Context) {
-	c.SetCookie("login_token", "", loginMaxAge, "/", domain, false, true)
-	c.SetCookie("login_email", "", loginMaxAge, "/", domain, false, true)
+	token, err := c.Cookie("login_token")
+	if err != nil || token == "" {
+		c.JSON(http.StatusBadRequest, gin.H{})
+		return
+	}
 
 	yes, email := isLoginedAdmin(c)
 	if yes {
 		c.SetCookie("is_admin", "", loginMaxAge, "/", domain, false, true)
 	}
 
-	clearLoginToken(email)
+	c.SetCookie("login_token", "", loginMaxAge, "/", domain, false, true)
+	c.SetCookie("login_email", "", loginMaxAge, "/", domain, false, true)
+
+	clearLoginToken(email, token)
 
 	c.Header("Location", landingPage)
 	c.JSON(http.StatusResetContent, gin.H{})

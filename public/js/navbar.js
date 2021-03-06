@@ -45,6 +45,16 @@ const logout = () => {
 const showNewPostButton = () => {
   if (getCookie("is_admin")) {
     newPostBtn.style.display = "block";
+  } else {
+    newPostBtn.style.display = "none";
+  }
+};
+
+const showLoginOrLogout = () => {
+  if (getCookie("login_email")) {
+    logoutBtn.style.display = "block";
+  } else {
+    loginBtn.style.display = "block";
   }
 };
 
@@ -66,11 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
   logoutBtn = document.getElementById("logoutBtn");
   newPostBtn = document.getElementById("newPostBtn");
 
-  if (getCookie("login_email")) {
-    loginBtn.style.display = "none";
-  } else {
-    logoutBtn.style.display = "none";
-  }
-  logoutBtn.addEventListener("click", logout);
+  showLoginOrLogout();
   showNewPostButton();
+  logoutBtn.addEventListener("click", logout);
 });
