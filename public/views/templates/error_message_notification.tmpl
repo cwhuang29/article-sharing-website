@@ -5,7 +5,7 @@
   <!-- Content will be inserted dynamically by JS -->
 </div>
 <style>
-    .notification {
+    .notification.is-danger {
         display: none;
         box-shadow: 3px 5px 2px 1px #555555;
         position: fixed;
@@ -29,7 +29,7 @@
         notification_message_tag.innerHTML = '';
         e.target.parentNode.style.display = 'none';
     };
-    document.querySelector('.notification .delete').addEventListener('click', hideErrMsg);
+    document.querySelector('.notification.is-danger .delete').addEventListener('click', hideErrMsg);
     // (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
     //     const $notification = $delete.parentNode;
     //     $delete.addEventListener('click', () => {

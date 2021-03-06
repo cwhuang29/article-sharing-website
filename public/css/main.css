@@ -1,15 +1,15 @@
 :root {
     /* --main-bg-color: #FEDF59; */
-    --main-bg-color: #FFDF8A;
+    --main-bg-color: #ffdf8a;
 }
 
-.main_padding_container {
+.main-padding-container {
     padding-left: 8rem;
     padding-right: 8rem;
 }
 
-@media only screen and (hover: none) and (pointer: coarse){
-    .main_padding_container {
+@media only screen and (hover: none) and (pointer: coarse) {
+    .main-padding-container {
         padding-left: 25px;
         padding-right: 25px;
     }

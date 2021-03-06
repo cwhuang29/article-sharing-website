@@ -35,7 +35,7 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	invalids := validaateUserFormat(newUser)
+	invalids := validateUserFormat(newUser)
 	if len(invalids) != 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"bindingError": false, "err": invalids})
 		return

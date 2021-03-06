@@ -35,7 +35,7 @@ func UpdateArticleView(c *gin.Context) {
 		return
 	}
 
-	id := checkParaId(c, "articleId")
+	id := checkArticleId(c, "articleId")
 	if id == 0 {
 		errMsg := "<div><p><strong>Article ID is an integer</strong></p><p>Please try again.</p></div>"
 		c.HTML(http.StatusBadRequest, "browse.html", gin.H{
@@ -177,7 +177,7 @@ func UpdateArticle(c *gin.Context) {
 		return
 	}
 
-	id := checkParaId(c, "articleId")
+	id := checkArticleId(c, "articleId")
 	if id == 0 {
 		errMsg := "<div><p><strong>Article ID is an integer</strong></p><p>Please try again.</p></div>"
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"bindingError": false, "err": errMsg})
@@ -210,7 +210,7 @@ func DeleteArticle(c *gin.Context) {
 		return
 	}
 
-	id := checkParaId(c, "articleId")
+	id := checkArticleId(c, "articleId")
 	if id == 0 {
 		errMsg := "<div><p><strong>Article ID is an integer</strong></p><p>Please try again.</p></div>"
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"bindingError": false, "err": errMsg})
