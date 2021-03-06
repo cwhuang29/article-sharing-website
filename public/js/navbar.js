@@ -27,8 +27,7 @@ const logout = () => {
     referrerPolicy: "no-referrer",
   }).then((resp) => {
     if (resp.status >= 400) {
-      errMsg = "<div><p><strong>Some Severe Errors Occurred</strong></p><p>Please reload the page and try again.</p></div>";
-      showErrMsg(errMsg);
+      showErrMsg("Some Severe Errors Occurred", "Please reload the page and try again.");
     } else {
       /*
        * Notice: To enhance security, server sets the httpOnly for login_token cookie and handles the cookies deletion (set their values to "")

@@ -30,9 +30,22 @@ const formatArticle = (id, title, subtitle, tags, category, content) => {
       truncEnd -= 1;
     }
     let img_tag = `<div class="column is-5" style="text-align: center;">` + img_add_class + img[0].substring(4, truncEnd) + "</div>"; // substring(): to remove "</p>"
-    content = '<div class="column is-7">' + content.replaceAll("<img.*>", "").replaceAll("<pre>", "").replaceAll("</pre>", "") + "</div>" + img_tag;
+    content =
+      '<div class="column is-7">' +
+      content
+        .replaceAll(/<img.*>/g, "")
+        .replaceAll(/<pre>/g, "")
+        .replaceAll(/<\/pre>/g, "") +
+      "</div>" +
+      img_tag;
   } else {
-    content = '<div class="column is-12">' + content.replaceAll("<img.*>", "").replaceAll("<pre>", "").replaceAll("</pre>", "") + "</div>";
+    content =
+      '<div class="column is-12">' +
+      content
+        .replaceAll(/<img.*>/g, "")
+        .replaceAll(/<pre>/g, "")
+        .replaceAll(/<\/pre>/g, "") +
+      "</div>";
   }
 
   return `<div class="tile is-ancestor">
@@ -91,7 +104,7 @@ const fetchSucceed = async (resp) => {
 
 const fetchFailed = async (resp) => {
   await resp.json().then((data) => {
-    c("Error: ", data.err);
+    c("Error: ", data.errHead, data.errBody);
   });
   return Promise.resolve(false);
 };
@@ -116,7 +129,7 @@ const fetchOlderContent = async (count) => {
     if (count < 3) {
       fetchOlderContent(++count);
     } else {
-      showErrMsg("<div><strong>Failed to fetch content!</strong><p>Please reload the page and try again.</p></div>");
+      showErrMsg("Failed to fetch content!", "Please reload the page and try again.");
     }
   }
 };
@@ -125,7 +138,7 @@ const fetchInitialContent = async () => {
   if (offset == 0) {
     await fetchOlderContent(0);
     if (offset == 0) {
-      showNoticeMsg("<strong>Oops ... </strong><br>There is no articles in this category");
+      showNoticeMsg("Oops ... ", "There is no articles in this category.");
     }
   }
 };

@@ -33,20 +33,21 @@ func Register(c *gin.Context) {
 	var newUser models.User
 
 	if err := c.ShouldBindJSON(&newUser); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"bindingError": true, "err": err})
+		c.JSON(http.StatusBadRequest, gin.H{"bindingError": true, "errHead": err.Error()})
 		return
 	}
 
 	invalids := validateUserFormat(newUser)
 	if len(invalids) != 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"bindingError": false, "err": invalids})
+		c.JSON(http.StatusBadRequest, gin.H{"bindingError": false, "errTags": invalids})
 		return
 	}
 
 	tmp := databases.GetUser(newUser.Email)
 	if tmp.ID != 0 {
-		errMsg := "<div><p><strong>This email is already registered</strong></p><p>Please use another email.</p></div>"
-		c.JSON(http.StatusConflict, gin.H{"bindingError": false, "err": errMsg})
+		errHead := "This email is already registered"
+		errBody := "Please use another email."
+		c.JSON(http.StatusConflict, gin.H{"bindingError": false, "errHead": errHead, "errBody": errBody})
 		return
 	}
 
@@ -54,12 +55,20 @@ func Register(c *gin.Context) {
 		newUser.Admin = true
 	}
 
-	hashedPwd, _ := hashPassword(newUser.Password)
+	hashedPwd, err := hashPassword(newUser.Password)
+	if err != nil {
+		errHead := "Some Severe Errors Occurred"
+		errBody := "Please reload the page and try again."
+		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "errHead": errHead, "errBody": errBody})
+		return
+	}
+
 	newUser.Password = string(hashedPwd)
 	_, res := databases.InsertUserToDB(newUser)
 	if !res {
-		errMsg := "<div><p><strong>Some Severe Errors Occurred</strong></p><p>Please reload the page and try again.</p></div>"
-		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "err": errMsg})
+		errHead := "Some Severe Errors Occurred"
+		errBody := "Please reload the page and try again."
+		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "errHead": errHead, "errBody": errBody})
 		return
 	}
 
@@ -80,7 +89,7 @@ func LoginView(c *gin.Context) {
 func LoginJSON(c *gin.Context) {
 	var json Login
 	if err := c.ShouldBindJSON(&json); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"inputFormatInvalid": true, "err": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"inputFormatInvalid": true, "errHead": err.Error()})
 		return
 	}
 
@@ -93,13 +102,17 @@ func LoginJSON(c *gin.Context) {
 	var user models.User
 	user = databases.GetUser(json.Email)
 	if user.ID == 0 {
-		c.JSON(http.StatusForbidden, gin.H{"inputFormatInvalid": false, "err": "<div><p><strong>User not Found</strong></p><p>Please try again</p></div>"})
+		errHead := "User not Found"
+		errBody := "Please try again."
+		c.JSON(http.StatusForbidden, gin.H{"inputFormatInvalid": false, "errHead": errHead, "errBody": errBody})
 		return
 	}
 
 	err := compareHashAndPassword([]byte(user.Password), []byte(json.Password))
 	if err != nil {
-		c.JSON(http.StatusForbidden, gin.H{"inputFormatInvalid": false, "err": err.Error()})
+		errHead := "Password Incorrect"
+		errBody := "Please try again."
+		c.JSON(http.StatusForbidden, gin.H{"inputFormatInvalid": false, "errHead": errHead, "errBody": errBody})
 		return
 	}
 

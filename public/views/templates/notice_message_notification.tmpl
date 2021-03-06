@@ -2,7 +2,6 @@
 <div class="notification is-link has-text-centered">
   <button class="delete"></button>
   <div id="notification_message_notice"></div>
-  <!-- Content will be inserted dynamically by JS -->
 </div>
 <style>
     .notification.is-link {
@@ -21,8 +20,8 @@
 </style>
 <script>
     const notification_message_tag_notice = document.querySelector('#notification_message_notice');
-    const showNoticeMsg = (msg) => {
-        notification_message_tag_notice.innerHTML = msg;
+    const showNoticeMsg = (msgHead = "", msgBody = "") => {
+        notification_message_tag_notice.innerHTML = `<div><p><strong>${msgHead}</strong></p><p>${msgBody}</p></div>`;
         notification_message_tag_notice.parentNode.style.display='block';
     };
     const hideNoticeMsg = (e) => {

@@ -214,19 +214,11 @@ func getUUID() string {
 }
 
 func hashPassword(password string) ([]byte, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		err = fmt.Errorf("<div><p><strong>Some Severe Errors Occurred</strong></p><p>Please reload the page and try again.</p></div>")
-	}
-	return hashedPassword, err
+	return bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 }
 
 func compareHashAndPassword(hashedPassword, password []byte) error {
-	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
-	if err != nil {
-		err = fmt.Errorf("<div><p><strong>Password Incorrect</strong></p><p>Please try again.</p></div>")
-	}
-	return err
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }
 
 func isEmailValid(e string) bool {

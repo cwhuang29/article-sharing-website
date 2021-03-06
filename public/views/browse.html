@@ -80,7 +80,7 @@
     {{ template "footer" . }}
     {{ if not .success }}
         <script>
-            showErrMsg( '{{ .err }}' );
+            showErrMsg('{{ .errHead }}', '{{ .errBody }}');
             var offset = document.querySelector('nav').offsetHeight +  document.querySelector('footer').offsetHeight + 60; // 60: the padding in the footer
             document.querySelector('#padding-when-error').style.paddingBottom = `${window.innerHeight - offset}px`;
         </script>

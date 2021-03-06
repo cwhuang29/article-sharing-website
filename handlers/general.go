@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"github.com/cwhuang29/article-sharing-website/databases"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -16,21 +15,24 @@ func About(c *gin.Context) {
 func CheckPermission(c *gin.Context) {
 	yes, _ := isLoginedAdmin(c)
 	if !yes {
-		errMsg := "<div><strong>You are not allowed to perform this action</strong><p>Login if you are administrator.</p></div>"
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"err": errMsg})
+		errHead := "You are not allowed to perform this action"
+		errBody := "Login if you are administrator."
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errHead": errHead, "errBody": errBody})
 		return
 	}
 
 	id := checkArticleId(c, "articleId")
 	if id == 0 {
-		errMsg := "<div><p><strong>Article ID is an integer</strong></p><p>Please try again.</p></div>"
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"err": errMsg})
+		errHead := "Article ID is An Integer"
+		errBody := "Please try again."
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody})
 		return
 	}
 
 	if succeed := databases.IsArticleExists(id); succeed != true {
-		errMsg := "<div><p><strong>Article ID Not Found</strong></p><p>Please try again.</p></div>"
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"err": errMsg})
+		errHead := "Article ID Not Found"
+		errBody := "Please try again."
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errHead": errHead, "errBody": errBody})
 		return
 	}
 
@@ -46,7 +48,8 @@ func WeeklyUpdate(c *gin.Context) {
 		c.HTML(http.StatusOK, "overview.html", gin.H{
 			"currPageCSS": "css/overview.css",
 			"title":       "Weekly News",
-			"err":         "<strong>Oops ... </strong><br>No new articles in the past 7 days",
+			"errHead":     "Oops ...",
+			"errBody":     "No new articles in the past 7 days.",
 		})
 	} else {
 		var articleList []OverviewArticle
@@ -63,30 +66,32 @@ func WeeklyUpdate(c *gin.Context) {
 }
 
 func FetchData(c *gin.Context) {
+	errHead := "Invalid Parameter"
+
 	category := c.DefaultQuery("category", "")
 	if category == "" {
-		errMsg := "Parameter category can not be empty."
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"err": errMsg, "size": 0})
+		errBody := "Parameter category can not be empty."
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody, "size": 0})
 		return
 	}
 
 	offset, err := strconv.Atoi(c.Query("offset"))
 	if err != nil {
-		errMsg := "Parameter offset should be a positive integer."
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"err": errMsg, "size": 0})
+		errBody := "Parameter offset should be a positive integer."
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody, "size": 0})
 		return
 	}
 
 	limit, err := strconv.Atoi(c.Query("limit"))
 	if err != nil {
-		errMsg := "Parameter limit should be a positive integer."
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"err": errMsg, "size": 0})
+		errBody := "Parameter limit should be a positive integer."
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody, "size": 0})
 		return
 	}
 
 	data, err := fetchData(category, offset, limit)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"err": err.Error(), "size": 0})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": err.Error(), "size": 0})
 		return
 	}
 
@@ -94,7 +99,7 @@ func FetchData(c *gin.Context) {
 }
 
 func Overview(c *gin.Context) {
-	// fmt.Println(c.FullPath()) // If frontend trigger this route via window.location.href="/articles/browse?articleId=1", then c.FullPath() is /articles/browse
+	// If frontend trigger this route via window.location.href="/articles/browse?articleId=1", then c.FullPath() is /articles/browse
 	title := "Pharma News"
 	if c.FullPath() == "/articles/medication" {
 		title = "Medication Related News"
@@ -114,20 +119,23 @@ func Browse(c *gin.Context) {
 
 	id, err := strconv.Atoi(c.Query("articleId"))
 	if err != nil || id <= 0 {
-		err := fmt.Errorf("<div><p><strong>Article Not Found</strong></p><p>Go back to previous page and try again.</p></div>")
-		// c.AbortWithStatusJSON(http.StatusBadRequest, err.Error())
+		errHead := "Article ID is An Integer"
+		errBody := "Go back to previous page and try again."
 		c.HTML(http.StatusBadRequest, "browse.html", gin.H{
 			"currPageCSS": "css/browse.css",
-			"err":         err.Error(),
+			"errHead":     errHead,
+			"errBody":     errBody,
 		})
 		return
 	}
 
 	if dbFormatArticle, succeed := databases.GetArticleFullContent(id); succeed != true {
-		errMsg := "<div><p><strong>Article ID Not Found</strong></p><p>Please try again.</p></div>"
+		errHead := "Article Not Found"
+		errBody := "Go back to previous page and try again."
 		c.HTML(http.StatusNotFound, "browse.html", gin.H{
 			"currPageCSS": "css/browse.css",
-			"err":         errMsg,
+			"errHead":     errHead,
+			"errBody":     errBody,
 		})
 	} else {
 		article := articleFormatDBToDetailed(dbFormatArticle, true)

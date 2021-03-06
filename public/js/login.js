@@ -47,11 +47,11 @@ const loginSucceed = async (resp) => {
 const loginFailed = async (resp) => {
   if (resp.status == 500) {
     resp.json().then(function (data) {
-      showErrMsg(`<div><p><strong>Error !</strong></p><p>${data.err}</p></div>`);
+      showErrMsg(data.errHead, data.errBody);
     });
   } else {
     resp.json().then(function (data) {
-      showErrMsg(data.err);
+      showErrMsg(data.errHead, data.errBody);
       for (var key in data.errTags) {
         document.getElementById(`err_msg_${key}`).innerText = data.err[key];
       }

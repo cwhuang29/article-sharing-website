@@ -112,22 +112,23 @@ const creationSucceed = async (resp) => {
 const creationFailed = async (resp) => {
   if (resp.status == 500) {
     resp.json().then(function (data) {
-      showErrMsg(`<div><p><strong>Error !</strong></p><p>${data.err}</p></div>`);
+      showErrMsg(data.errHead, data.errBody);
     });
   } else if (resp.status == 400) {
     resp.json().then(function (data) {
       if (data.bindingError) {
-        showErrMsg("<div><p><strong>Some severe errors occurred !</strong></p><p>Please reload the page and try again.</p></div>");
+        c(data.errHead);
+        showErrMsg("Some severe errors occurred !", "Please reload the page and try again.");
       } else {
-        for (var key in data.err) {
+        for (var key in data.errTags) {
           document.getElementById(`err_msg_${key}`).innerText = data.err[key];
         }
       }
     });
   } else if (resp.status == 409) {
-    resp.json().then((data) => showErrMsg(data.err));
+    resp.json().then((data) => showErrMsg(data.errHead, data.errBody));
   } else {
-    showErrMsg("<div><p><strong>Some severe errors occurred !</strong></p><p>Please reload the page and try again.</p></div>");
+    showErrMsg("Some severe errors occurred !", "Please reload the page and try again.");
   }
 };
 
@@ -178,7 +179,7 @@ const submitNewPost = () => {
 };
 
 onDOMContentLoaded = (function () {
-  showNoticeMsg("<div><strong>Reset password feature is coming out soon. Sorry for the inconvenience.</strong></div>");
+  showNoticeMsg("Reset password feature is coming out soon. Sorry for the inconvenience.", "");
   firstName = document.getElementsByName("first_name")[0];
   lastName = document.getElementsByName("last_name")[0];
   password = document.getElementsByName("password")[0];

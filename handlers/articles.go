@@ -13,7 +13,9 @@ import (
 func CreateArticleView(c *gin.Context) {
 	yes, _ := isLoginedAdmin(c)
 	if !yes {
-		c.JSON(http.StatusUnauthorized, gin.H{"err": "Unauthorized."})
+		errHead := "Unauthorized"
+		errBody := "You are not allowed to perform this action."
+		c.JSON(http.StatusUnauthorized, gin.H{"errHead": errHead, "errBody": errBody})
 		return
 	}
 
@@ -27,39 +29,47 @@ func CreateArticleView(c *gin.Context) {
 func UpdateArticleView(c *gin.Context) {
 	yes, _ := isLoginedAdmin(c)
 	if !yes {
-		errMsg := "<div><strong>You are not allowed to perform this action</strong><p>Login if you are administrator.</p></div>"
+		errHead := "You are not allowed to perform this action"
+		errBody := "Login if you are administrator."
 		c.HTML(http.StatusUnauthorized, "browse.html", gin.H{
 			"currPageCSS": "css/browse.css",
-			"err":         errMsg,
+			"errHead":     errHead,
+			"errBody":     errBody,
 		})
 		return
 	}
 
 	id := checkArticleId(c, "articleId")
 	if id == 0 {
-		errMsg := "<div><p><strong>Article ID is an integer</strong></p><p>Please try again.</p></div>"
+		errHead := "Article ID is An Integer"
+		errBody := "Please try again."
 		c.HTML(http.StatusBadRequest, "browse.html", gin.H{
 			"currPageCSS": "css/browse.css",
-			"err":         errMsg,
+			"errHead":     errHead,
+			"errBody":     errBody,
 		})
 		return
 	}
 
 	if succeed := databases.IsArticleExists(id); succeed != true {
-		errMsg := "<div><p><strong>Article ID Not Found</strong></p><p>Please try again.</p></div>"
+		errHead := "Article Not Found"
+		errBody := "Please try again."
 		c.HTML(http.StatusNotFound, "browse.html", gin.H{
 			"currPageCSS": "css/browse.css",
-			"err":         errMsg,
+			"errHead":     errHead,
+			"errBody":     errBody,
 		})
 		return
 	}
 
 	dbFormatArticle, succeed := databases.GetArticleFullContent(id)
 	if succeed != true {
-		errMsg := "<div><p><strong>Article ID Not Found</strong></p><p>Please try again.</p></div>"
+		errHead := "Article Not Found"
+		errBody := "Please try again."
 		c.HTML(http.StatusNotFound, "browse.html", gin.H{
 			"currPageCSS": "css/browse.css",
-			"err":         errMsg,
+			"errHead":     errHead,
+			"errBody":     errBody,
 		})
 		return
 	}
@@ -82,19 +92,21 @@ func UpdateArticleView(c *gin.Context) {
 func CreateArticle(c *gin.Context) {
 	yes, _ := isLoginedAdmin(c)
 	if !yes {
-		c.JSON(http.StatusUnauthorized, gin.H{"err": "Unauthorized."})
+		errHead := "Unauthorized"
+		errBody := "You are not allowed to perform this action."
+		c.JSON(http.StatusUnauthorized, gin.H{"errHead": errHead, "errBody": errBody})
 		return
 	}
 
 	var newArticle Article
 	if err := c.ShouldBindJSON(&newArticle); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"bindingError": true, "err": err})
+		c.JSON(http.StatusBadRequest, gin.H{"bindingError": true, "errHead": err.Error()})
 		return
 	}
 
 	invalids := validateArticleFormat(newArticle)
 	if len(invalids) != 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"bindingError": false, "err": invalids})
+		c.JSON(http.StatusBadRequest, gin.H{"bindingError": false, "errTags": invalids})
 		return
 	}
 
@@ -105,14 +117,16 @@ func CreateArticle(c *gin.Context) {
 		c.Header("Location", "/articles/browse?articleId="+strconv.Itoa(id)) // With Location header, response.redirected will become true (if status code is 3XX. e.g., 201 is always false)
 		c.JSON(http.StatusCreated, gin.H{"articleId": id})                   // See public/js/editor.js to see the difference between 201 & 302
 	} else {
-		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "err": "An error occurred while writing to DB."})
+		errHead := "Some Severe Errors Occurred"
+		errBody := "An error occurred while writing to DB."
+		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "errHead": errHead, "errBody": errBody})
 	}
 }
 
 func UploadImages(c *gin.Context) {
 	yes, _ := isLoginedAdmin(c)
 	if !yes {
-		c.JSON(http.StatusUnauthorized, gin.H{"err": "Unauthorized."})
+		c.JSON(http.StatusUnauthorized, gin.H{"err": "Unauthorized"})
 		return
 	}
 
@@ -161,32 +175,36 @@ func UploadImages(c *gin.Context) {
 func UpdateArticle(c *gin.Context) {
 	yes, _ := isLoginedAdmin(c)
 	if !yes {
-		c.JSON(http.StatusUnauthorized, gin.H{"err": "Unauthorized."})
+		errHead := "Unauthorized"
+		errBody := "You are not allowed to perform this action."
+		c.JSON(http.StatusUnauthorized, gin.H{"errHead": errHead, "errBody": errBody})
 		return
 	}
 
 	var newArticle Article
 	if err := c.ShouldBindJSON(&newArticle); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"bindingError": true, "err": err})
+		c.JSON(http.StatusBadRequest, gin.H{"bindingError": true, "errHead": err.Error()})
 		return
 	}
 
 	invalids := validateArticleFormat(newArticle)
 	if len(invalids) != 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"bindingError": false, "err": invalids})
+		c.JSON(http.StatusBadRequest, gin.H{"bindingError": false, "errTags": invalids})
 		return
 	}
 
 	id := checkArticleId(c, "articleId")
 	if id == 0 {
-		errMsg := "<div><p><strong>Article ID is an integer</strong></p><p>Please try again.</p></div>"
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"bindingError": false, "err": errMsg})
+		errHead := "Article ID is An Integer"
+		errBody := "Please try again."
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"bindingError": false, "errHead": errHead, "errBody": errBody})
 		return
 	}
 
 	if succeed := databases.IsArticleExists(id); succeed != true {
-		errMsg := "<div><p><strong>Article ID Not Found</strong></p><p>Please try again.</p></div>"
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"bindingError": false, "err": errMsg})
+		errHead := "Article Not Found"
+		errBody := "Please try again."
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"bindingError": false, "errHead": errHead, "errBody": errBody})
 		return
 	}
 
@@ -199,27 +217,33 @@ func UpdateArticle(c *gin.Context) {
 		c.Header("Location", "/articles/browse?articleId="+strconv.Itoa(id))
 		c.JSON(http.StatusCreated, gin.H{"articleId": id})
 	} else {
-		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "err": "An error occurred while writing to DB."})
+		errHead := "Some Severe Errors Occurred"
+		errBody := "An error occurred while writing to DB."
+		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "errHead": errHead, "errBody": errBody})
 	}
 }
 
 func DeleteArticle(c *gin.Context) {
 	yes, _ := isLoginedAdmin(c)
 	if !yes {
-		c.JSON(http.StatusUnauthorized, gin.H{"err": "Unauthorized."})
+		errHead := "Unauthorized"
+		errBody := "You are not allowed to perform this action."
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errHead": errHead, "errBody": errBody})
 		return
 	}
 
 	id := checkArticleId(c, "articleId")
 	if id == 0 {
-		errMsg := "<div><p><strong>Article ID is an integer</strong></p><p>Please try again.</p></div>"
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"bindingError": false, "err": errMsg})
+		errHead := "Article ID is An Integer"
+		errBody := "Please try again."
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody})
 		return
 	}
 
 	if succeed := databases.IsArticleExists(id); succeed != true {
-		errMsg := "<div><p><strong>Article ID Not Found</strong></p><p>Please try again.</p></div>"
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"bindingError": false, "err": errMsg})
+		errHead := "Article Not Found"
+		errBody := "Please try again."
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errHead": errHead, "errBody": errBody})
 		return
 	}
 
@@ -227,6 +251,8 @@ func DeleteArticle(c *gin.Context) {
 	if res := databases.DeleteArticle(id); res {
 		c.Status(http.StatusNoContent)
 	} else {
-		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "err": "An error occurred while writing to DB."})
+		errHead := "Some Severe Errors Occurred"
+		errBody := "An error occurred while writing to DB."
+		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "errHead": errHead, "errBody": errBody})
 	}
 }

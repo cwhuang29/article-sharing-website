@@ -24,18 +24,14 @@ const checkStatus = async (resp) => {
   return Promise.resolve(resp);
 };
 
-const creationFailed = async (resp) => {
-  if (resp.status < 500) {
-    resp.json().then(function (data) {
-      showErrMsg(data.err);
-    });
-  } else {
-    showErrMsg("<div><p><strong>Some severe errors occurred !</strong></p><p>Please reload the page and try again.</p></div>");
-  }
+const fetchFailed = async (resp) => {
+  resp.json().then(function (data) {
+    showErrMsg(data.errHead, data.errBody);
+  });
   return Promise.resolve(0);
 };
 
-const creationSucceed = async (resp) => {
+const fetchSucceed = async (resp) => {
   return Promise.resolve(1);
 };
 
@@ -49,8 +45,8 @@ const fetchDeleteReq = async (url) => {
     referrerPolicy: "no-referrer",
   })
     .then(checkStatus)
-    .then(creationSucceed)
-    .catch(creationFailed);
+    .then(fetchSucceed)
+    .catch(fetchFailed);
 };
 
 const modifyOrDelete = async () => {
@@ -72,8 +68,8 @@ const modifyOrDelete = async () => {
     referrerPolicy: "no-referrer",
   })
     .then(checkStatus)
-    .then(creationSucceed)
-    .catch(creationFailed);
+    .then(fetchSucceed)
+    .catch(fetchFailed);
 
   if (!res) {
     return;

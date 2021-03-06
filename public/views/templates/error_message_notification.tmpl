@@ -2,7 +2,6 @@
 <div class="notification is-danger is-light has-text-centered">
   <button class="delete"></button>
   <div id="notification_message"></div>
-  <!-- Content will be inserted dynamically by JS -->
 </div>
 <style>
     .notification.is-danger {
@@ -21,8 +20,8 @@
 </style>
 <script>
     const notification_message_tag = document.querySelector('#notification_message');
-    const showErrMsg = (msg) => {
-        notification_message_tag.innerHTML = msg;
+    const showErrMsg = (msgHead = "", msgBody = "") => {
+        notification_message_tag.innerHTML = `<div><p><strong>${msgHead}</strong></p><p>${msgBody}</p></div>`;
         notification_message_tag.parentNode.style.display='block';
     };
     const hideErrMsg = (e) => {

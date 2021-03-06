@@ -68,8 +68,8 @@
                 {{ end }}
             {{ else }}
                 <script>
-                    var err = '{{ .err }}';
-                    if (err != "" && err != null) showNoticeMsg(err);
+                    var errHead = '{{ .errHead }}', errBody = '{{ .errBody }}'
+                    if (errHead != "" && errHead != null) showNoticeMsg(errHead, errBody);
                 </script>
             {{ end }}
             </div>
