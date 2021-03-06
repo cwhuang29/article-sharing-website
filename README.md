@@ -1,6 +1,8 @@
 # article-sharing-website
 An article sharing website developed by Go.
 
+Here is a live demo: [inews](http://18.179.7.226/) (hosting on AWS)
+
 ## Overview
 This project does not rely on any frontend framework, so it is a good entry point for backend engineers who want to build a whole website. With basic knowledge of JavaScript and CSS, You can start developing!
 
@@ -21,9 +23,10 @@ There are three environment variables that can be overwritten, which are `APP_PO
 
 #### Local
 ```bash
-export APP_PORT=8080
-export DB_PORT=3306
-export DB_HOST=127.0.0.1
+# Set the env values if needed
+# export APP_PORT=8080
+# export DB_PORT=3306
+# export DB_HOST=127.0.0.1
 go run cmd/main.go
 ```
 
@@ -83,7 +86,7 @@ sudo yum -y install mysql
 - [x]  Modify articles
 - [x]  Delete articles
 - [x]  Optimize Docker builds
-- [ ]  Pagination
+- [x]  Pagination
 - [ ]  Logger
 - [ ]  CSRF token
 - [ ]  Reset password
@@ -98,11 +101,9 @@ sudo yum -y install mysql
 - [ ]  Optimize create articles method (improve the way to upload texts and images)
 
 ## Demo
-Here is a live demo: [inews](http://18.179.7.226/) (hosting on AWS)
 ### Feature - article list
 ![Articles List](demo/articles-list.png)
 ### Feature - browse
 ![Browse](demo/browse.png)
 ### Feature - edit
 ![Edit](demo/edit.png)
-

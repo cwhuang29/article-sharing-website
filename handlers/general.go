@@ -21,7 +21,7 @@ func CheckPermission(c *gin.Context) {
 		return
 	}
 
-	id := checkParaId(c, "articleId")
+	id := checkArticleId(c, "articleId")
 	if id == 0 {
 		errMsg := "<div><p><strong>Article ID is an integer</strong></p><p>Please try again.</p></div>"
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"err": errMsg})
@@ -61,9 +61,38 @@ func WeeklyUpdate(c *gin.Context) {
 	}
 }
 
+func FetchData(c *gin.Context) {
+	category := c.DefaultQuery("category", "")
+	if category == "" {
+		errMsg := "Parameter category can not be empty."
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"err": errMsg, "size": 0})
+		return
+	}
+
+	offset, err := strconv.Atoi(c.Query("offset"))
+	if err != nil {
+		errMsg := "Parameter offset should be a positive integer."
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"err": errMsg, "size": 0})
+		return
+	}
+
+	limit, err := strconv.Atoi(c.Query("limit"))
+	if err != nil {
+		errMsg := "Parameter limit should be a positive integer."
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"err": errMsg, "size": 0})
+		return
+	}
+
+	data, err := fetchData(category, offset, limit)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"err": err.Error(), "size": 0})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"articleList": data, "size": len(data)}) // Notice: if the data is an empty array [], frontend will get `null` instead of empty array
+}
+
 func Overview(c *gin.Context) {
-	offset := 0
-	limit := 10
 	category := "pharma"
 	title := "Pharma News"
 
@@ -73,31 +102,33 @@ func Overview(c *gin.Context) {
 		title = "Medication Related News"
 	}
 
-	if dbFormatArticle, err := databases.GetArticlesList(category, offset, limit); err != nil {
+	data, err := fetchData(category, 0, 10)
+	if err != nil {
 		c.HTML(http.StatusBadRequest, "overview.html", gin.H{
-			"currPageCSS": "css/overview.css",
-			"title":       title,
-			"err":         "<strong>Oops ... </strong><br>There is no articles in this category",
+			"currPageCSS":  "css/overview.css",
+			"title":        title,
+			"initialCount": 0,
+			"err":          err.Error(),
 		})
-	} else {
-		if len(dbFormatArticle) == 0 {
-			c.HTML(http.StatusOK, "overview.html", gin.H{
-				"currPageCSS": "css/overview.css",
-				"title":       title,
-				"err":         "<strong>Oops ... </strong><br>There is no articles in this category",
-			})
-			return
-		}
-		var articleList []OverviewArticle
-		for _, a := range dbFormatArticle {
-			articleList = append(articleList, articleFormatDBToOverview(a))
-		}
-		c.HTML(http.StatusOK, "overview.html", gin.H{
-			"currPageCSS": "css/overview.css",
-			"title":       title,
-			"articleList": articleList,
-		})
+		return
 	}
+
+	if len(data) == 0 {
+		c.HTML(http.StatusOK, "overview.html", gin.H{
+			"currPageCSS":  "css/overview.css",
+			"title":        title,
+			"initialCount": 0,
+			"err":          "<strong>Oops ... </strong><br>There is no articles in this category",
+		})
+		return
+	}
+
+	c.HTML(http.StatusOK, "overview.html", gin.H{
+		"currPageCSS":  "css/overview.css",
+		"title":        title,
+		"initialCount": len(data),
+		"articleList":  data,
+	})
 }
 
 func Browse(c *gin.Context) {

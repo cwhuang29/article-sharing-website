@@ -75,17 +75,33 @@ func isExpired(startTime time.Time, period int) bool {
 	return false
 }
 
-func checkParaId(c *gin.Context, para string) int {
-	if c.Query("articleId") == "" {
+func checkArticleId(c *gin.Context, key string) int {
+	if c.Query(key) == "" {
 		return 0
 	}
 
-	id, err := strconv.Atoi(c.Query(para))
+	id, err := strconv.Atoi(c.Query(key))
 	if err != nil || id <= 0 {
 		return 0
 	}
 
 	return id
+}
+
+func fetchData(category string, offset int, limit int) (articleList []OverviewArticle, err error) {
+	if offset < 0 {
+		err = fmt.Errorf("Invalid parameter: offset should not be negative.")
+		return
+	} else if limit <= 0 {
+		err = fmt.Errorf("Invalid parameter: limit should not be negative.")
+		return
+	}
+
+	dbFormatArticle := databases.GetArticlesList(category, offset, limit)
+	for _, a := range dbFormatArticle {
+		articleList = append(articleList, articleFormatDBToOverview(a))
+	}
+	return
 }
 
 /*
@@ -249,7 +265,7 @@ func removeDuplicateValuesInSlice(t interface{}) []interface{} {
 	}
 }
 
-func validaateUserFormat(newUser models.User) (err map[string]interface{}) {
+func validateUserFormat(newUser models.User) (err map[string]interface{}) {
 	err = make(map[string]interface{})
 
 	if len(newUser.FirstName) == 0 {

@@ -59,6 +59,7 @@ func addRoutes() {
 		articles.GET("/weekly-update", handlers.WeeklyUpdate) // The main page
 		articles.GET("/medication", handlers.Overview)
 		articles.GET("/pharma", handlers.Overview)
+		articles.GET("/fetch", handlers.FetchData)
 	}
 
 	router.GET("/register", handlers.RegisterView)

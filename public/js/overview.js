@@ -1,90 +1,140 @@
-const fetchArticle = async (url = '', data = {}) => {
-    const response = await fetch(url, {
-        method: 'GET', // *GET, POST, PUT, DELETE, etc.
-        mode: 'cors', // no-cors, *cors, same-origin
-        mode: 'same-origin',
-        cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-        credentials: 'same-origin', // include, *same-origin, omit
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-        },
-        redirect: 'follow', // manual, *follow, error
-        referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-    });
-    return response;
+const fetchNewContentAnchor = 0.8;
+const limit = 10;
+let offset = 0,
+  prevOffset = -1;
+
+const formatArticle = (id, title, subtitle, tags, category, content) => {
+  let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if (isMobile && title.length > 55) {
+    title = title.substr(0, 55) + " ...";
+  }
+  title = title.replaceAll(" ", "&nbsp;");
+
+  if (isMobile) {
+    subtitle = subtitle.replaceAll(" ", "&nbsp;");
+  }
+
+  let tagHTML = "";
+  tags.forEach((t) => {
+    tagHTML += `<span class="tag is-warning">${t}</span>&nbsp;`;
+  });
+
+  category = `<a href="/articles/${category}"><span class="tag is-primary">${category}</span></a>`;
+
+  let img = /<img.*>/.exec(content); // Note that there is a <p></p> tag surrounded
+  let img_add_class = '<img class="article-list-img-h" ';
+  if (img != null) {
+    truncEnd = img[0].length - 4;
+    if (img[0][img[0].length - 5] == "<") {
+      // If the image is embedded in a list, then it will be surrounded by <li></li> instead of <p></p>
+      truncEnd -= 1;
+    }
+    let img_tag = `<div class="column is-5" style="text-align: center;">` + img_add_class + img[0].substring(4, truncEnd) + "</div>"; // substring(): to remove "</p>"
+    content = '<div class="column is-7">' + content.replaceAll("<img.*>", "").replaceAll("<pre>", "").replaceAll("</pre>", "") + "</div>" + img_tag;
+  } else {
+    content = '<div class="column is-12">' + content.replaceAll("<img.*>", "").replaceAll("<pre>", "").replaceAll("</pre>", "") + "</div>";
+  }
+
+  return `<div class="tile is-ancestor">
+                <div class="tile is-parent">
+                    <div class="tile is-child box article-list-container">
+                        <div data-articleid=${id}></div>
+                        <div class="article-list-tag">
+                            ${tagHTML}
+                            ${category}
+                        </div>
+                        <p class="title">${title}</p>
+                        <p class="subtitle">${subtitle}</p>
+                        <div class="columns overview-content">${content}</div>
+                    </div>
+                </div>
+            </div>`;
 };
 
-const DECREASE_IMAGE_HEIGHT = 950;
-const imageDisplayToggle = () => {
-	let imgDisplay = true;
-	if (window.innerWidth < DECREASE_IMAGE_HEIGHT) {
-		imgDisplay = false;
-		[...document.querySelectorAll('.article-list-img-h')].forEach(img => {
-            img.style.height = 132;
-		});
-	}
-	window.addEventListener('resize', _ => {
-		if (imgDisplay == true && window.innerWidth < DECREASE_IMAGE_HEIGHT) {
-			imgDisplay = false;
-			[...document.querySelectorAll('.article-list-img-h')].forEach(img => {
-                img.style.height = 150;
-			});
-		} else if (imgDisplay == false && window.innerWidth >= DECREASE_IMAGE_HEIGHT) {
-			imgDisplay = true;
-			[...document.querySelectorAll('.article-list-img-h')].forEach(img => {
-                img.style.height = 172;
-			});
-		}
-	});
+const appendNewContent = (content) => {
+  ele = document.createElement("div");
+  ele.classList.add("articles-parent");
+  ele.innerHTML = content;
+
+  lastArticlesParents.insertAfter = newContent;
+  lastArticlesParents.parentNode.insertBefore(ele, lastArticlesParents.nextSibling);
+  lastArticlesParents = ele;
 };
 
-onDOMContentLoaded = (function(){
-    /*
-    const checkStatus = async (resp) => {
-        if (resp.status >= 400) {
-            return Promise.reject(resp);
-        } else {
-            return Promise.resolve(resp);
-        }
-    };
-    const showArticle = async (resp) => {
-        c(resp.redirected, resp.url);
-        if (response.redirected) { // Should set the Location header in server side
-            window.location.href = response.url;
-        }
-        // resp.redirect(); // ???????????
-        // resp.json().then(function(data) {
-        //     c(data);
-        // })
-        return Promise.resolve();
-    };
-    const handleErr = (resp) => {
-        if (resp.status == 400 || resp.status == 404) {
-            resp.json().then((data) => {
-                showErrMsg(data);
-            })
-        } else {
-            showErrMsg("<div><p><strong> Some severe errors occurred !</strong></p><p>Please reload the page and try again.</p></div>");
-        }
-    };
-    const getArticleFullContent = (id) => {
-        document.body.style.cursor = 'wait!important';
-        fetchArticle('/articles/browse?' + new URLSearchParams({"id": id})) // /articles/browse?id=<id>
-            .then(checkStatus)
-            .then(showArticle)
-            .catch(handleErr)
-            .finally(_ => {
-                document.body.style.cursor = 'default';
-            });
-    };
-    */
+const checkStatus = async (resp) => {
+  const contentType = resp.headers.get("content-type");
 
-    [...document.querySelectorAll('.tile > .title, .tile > .subtitle, .tile > .columns')].forEach(tile => {
-        tile.addEventListener('click', (e) => {
-            // getArticleFullContent(tile.parentNode.children[0].dataset.articleid);
-            window.location.href = '/articles/browse?articleId=' + tile.parentNode.children[0].dataset.articleid;
-        });
+  if (contentType && contentType.indexOf("application/json") !== -1 && resp.status < 400) {
+    return Promise.resolve(resp);
+  }
+  return Promise.reject(resp);
+};
+
+const fetchSucceed = async (resp) => {
+  await resp.json().then((data) => {
+    prevOffset = offset;
+    offset += data.size;
+
+    data.articleList = data.articleList || []; // If there is no data, the empty array returned by backend becomes null
+    if (data.articleList.length == 0) {
+      return;
+    }
+
+    newContent = "";
+    data.articleList.forEach((a) => {
+      newContent += formatArticle(a.ID, a.Title, a.Subtitle, a.Tags, a.Category, a.Content);
     });
+    appendNewContent(newContent);
+  });
+  return Promise.resolve(true);
+};
 
-	imageDisplayToggle();
+const fetchFailed = async (resp) => {
+  await resp.json().then((data) => {
+    c("Error: ", data.err);
+  });
+  return Promise.resolve(false);
+};
+
+const fetchOlderContent = async (count) => {
+  if (offset == prevOffset) {
+    return;
+  }
+
+  let urlPath = location.pathname.split("/");
+  let category = urlPath[urlPath.length - 1];
+
+  if (category == "weekly-update") {
+    return;
+  }
+
+  let para = "?" + new URLSearchParams({ category: category, offset: offset, limit: limit });
+  let url = "fetch" + para;
+  let res = await fetchData(url).then(checkStatus).then(fetchSucceed).catch(fetchFailed);
+
+  if (!res) {
+    if (count < 3) {
+      fetchOlderContent(++count);
+    } else {
+      showErrMsg("<div><strong>Failed to fetch content!</strong><p>Please reload the page and try again.</p></div>");
+    }
+  }
+};
+
+onDOMContentLoaded = (function () {
+  lastArticlesParents = document.getElementsByClassName("articles-parent")[0];
+  offset = Number(document.getElementById("articles-count").innerText) || 0; // offset == # means we'll skip # articles in next fetch
+
+  document.getElementById("articles-container").addEventListener("click", (e) => {
+    window.location.href = "/articles/browse?articleId=" + e.target.closest("div.tile.is-child").children[0].dataset.articleid;
+  });
+
+  let lastFetch = 0,
+    delay = 800;
+  window.onscroll = () => {
+    if (lastFetch < Date.now() - delay && window.innerHeight + window.pageYOffset >= document.body.offsetHeight * fetchNewContentAnchor) {
+      lastFetch = Date.now();
+      fetchOlderContent(0);
+    }
+  };
 })();
