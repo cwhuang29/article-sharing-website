@@ -35,9 +35,14 @@ var (
 	emailRegex            = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 )
 
-func isLoginedAdmin(c *gin.Context) (yes bool, adminEmail string) { // Currently, the admin cookie is set as well as login reladed cookies
+func IsLoginedAdmin(c *gin.Context) (status UserStatus, adminEmail string) { // Currently, the admin cookie is set as well as login reladed cookies
+	status, email := IsLogin(c)
+	if status == IsGuest {
+		return
+	}
+
 	adminEmail, err := c.Cookie("is_admin")
-	if err != nil {
+	if err != nil || email != adminEmail {
 		return
 	}
 
@@ -45,16 +50,11 @@ func isLoginedAdmin(c *gin.Context) (yes bool, adminEmail string) { // Currently
 		return
 	}
 
-	yes, email := isLogin(c)
-	if yes == false || email != adminEmail {
-		adminEmail = ""
-		return
-	}
-	yes = true
+	status = IsAdmin
 	return
 }
 
-func isLogin(c *gin.Context) (yes bool, cookieEmail string) {
+func IsLogin(c *gin.Context) (status UserStatus, cookieEmail string) {
 	cookieEmail, err := c.Cookie("login_email")
 	if err != nil {
 		return
@@ -66,15 +66,10 @@ func isLogin(c *gin.Context) (yes bool, cookieEmail string) {
 	}
 
 	loginCredentials := databases.GetLoginCredentials(cookieEmail)
-	if len(loginCredentials) == 0 {
-		cookieEmail = ""
-		return
-	}
-
 	for i := 0; i < len(loginCredentials); i++ {
 		isEpr := isExpired(loginCredentials[i].LastLogin, loginCredentials[i].MaxAge)
 		if cookieEmail == loginCredentials[i].Email && cookieToken == loginCredentials[i].Token && !isEpr {
-			yes = true
+			status = IsMember
 			return
 		}
 	}

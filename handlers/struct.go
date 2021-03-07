@@ -1,5 +1,14 @@
 package handlers
 
+type UserStatus int
+
+const (
+	IsGuest UserStatus = iota
+	IsMember
+	IsMemberAndVerified
+	IsAdmin
+)
+
 type Article struct {
 	Title    string   `form:"title" json:"title" binding:"required"`
 	Subtitle string   `form:"subtitle" json:"subtitle" binding:"-"`

@@ -1,7 +1,7 @@
 # article-sharing-website
 An article sharing website developed by Go.
 
-Here is a live demo: [inews](http://18.179.7.226/) (hosting on AWS)
+Here is a live demo: [inews](https://www.inewsforpharm.com/) (hosting on AWS EC2 with Load Balancer, Route 53, Certificate Manager.)
 
 ## Overview
 This project does not rely on any frontend framework, so it is a good entry point for backend engineers who want to build a whole website. With basic knowledge of JavaScript and CSS, You can start developing!
@@ -87,6 +87,7 @@ sudo yum -y install mysql
 - [x]  Delete articles
 - [x]  Optimize Docker builds
 - [x]  Pagination
+- [x]  Middleware
 - [ ]  Logger
 - [ ]  CSRF token
 - [ ]  Reset password

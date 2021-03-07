@@ -13,14 +13,6 @@ func About(c *gin.Context) {
 }
 
 func CheckPermission(c *gin.Context) {
-	yes, _ := isLoginedAdmin(c)
-	if !yes {
-		errHead := "You are not allowed to perform this action"
-		errBody := "Login if you are administrator."
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errHead": errHead, "errBody": errBody})
-		return
-	}
-
 	id := checkArticleId(c, "articleId")
 	if id == 0 {
 		errHead := "Article ID is An Integer"

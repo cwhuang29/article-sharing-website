@@ -57,7 +57,7 @@ func Register(c *gin.Context) {
 
 	hashedPwd, err := hashPassword(newUser.Password)
 	if err != nil {
-		errHead := "Some Severe Errors Occurred"
+		errHead := "An Error Occurred"
 		errBody := "Please reload the page and try again."
 		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "errHead": errHead, "errBody": errBody})
 		return
@@ -66,7 +66,7 @@ func Register(c *gin.Context) {
 	newUser.Password = string(hashedPwd)
 	_, res := databases.InsertUserToDB(newUser)
 	if !res {
-		errHead := "Some Severe Errors Occurred"
+		errHead := "An Error Occurred"
 		errBody := "Please reload the page and try again."
 		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "errHead": errHead, "errBody": errBody})
 		return
@@ -133,8 +133,8 @@ func Logout(c *gin.Context) {
 		return
 	}
 
-	yes, email := isLoginedAdmin(c)
-	if yes {
+	userStatus, email := IsLoginedAdmin(c)
+	if userStatus == IsAdmin {
 		c.SetCookie("is_admin", "", loginMaxAge, "/", domain, false, true)
 	}
 

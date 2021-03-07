@@ -40,6 +40,7 @@ func loadAssets() {
 
 func addRoutes() {
 	admin := router.Group("/admin") // /overview/... -> /admin/overview/...
+	admin.Use(AdminRequired())
 	{
 		// admin.GET("/overview", handlers.AdminOverview)
 		admin.GET("/check-permisssion", handlers.CheckPermission)
