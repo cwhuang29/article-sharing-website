@@ -204,7 +204,7 @@ const creationFailed = async (resp) => {
   } else if (resp.status == 400) {
     resp.json().then(function (data) {
       if (data.bindingError) {
-        showErrMsg("Some severe errors occurred !", "Please reload the page and try again.");
+        showErrMsg("An Error Occurred !", "Please reload the page and try again.");
         c(data.errHead);
       } else {
         if (data.errHead) {
@@ -216,7 +216,7 @@ const creationFailed = async (resp) => {
       }
     });
   } else {
-    showErrMsg("Some severe errors occurred !", "Please reload the page and try again.");
+    showErrMsg("An Error Occurred !", "Please reload the page and try again.");
   }
 };
 
@@ -254,7 +254,7 @@ const submitArticle = async (method, url, formData, formNameIDMapping, title, su
         return Promise.resolve(1);
       })
       .catch((err) => {
-        showErrMsg("Image upload failed !", "Please try again later.");
+        showErrMsg("Image Upload Failed !", "Please try again later.");
         c("Images upload error:", err);
         return 0;
       });

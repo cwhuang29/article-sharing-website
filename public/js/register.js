@@ -118,7 +118,7 @@ const creationFailed = async (resp) => {
     resp.json().then(function (data) {
       if (data.bindingError) {
         c(data.errHead);
-        showErrMsg("Some severe errors occurred !", "Please reload the page and try again.");
+        showErrMsg("An Error Occurred !", "Please reload the page and try again.");
       } else {
         for (var key in data.errTags) {
           document.getElementById(`err_msg_${key}`).innerText = data.err[key];
@@ -128,7 +128,7 @@ const creationFailed = async (resp) => {
   } else if (resp.status == 409) {
     resp.json().then((data) => showErrMsg(data.errHead, data.errBody));
   } else {
-    showErrMsg("Some severe errors occurred !", "Please reload the page and try again.");
+    showErrMsg("An Error Occurred !", "Please reload the page and try again.");
   }
 };
 
