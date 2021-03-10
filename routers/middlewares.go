@@ -33,6 +33,6 @@ func AdminRequired() gin.HandlerFunc {
 			"latency": time.Since(t),
 			"email":   cookieEmail,
 		}
-		logrus.WithFields(fields).Info("Routes for Admins")
+		logrus.WithFields(fields).Info("Admins related routes")
 	}
 }

@@ -42,13 +42,12 @@ func addRoutes() {
 	admin := router.Group("/admin") // /overview/... -> /admin/overview/...
 	admin.Use(AdminRequired())
 	{
-		// admin.GET("/overview", handlers.AdminOverview)
+		admin.GET("/overview", handlers.AdminOverview)
 		admin.GET("/check-permisssion", handlers.CheckPermission)
 		admin.GET("/create/article", handlers.CreateArticleView)
 		admin.GET("/update/article", handlers.UpdateArticleView)
 
 		admin.POST("/create/article", handlers.CreateArticle)
-		admin.POST("/create/images", handlers.UploadImages)
 		admin.PUT("/update/article", handlers.UpdateArticle)
 		admin.DELETE("/delete/article", handlers.DeleteArticle)
 	}
@@ -90,5 +89,7 @@ func Router() {
 
 	loadAssets()
 	addRoutes()
+
+	// router.MaxMultipartMemory = 8 << 20 // 8 MiB. Set a lower memory limit for multipart forms (default is 32 MiB)
 	router.Run(":" + config.GetConfig().App.Port)
 }

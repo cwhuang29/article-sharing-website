@@ -21,6 +21,9 @@
 <script>
     const notification_message_tag = document.querySelector('#notification_message');
     const showErrMsg = (msgHead = "", msgBody = "") => {
+        if (msgHead == "" && msgBody == "") {
+            return;
+        }
         notification_message_tag.innerHTML = `<div><p><strong>${msgHead}</strong></p><p>${msgBody}</p></div>`;
         notification_message_tag.parentNode.style.display='block';
     };

@@ -1,20 +1,25 @@
 const TAGS_LIMIT = 5;
 const TAGS_CHAR_LIMIT = 20;
 const FILES_UPLOAD_LIMIT = 10;
+const FILE_ID_LENGTH = 10;
+const FILE_MAX_SIZE = 4 * 1000 * 1000; // 4MB
+const ACCEPT_FILE_TYPE = {
+  image: ["image/png", "image/jpeg", "image/gif"],
+};
 const errInputMsg = {
   empty: "This field can't be empty.",
   long: "This field can have no more than 255 characters.",
-  dateFormat: "The format of date should be yyyy-mm-dd.", // For safari which don't support input type date
+  dateFormat: "The format of date should be yyyy-mm-dd.", // For browsers don't support input type date
   dateIllegal: "The date is illegal.",
   dateTooOld: "The date chosen should be greater than 1960-01-01.",
   dateFuture: "The date chosen should be smaller than the current year.",
   tagsTooMany: `You can target up to ${TAGS_LIMIT} tags at a time.`,
   tagsTooLong: `Each tag can contain at most ${TAGS_CHAR_LIMIT} characters.`,
 };
-const editorPlaceholder = `Tip:\nUpload images in advance so that you can get the URL to embed them.\n\nShortcuts:\nCtrl-B   -   toggleBold\nCtrl-I    -   toggleItalic\nCtrl-K   -   drawLink\nCtrl-H   -   toggleHeadingSmaller\nShift-Ctrl-H  -  toggleHeadingBigger`;
-const createImagesEndpoint = "/admin/create/images";
+const editorPlaceholder = `Tip:\nUpload images in advance so that you can get the URL to embed them (4MB per image).\n\nShortcuts:\nCtrl-B   -   toggleBold\nCtrl-I    -   toggleItalic\nCtrl-K   -   drawLink\nCtrl-H   -   toggleHeadingSmaller\nShift-Ctrl-H  -  toggleHeadingBigger`;
 const createArticleEndpoint = "/admin/create/article";
 const updateArticleEndpoint = "/admin/update/article";
+const baseURL = window.location.protocol + "//" + window.location.host + "/";
 
 const loadMarkdownEditor = () => {
   // https://github.com/Ionaru/easy-markdown-editor
@@ -32,7 +37,7 @@ const loadMarkdownEditor = () => {
     minHeight: "250px",
     maxHeight: "400px",
     placeholder: editorPlaceholder,
-    imageAccept: "image/png, image/jpeg", // Should check again at server side
+    imageAccept: "image/png, image/jpeg",
     spellChecker: false,
     tabSize: 4,
     toolbarTips: true,
@@ -46,6 +51,7 @@ const tagsConstructor = (e) => {
       document.getElementById("err_msg_tags").innerText = errInputMsg.tagsTooMany;
       return;
     }
+
     var val = tagsInputBox.value.trim();
     if (val == "") {
       return;
@@ -53,16 +59,19 @@ const tagsConstructor = (e) => {
       document.getElementById("err_msg_tags").innerText = errInputMsg.tagsTooLong;
       return;
     }
+
     document.getElementById("err_msg_tags").innerText = "";
     tagsCount += 1;
+
     var newTag = `<span class="tag is-warning is-medium" name="tags" style="margin-right: 9px;">${val}<button class="delete is-small"></button></span>`;
     tagsList.innerHTML += newTag;
     tagsInputBox.value = "";
   }
 };
+
 const tagsDeconstructor = (e) => {
-  if (e.target.tagName == "BUTTON") {
-    // c(e.currentTarget); The #tag-list element
+  if (e.target.tagName.toLowerCase() == "button") {
+    // c(e.currentTarget); The #tag-list element which registered this event listener's callback function
     tagsCount -= 1;
     e.target.parentNode.remove();
   }
@@ -72,23 +81,12 @@ const getInputValue = (easyMDE) => {
   var title = document.getElementsByName("title")[0].value.trim();
   var subtitle = document.getElementsByName("subtitle")[0].value.trim();
   var date = document.getElementsByName("date")[0].value;
-  var authors = [...document.getElementsByName("authors")]
-    .filter((author) => {
-      return author.checked;
-    })
-    .map((author) => {
-      return author.value;
-    });
+  var authors = [...document.getElementsByName("authors")].filter((author) => author.checked).map((author) => author.value);
   var category = document.getElementsByName("category")[0].value;
-  var tags = [...document.getElementsByName("tags")]
-    .filter((tag) => {
-      return tag.tagName == "SPAN";
-    })
-    .map((tag) => {
-      return tag.textContent.trim();
-    });
-  // Insert newlines into head and tail of images. Otherwise the <img> tag will not embedded in <figure> tag after transformation
-  var content = easyMDE.value().replace(/(!\[.*\]\(.*\))/g, "\n\n$1\n\n");
+  var tags = [...document.getElementsByName("tags")].filter((tag) => tag.tagName.toLowerCase() == "span").map((tag) => tag.textContent.trim());
+  // Insert newlines into head and tail of images. Otherwise when render markdown to html, the image won't display preperly
+  // Side effect: after modifying article multiple times, there will be lots of empty lines
+  var content = easyMDE.value().replace(/(!\[.*\]\(.*\))/g, "\n$1\n");
 
   return [title, subtitle, date, authors, category, tags, content];
 };
@@ -177,12 +175,11 @@ const generateId = (len) => {
 const checkStatus = async (resp) => {
   if (resp.status >= 400) {
     return Promise.reject(resp);
-  } else {
-    return Promise.resolve(resp);
   }
+  return Promise.resolve(resp);
 };
 
-const creationSucceed = async (resp) => {
+const fetchSucceed = async (resp) => {
   // [...resp.headers.entries()].forEach(header => console.log(header[0], header[1]));
   /*
    * console.log(resp.redirected, resp.url);
@@ -196,23 +193,12 @@ const creationSucceed = async (resp) => {
   return Promise.resolve();
 };
 
-const creationFailed = async (resp) => {
-  if (resp.status == 500 || resp.status == 401) {
+const fetchFailed = async (resp) => {
+  if (resp.status >= 400 && resp.status <= 500) {
     resp.json().then(function (data) {
       showErrMsg(data.errHead, data.errBody);
-    });
-  } else if (resp.status == 400) {
-    resp.json().then(function (data) {
-      if (data.bindingError) {
-        showErrMsg("An Error Occurred !", "Please reload the page and try again.");
-        c(data.errHead);
-      } else {
-        if (data.errHead) {
-          showErrMsg(data.errHead, data.errBody);
-        }
-        for (var key in data.errTags) {
-          document.getElementById(`err_msg_${key}`).innerText = data.err[key];
-        }
+      for (var key in data.errTags) {
+        document.getElementById(`err_msg_${key}`).innerText = data.err[key];
       }
     });
   } else {
@@ -220,162 +206,115 @@ const creationFailed = async (resp) => {
   }
 };
 
-const postData = async (url = "", method = "POST", data = {}) => {
-  return (response = await fetch(url, {
+const submitArticle = async (method, url, formData) => {
+  await fetch(url, {
     method: method,
-    mode: "cors", // no-cors, *cors, same-origin
-    cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
-    credentials: "same-origin", // include, *same-origin, omit
-    headers: {
-      "Content-Type": "application/json", // 'application/x-www-form-urlencoded',
-    },
-    redirect: "follow", // manual, *follow, error
-    referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-    body: JSON.stringify(data),
-  }));
-};
-
-const uploadMultipleImages = async (url, data) => {
-  return (response = await fetch(url, {
-    // Do NOT set Content-Type header (browser will set this header automatically)
-    method: "POST",
-    body: data,
-  }));
-};
-
-const submitArticle = async (method, url, formData, formNameIDMapping, title, subtitle, date, authors, category, tags, content) => {
-  if (formData != null) {
-    var success = await uploadMultipleImages(createImagesEndpoint, formData)
-      .then((response) => response.json())
-      .then((data) => {
-        for (const fileName in data) {
-          content = content.replaceAll(formNameIDMapping[fileName], data[fileName]);
-        }
-        return Promise.resolve(1);
-      })
-      .catch((err) => {
-        showErrMsg("Image Upload Failed !", "Please try again later.");
-        c("Images upload error:", err);
-        return 0;
-      });
-    if (!success) {
-      return;
-    }
-  }
-
-  await postData(url, method, {
-    title: title,
-    subtitle: subtitle,
-    date: date,
-    authors: authors,
-    category: category,
-    tags: tags,
-    content: content,
+    body: formData,
   })
     .then(checkStatus)
-    .then(creationSucceed)
-    .catch(creationFailed);
+    .then(fetchSucceed)
+    .catch(fetchFailed);
 };
 
-const getImagesData = () => {
-  let hasImage = false;
-  let formNameIDMapping = {};
-  const imagesData = new FormData();
+const generateForm = (title, subtitle, date, authors, category, tags, content) => {
+  const formData = new FormData();
+
+  formData.append("title", title);
+  formData.append("subtitle", subtitle);
+  formData.append("date", date);
+  formData.append("authors", authors);
+  formData.append("category", category);
+  formData.append("tags", tags);
+  formData.append("content", content);
+
   const fileField = document.querySelectorAll('input[type="file"]');
   for (const f of fileField) {
     if (f.files[0] === undefined) {
       continue;
+    } else if (f.files[0].size > FILE_MAX_SIZE) {
+      document.getElementById("err_msg_content").innerText = `File size of ${f.files[0].name} is too large!`;
+      return;
+    } else if (ACCEPT_FILE_TYPE.image.indexOf(f.files[0].type) == -1) {
+      document.getElementById("err_msg_content").innerText = `File type of ${f.files[0].name} is not permitted!`;
+      return;
     }
-    hasImage = true;
-    formNameIDMapping[f.files[0].name] = f.nextElementSibling.nextElementSibling.nextElementSibling.innerText; // Uploaded file name - fake ID of the file
-    imagesData.append("uploadImage", f.files[0]);
-    // File {name: "test_image.png", lastModified: 1567836656000, lastModifiedDate: Sat Sep 07 2019 14:10:56 GMT+0800 (Taipei Standard Time), webkitRelativePath: "", size: 939134, …}
+    let fakeID = f.nextElementSibling.nextElementSibling.nextElementSibling.innerText.substr(-FILE_ID_LENGTH); // Fake image ID provided to user
+    let newName = fakeID;
+    formData.append("uploadImages", f.files[0], newName); // Note: f.files[0].name is readonly (can't change a name of a created file), so we add customized name as 3rd argument
   }
-  if (!hasImage) {
-    return { imagesData: null, formNameIDMapping: null };
-  }
-  return { imagesData: imagesData, formNameIDMapping: formNameIDMapping };
+  return formData;
 };
 
-const submitPost = async () => {
-  submitBtn.classList.add("is-loading");
-
+const handleSubmit = async (method, endpoint, button) => {
+  button.classList.add("is-loading");
   let [title, subtitle, date, authors, category, tags, content] = getInputValue(easyMDE);
   let res = validateInput(title, subtitle, date, authors, category, tags, content);
 
   if (!res) {
-    submitBtn.classList.remove("is-loading");
+    button.classList.remove("is-loading");
   } else {
-    const { imagesData, formNameIDMapping } = getImagesData();
-    await submitArticle("POST", createArticleEndpoint, imagesData, formNameIDMapping, title, subtitle, date, authors, category, tags, content);
-    submitBtn.classList.remove("is-loading");
+    const formData = generateForm(title, subtitle, date, authors, category, tags, content);
+    if (formData != null) {
+      await submitArticle(method, endpoint, formData);
+    }
+    button.classList.remove("is-loading");
   }
 };
 
-const savePost = async () => {
-  saveBtn.classList.add("is-loading");
+const submitPost = () => {
+  handleSubmit("POST", createArticleEndpoint, submitBtn);
+};
 
-  let [title, subtitle, date, authors, category, tags, content] = getInputValue(easyMDE);
-  let res = validateInput(title, subtitle, date, authors, category, tags, content);
+const savePost = () => {
+  let articleId = new URLSearchParams(window.location.search).get("articleId");
+  let para = "?" + new URLSearchParams({ articleId: articleId });
 
-  if (!res) {
-    savetBtn.classList.remove("is-loading");
-  } else {
-    const { imagesData, formNameIDMapping } = getImagesData();
-    let articleId = new URLSearchParams(window.location.search).get("articleId");
-    let para = "?" + new URLSearchParams({ articleId: articleId });
-    await submitArticle("PUT", updateArticleEndpoint + para, imagesData, formNameIDMapping, title, subtitle, date, authors, category, tags, content);
-    saveBtn.classList.remove("is-loading");
-  }
+  handleSubmit("PUT", updateArticleEndpoint + para, saveBtn);
 };
 
 onDOMContentLoaded = (function () {
   let easyMDE = loadMarkdownEditor();
 
-  let loc = window.location;
-  let baseURL = loc.protocol + "//" + loc.host + "/upload/images/";
-
-  const FILE_ID_LENGTH = 8;
   let filesCount = 1;
-  let noUploadDefaultMsg = "No image uploaded";
+  let fileUploadDefaultMsg = "No image uploaded";
   let fileGroups = document.getElementById("fileInputGroups");
 
+  fileGroups.addEventListener("change", (e) => {
+    if (e.target.tagName.toLowerCase() == "input") {
+      displayFileNameAndCancelBtn(e.target);
+    }
+  });
+  fileGroups.addEventListener("click", (e) => {
+    if (e.target.tagName.toLowerCase() == "button") {
+      removeFileUploadTag(e.target.parentNode.parentNode.parentNode);
+    }
+  });
   const createFileIDField = () => {
-    var id = generateId(FILE_ID_LENGTH);
-    imgURL = baseURL + id;
-
-    var d = document.createElement("span");
-    d.classList.add("file-name");
-    d.classList.add("fake-id");
-    d.style.paddingRight = "265px";
+    let imgURL = baseURL + generateId(FILE_ID_LENGTH);
+    let d = document.createElement("span");
+    let classesToAdd = ["file-name", "fake-id"];
+    d.classList.add(...classesToAdd);
+    d.style.paddingRight = "15px";
     d.style.cursor = "default";
     d.style.userSelect = "all";
     d.style.WebkitTransition.userSelect = "all"; // Chrome 49+
     d.textContent = imgURL;
-    d.addEventListener("click", function (e) {
-      e.preventDefault();
-    });
+    d.addEventListener("click", (e) => e.preventDefault()); // User has to click on this field to copy fake URL
     return d;
   };
   const createFileUploadTag = () => {
-    if (filesCount >= FILES_UPLOAD_LIMIT) {
-      return null;
-    }
     filesCount += 1;
     let fileInputTemplate = `<label class='file-label'>
-                <input class='file-input' type='file' name='resume'>
+                <input class='file-input' type='file'>
                 <span class='file-cta'>
                   <span class='file-icon'> 📂 </span>
                   <span class='file-label'>Upload images</span>
                 </span>
-                <span class='file-name'>${noUploadDefaultMsg}</span>
+                <span class='file-name'>${fileUploadDefaultMsg}</span>
               </label>`;
-    var d = document.createElement("div");
-    d.classList.add("file");
-    d.classList.add("has-name");
-    d.classList.add("is-warning");
-    d.classList.add("is-small");
-    d.classList.add("pb-1");
+    let d = document.createElement("div");
+    let classesToAdd = ["file", "has-name", "is-warning", "is-small", "pb-1"];
+    d.classList.add(...classesToAdd);
     d.innerHTML = fileInputTemplate;
     return d;
   };
@@ -386,43 +325,35 @@ onDOMContentLoaded = (function () {
       fileGroups.appendChild(createFileUploadTag());
     }
   };
-  fileGroups.addEventListener("click", (e) => {
-    if (e.target.tagName == "BUTTON") {
-      removeFileUploadTag(e.target.parentNode.parentNode.parentNode);
-      return;
-    }
-    fileInput = e.target.closest("input[type=file]");
-    if (!fileInput) {
-      return;
-    }
-    fileInput.onchange = () => {
-      if (fileInput.files.length > 0) {
-        var fileDeleteBtn = "<button class='delete is-small mr-2'></button>";
-        var originalHTML = fileInput.nextElementSibling.textContent;
-        fileInput.nextElementSibling.innerHTML = fileDeleteBtn + originalHTML;
+  const displayFileNameAndCancelBtn = (ele) => {
+    if (ele.files.length > 0) {
+      let fileDeleteBtn = "<button class='delete is-small mr-2'></button>";
+      let originalHTML = ele.nextElementSibling.textContent;
+      ele.nextElementSibling.innerHTML = fileDeleteBtn + originalHTML;
 
-        var val = fileInput.nextElementSibling.nextElementSibling.textContent;
-        fileInput.nextElementSibling.nextElementSibling.textContent = fileInput.files[0].name;
-        fileInput.parentNode.appendChild(createFileIDField());
-        if (val == noUploadDefaultMsg) {
-          var newNode = createFileUploadTag();
-          if (newNode) {
-            fileGroups.appendChild(newNode);
-          }
-        }
+      let val = ele.nextElementSibling.nextElementSibling.textContent;
+      ele.nextElementSibling.nextElementSibling.textContent = ele.files[0].name;
+      ele.parentNode.appendChild(createFileIDField());
+      if (val == fileUploadDefaultMsg && filesCount < FILES_UPLOAD_LIMIT) {
+        fileGroups.appendChild(createFileUploadTag());
       }
-    };
-  });
+    }
+  };
 
   tagsCount = 0;
   tagsInputBox = document.querySelector("input[name='tags']");
-  tagsList = document.querySelector("#tags-list");
   tagsInputBox.addEventListener("keyup", tagsConstructor);
+  tagsList = document.querySelector("#tags-list");
   tagsList.addEventListener("click", tagsDeconstructor);
 
   submitBtn = document.querySelector("#submit_button");
   if (submitBtn) {
     submitBtn.addEventListener("click", submitPost);
+  }
+
+  saveBtn = document.getElementById("save_button");
+  if (saveBtn) {
+    saveBtn.addEventListener("click", savePost);
   }
 
   cancelBtn = document.getElementById("cancel_button");
@@ -433,24 +364,8 @@ onDOMContentLoaded = (function () {
       window.location.href = "/articles/browse" + para;
     });
   }
-  saveBtn = document.getElementById("save_button");
-  if (saveBtn) {
-    saveBtn.addEventListener("click", savePost);
-  }
 })();
 /*
-    const uploadSingleImages = () => {
-        const formData = new FormData();
-        const fileField = document.querySelector('input[type="file"]');
-
-        formData.append('uploadImage', fileField.files[0]);
-        c(fileField.files[0]);
-        // File {name: "test_image.png", lastModified: 1567836656000, lastModifiedDate: Sat Sep 07 2019 14:10:56 GMT+0800 (Taipei Standard Time), webkitRelativePath: "", size: 939134, …}
-        fetch('/admin/create/images', { // Do NOT set Content-Type header (browser will set Content-Type automatically)
-            method: 'POST',
-            body: formData
-        });
-    };
     const createArticles = (title, subtitle, date, authors, category, tags, content) => {
         var request = new XMLHttpRequest();
         request.open('GET', `/admin/create/article`, true);

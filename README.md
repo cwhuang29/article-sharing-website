@@ -6,9 +6,9 @@ Here is a live demo: [inews](https://www.inewsforpharm.com/) (hosting on AWS EC2
 ## Overview
 This project does not rely on any frontend framework, so it is a good entry point for backend engineers who want to build a whole website. With basic knowledge of JavaScript and CSS, You can start developing!
 
-I chose [gin](https://github.com/gin-gonic/gin) as the backend web framework for its simplicity and high performance (it is also the most popular framework in Go, see [Top Go Web Frameworks](https://github.com/mingrammer/go-web-framework-stars)).
+I choose [gin](https://github.com/gin-gonic/gin) as the backend web framework for its simplicity and high performance (it is also the most popular framework in Go, see [Top Go Web Frameworks](https://github.com/mingrammer/go-web-framework-stars)).
 
-For database ORM, I chose [gorm](https://github.com/go-gorm/gorm). It is a full-featured ORM with great community support and [easy to follow documentation](https://gorm.io/docs/).
+For database ORM, I choose [gorm](https://github.com/go-gorm/gorm). It is a full-featured ORM with great community support and [easy to follow documentation](https://gorm.io/docs/).
 Besides, if you choose `sqlite` as the database driver, then you can get rid of the setting database burden (the data will be stored in a file `tmp.db` in the root of project) and focus on the backend development.
 
 The admin users are created by the following mechanism:
@@ -97,9 +97,9 @@ sudo yum -y install mysql
 - [ ]  Like/Save buttons
 - [ ]  Admin overview page (e.g. show statistics)
 - [ ]  Preview feature (before submitting the article)
-- [ ]  Security issues about uploading files (e.g. check files type and files size)
+- [x]  Security issues about uploading files
 - [ ]  Support CLI
-- [ ]  Optimize create articles method (improve the way to upload texts and images)
+- [ ]  Integrate AWS SES to send emails
 
 ## Demo
 ### Feature - article list

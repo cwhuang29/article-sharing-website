@@ -83,7 +83,7 @@
         <div id='fileInputGroups' class="block">
           <div class='file has-name is-warning is-small pb-1'>
             <label class='file-label'>
-              <input class='file-input' type='file' name='resume'>
+              <input class='file-input' type='file'>
               <span class='file-cta'>
                 <span class='file-icon'> 📂 </span>
                 <span class='file-label'>Upload images</span>
@@ -109,8 +109,6 @@
               </div>
             </div>
             <script>
-                showNoticeMsg("Notice", "To remove images, just remove their paths in the parentheses.");
-
                 document.getElementsByName("title")[0].value = '{{ .articleTitle }}';
                 document.getElementsByName("subtitle")[0].value = '{{ .subtitle }}';
                 document.getElementsByName("date")[0].value = '{{ .date }}';
