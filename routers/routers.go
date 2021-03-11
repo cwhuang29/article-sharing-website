@@ -47,9 +47,12 @@ func addRoutes() {
 		admin.GET("/create/article", handlers.CreateArticleView)
 		admin.GET("/update/article", handlers.UpdateArticleView)
 
-		admin.POST("/create/article", handlers.CreateArticle)
-		admin.PUT("/update/article", handlers.UpdateArticle)
-		admin.DELETE("/delete/article", handlers.DeleteArticle)
+		admin.Use(CSRFProtection())
+		{
+			admin.POST("/create/article", handlers.CreateArticle)
+			admin.PUT("/update/article", handlers.UpdateArticle)
+			admin.DELETE("/delete/article", handlers.DeleteArticle)
+		}
 	}
 
 	articles := router.Group("/articles")

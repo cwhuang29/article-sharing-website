@@ -4,7 +4,7 @@ const FILES_UPLOAD_LIMIT = 10;
 const FILE_ID_LENGTH = 10;
 const FILE_MAX_SIZE = 4 * 1000 * 1000; // 4MB
 const ACCEPT_FILE_TYPE = {
-  image: ["image/png", "image/jpeg", "image/gif"],
+  image: ["image/png", "image/jpeg", "image/gif", "image/webp", "image/apng"],
 };
 const errInputMsg = {
   empty: "This field can't be empty.",
@@ -207,8 +207,12 @@ const fetchFailed = async (resp) => {
 };
 
 const submitArticle = async (method, url, formData) => {
+  let csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+  const headers = new Headers({ "X-CSRF-TOKEN": csrfToken });
+
   await fetch(url, {
     method: method,
+    headers: headers,
     body: formData,
   })
     .then(checkStatus)

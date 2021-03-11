@@ -88,8 +88,8 @@ sudo yum -y install mysql
 - [x]  Optimize Docker builds
 - [x]  Pagination
 - [x]  Middleware
+- [x]  CSRF token
 - [ ]  Logger
-- [ ]  CSRF token
 - [ ]  Reset password
 - [ ]  Support Google login
 - [ ]  Login Throttling

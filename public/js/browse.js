@@ -36,12 +36,13 @@ const fetchSucceed = async (resp) => {
 };
 
 const fetchDeleteReq = async (url) => {
+  let csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+  const headers = new Headers({ "X-CSRF-TOKEN": csrfToken });
+
   return fetch(url, {
     method: "DELETE",
-    mode: "cors",
+    headers: headers,
     cache: "no-cache",
-    credentials: "same-origin",
-    redirect: "follow",
     referrerPolicy: "no-referrer",
   })
     .then(checkStatus)

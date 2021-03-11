@@ -121,7 +121,8 @@ func Browse(c *gin.Context) {
 		return
 	}
 
-	if dbFormatArticle, succeed := databases.GetArticleFullContent(id); succeed != true {
+	dbFormatArticle, succeed := databases.GetArticleFullContent(id)
+	if succeed != true {
 		errHead := "Article Not Found"
 		errBody := "Go back to previous page and try again."
 		c.HTML(http.StatusNotFound, "browse.html", gin.H{
@@ -129,20 +130,25 @@ func Browse(c *gin.Context) {
 			"errHead":     errHead,
 			"errBody":     errBody,
 		})
-	} else {
-		article := articleFormatDBToDetailed(dbFormatArticle, true)
-		c.HTML(http.StatusOK, "browse.html", gin.H{
-			"currPageCSS": "css/browse.css",
-			"success":     true,
-			"title":       article.Title,
-			"subtitle":    article.Subtitle,
-			"date":        article.Date,
-			"author":      article.Authors,
-			"category":    article.Category,
-			"tags":        article.Tags,
-			"content":     article.Content,
-		})
+		return
 	}
+
+	article := articleFormatDBToDetailed(dbFormatArticle, true)
+	uuid := getUUID()
+
+	c.SetCookie("csrf_token", uuid, csrfTokenAge, "/", "", true, true)
+	c.HTML(http.StatusOK, "browse.html", gin.H{
+		"currPageCSS": "css/browse.css",
+		"csrfToken":   uuid,
+		"success":     true,
+		"title":       article.Title,
+		"subtitle":    article.Subtitle,
+		"date":        article.Date,
+		"author":      article.Authors,
+		"category":    article.Category,
+		"tags":        article.Tags,
+		"content":     article.Content,
+	})
 	/*
 		c.HTML(http.StatusOK, "browse.html", gin.H{
 			"currPageCSS":      "css/browse.css",

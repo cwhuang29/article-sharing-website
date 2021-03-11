@@ -13,7 +13,7 @@ import (
 
 var (
 	fileDir          = "public/upload/images/" // Do not start with "./" otherwise the images URL in articles content will be incorrect
-	acceptedFileType = map[string][]string{"image": {"image/png", "image/jpeg", "image/gif"}}
+	acceptedFileType = map[string][]string{"image": {"image/png", "image/jpeg", "image/gif", "image/webp", "image/apng"}}
 	fileMaxSize      = 4 * 1000 * 1000 // 4MB
 )
 

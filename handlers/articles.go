@@ -8,11 +8,18 @@ import (
 	"strconv"
 )
 
+var (
+	csrfTokenAge = 6 * 60 * 60 // 6 hours
+)
+
 func CreateArticleView(c *gin.Context) {
+	uuid := getUUID()
+	c.SetCookie("csrf_token", uuid, csrfTokenAge, "/", "", true, true)
 	c.HTML(http.StatusOK, "editor.html", gin.H{
 		"currPageCSS": "css/editor.css",
-		"title":       "Create New Post",
+		"csrfToken":   uuid,
 		"function":    "create",
+		"title":       "Create New Post",
 	})
 }
 
@@ -53,9 +60,13 @@ func UpdateArticleView(c *gin.Context) {
 	}
 
 	article := articleFormatDBToDetailed(dbFormatArticle, false)
+	uuid := getUUID()
+
+	c.SetCookie("csrf_token", uuid, csrfTokenAge, "/", "", true, true)
 	c.HTML(http.StatusOK, "editor.html", gin.H{
-		"function":     "update",
 		"currPageCSS":  "css/editor.css",
+		"csrfToken":    uuid,
+		"function":     "update",
 		"title":        "Edit: " + article.Title,
 		"articleTitle": article.Title,
 		"subtitle":     article.Subtitle,

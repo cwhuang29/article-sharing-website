@@ -8,6 +8,20 @@ import (
 	"time"
 )
 
+func CSRFProtection() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		csrfHeaders := c.Request.Header["X-Csrf-Token"]
+		csrfToken, _ := c.Cookie("csrf_token")
+
+		if len(csrfHeaders) != 1 || csrfHeaders[0] != csrfToken {
+			errHead := "Unauthorized"
+			errBody := "You are not allowed to perform this action."
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"errHead": errHead, "errBody": errBody})
+			return
+		}
+	}
+}
+
 func AdminRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		t := time.Now()

@@ -10,7 +10,6 @@ import (
 var (
 	landingPage = "/articles/weekly-update"
 	loginMaxAge = 30 * 86400 // 1 month
-	domain      = ""
 )
 
 func storeLoginToken(email string, loginMaxAge int) (token string) {
@@ -20,9 +19,14 @@ func storeLoginToken(email string, loginMaxAge int) (token string) {
 }
 
 func clearLoginToken(email string, token string) {
-	// Notice: Users may have multiple tokens based on different user agents they have logged in from, and those tokens must be removed from DB when expired
-	// It can be done at login, logout, or any other time. Currently I'll done this job when user logout
+	/*
+	 * Notice: Users may have multiple tokens based on different user agents they have logged in from, and those
+	 * tokens must be removed from DB when expired. For instance, the user has logged in from the cellphone and laptop.
+	 * When the user logged out on the laptop, we'll check whether the login token for the cellphone expired
+	 * It can be done at login, logout, or any other time. Currently, I'll do this task when the user logout
+	 */
 	databases.DeleteLoginToken(email, token)
+	databases.DeleteExpiredLoginTokens(email)
 }
 
 func RegisterView(c *gin.Context) {
@@ -74,10 +78,10 @@ func Register(c *gin.Context) {
 
 	token := storeLoginToken(newUser.Email, loginMaxAge)
 	c.Header("Location", landingPage)
-	c.SetCookie("login_token", token, loginMaxAge, "/", domain, false, false)
-	c.SetCookie("login_email", newUser.Email, loginMaxAge, "/", domain, false, false)
+	c.SetCookie("login_token", token, loginMaxAge, "/", "", true, true)
+	c.SetCookie("login_email", newUser.Email, loginMaxAge, "/", "", true, false) // Frontend relys on this cookie
 	if newUser.Admin {
-		c.SetCookie("is_admin", newUser.Email, loginMaxAge, "/", domain, false, false)
+		c.SetCookie("is_admin", newUser.Email, loginMaxAge, "/", "", true, false) // Frontend relys on this cookie
 	}
 	c.JSON(http.StatusCreated, gin.H{})
 }
@@ -118,10 +122,10 @@ func LoginJSON(c *gin.Context) {
 
 	token := storeLoginToken(user.Email, loginMaxAge)
 	c.Header("Location", landingPage)
-	c.SetCookie("login_token", token, loginMaxAge, "/", domain, false, true)
-	c.SetCookie("login_email", user.Email, loginMaxAge, "/", domain, false, false)
+	c.SetCookie("login_token", token, loginMaxAge, "/", "", true, true)
+	c.SetCookie("login_email", user.Email, loginMaxAge, "/", "", true, false) // Frontend relys on this cookie
 	if user.Admin {
-		c.SetCookie("is_admin", user.Email, loginMaxAge, "/", domain, false, false)
+		c.SetCookie("is_admin", user.Email, loginMaxAge, "/", "", true, false) // Frontend relys on this cookie
 	}
 	c.JSON(http.StatusOK, gin.H{})
 }
@@ -129,17 +133,20 @@ func LoginJSON(c *gin.Context) {
 func Logout(c *gin.Context) {
 	token, err := c.Cookie("login_token")
 	if err != nil || token == "" {
-		c.JSON(http.StatusBadRequest, gin.H{})
+		// We'll reach here if user logout in one tab and re-logout on the another tab subsequently
+		// So don't regard this case as an error
+		c.Header("Location", landingPage)
+		c.JSON(http.StatusResetContent, gin.H{})
 		return
 	}
 
 	userStatus, email := IsLoginedAdmin(c)
 	if userStatus == IsAdmin {
-		c.SetCookie("is_admin", "", loginMaxAge, "/", domain, false, true)
+		c.SetCookie("is_admin", "", loginMaxAge, "/", "", true, true)
 	}
 
-	c.SetCookie("login_token", "", loginMaxAge, "/", domain, false, true)
-	c.SetCookie("login_email", "", loginMaxAge, "/", domain, false, true)
+	c.SetCookie("login_token", "", loginMaxAge, "/", "", true, true)
+	c.SetCookie("login_email", "", loginMaxAge, "/", "", true, true)
 
 	clearLoginToken(email, token)
 

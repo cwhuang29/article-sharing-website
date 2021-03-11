@@ -56,9 +56,9 @@ func InsertLoginToken(email string, token string, maxAge int) {
 
 func DeleteLoginToken(email string, token string) {
 	db.Delete(&models.Login{}, "email = ? and token = ?", email, token)
+}
 
-	// Notice: Users may have multiple tokens based on different user agents they have logged in from, and those tokens must be removed from DB when expired
-	// It can be done at login, logout, or any other time. Currently I'll done this job when user logout
+func DeleteExpiredLoginTokens(email string) {
 	db.Exec("delete from logins where email = \"" + email + "\" and last_login + max_age - now() < 0")
 }
 
