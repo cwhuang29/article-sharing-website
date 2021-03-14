@@ -27,8 +27,8 @@ func AdminRequired() gin.HandlerFunc {
 		t := time.Now()
 		cookieEmail, _ := c.Cookie("login_email")
 
-		userStatus, _ := handlers.IsLoginedAdmin(c)
-		if userStatus != handlers.IsAdmin {
+		userStatus, _ := handlers.GetUserStatus(c)
+		if userStatus < handlers.IsAdmin {
 			status := http.StatusUnauthorized
 			if userStatus == handlers.IsMember {
 				status = http.StatusForbidden
@@ -42,6 +42,7 @@ func AdminRequired() gin.HandlerFunc {
 		c.Next()
 
 		fields := map[string]interface{}{
+			"method":  c.Request.Method,
 			"url":     c.Request.URL.String(),
 			"status":  c.Writer.Status(),
 			"latency": time.Since(t),

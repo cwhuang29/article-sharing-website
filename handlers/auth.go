@@ -68,7 +68,7 @@ func Register(c *gin.Context) {
 	}
 
 	newUser.Password = string(hashedPwd)
-	_, res := databases.InsertUserToDB(newUser)
+	_, res := databases.InsertUser(newUser)
 	if !res {
 		errHead := "An Error Occurred"
 		errBody := "Please reload the page and try again."
@@ -131,24 +131,21 @@ func LoginJSON(c *gin.Context) {
 }
 
 func Logout(c *gin.Context) {
-	token, err := c.Cookie("login_token")
-	if err != nil || token == "" {
+	email, _ := c.Cookie("login_email") // If no such cookie, first argument will be an empty string
+	token, _ := c.Cookie("login_token")
+	if email == "" {
 		// We'll reach here if user logout in one tab and re-logout on the another tab subsequently
 		// So don't regard this case as an error
 		c.Header("Location", landingPage)
-		c.JSON(http.StatusResetContent, gin.H{})
+		c.JSON(http.StatusOK, gin.H{})
 		return
 	}
 
-	userStatus, email := IsLoginedAdmin(c)
-	if userStatus == IsAdmin {
-		c.SetCookie("is_admin", "", loginMaxAge, "/", "", true, true)
-	}
-
-	c.SetCookie("login_token", "", loginMaxAge, "/", "", true, true)
-	c.SetCookie("login_email", "", loginMaxAge, "/", "", true, true)
-
 	clearLoginToken(email, token)
+
+	c.SetCookie("login_token", "", 0, "/", "", false, true)
+	c.SetCookie("login_email", "", 0, "/", "", false, true)
+	c.SetCookie("is_admin", "", 0, "/", "", false, true)
 
 	c.Header("Location", landingPage)
 	c.JSON(http.StatusResetContent, gin.H{})

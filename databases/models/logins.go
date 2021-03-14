@@ -5,8 +5,9 @@ import (
 )
 
 type Login struct {
-	Email     string    `gorm:"not null"`
+	UserID    string
+	User      User      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 	Token     string    `gorm:"unique;not null;size:64"`
 	MaxAge    int       `gorm:"not null"`
-	LastLogin time.Time `gorm:"not null"`
+	LastLogin time.Time `gorm:"autoUpdateTime"`
 }

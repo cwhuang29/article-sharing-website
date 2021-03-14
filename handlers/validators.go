@@ -14,6 +14,7 @@ var (
 		"long":             "This field can have no more than 255 characters.",
 		"dateTooOld":       "The date chosen should be greater than 1960-01-01.",
 		"dateFuture":       "The date chosen can't be in the future.",
+		"dateFormat":       "The format of date should be yyyy-mm-dd.",
 		"tagsTooMany":      "You can target up to 5 tags at a time.",
 		"tagsTooLong":      "Each tag can contain at most 20 charaters.",
 		"emailInvalid":     "The email format is not correct.",
@@ -68,11 +69,8 @@ func validateUserFormat(newUser models.User) (err map[string]interface{}) {
 	return err
 }
 
-func validateArticleFormat(newArticle Article) (err map[string]interface{}) {
+func validateArticleValues(newArticle models.Article) (err map[string]interface{}) {
 	err = make(map[string]interface{})
-
-	// fmt.Println(newArticle.Date, time.Now().UTC().Format("2006-01-02"), OldestDate, OldestDate.String(), OldestDate.Local().String())
-	// 2020-01-01 2021-02-15 1960-01-01 00:00:00 +0000 UTC 1960-01-01 00:00:00 +0000 UTC 1960-01-01 08:00:00 +0800 CST
 
 	if len(newArticle.Title) == 0 {
 		err["title"] = ErrInputMsg["short"]
@@ -84,13 +82,13 @@ func validateArticleFormat(newArticle Article) (err map[string]interface{}) {
 		err["subtitle"] = ErrInputMsg["long"]
 	}
 
-	if inpDate, dateErr := time.Parse("2006-01-02", newArticle.Date); dateErr != nil {
-		err["date"] = dateErr.Error()
+	if newArticle.ReleaseDate == OldestDate {
+		err["date"] = ErrInputMsg["dateFormat"]
 	} else {
 		// if time.Now().Truncate(time.Hour * 24).Sub(inpDate) < 0 {
 		//     err["date"] = ErrInputMsg["dateFuture"]
 		// }
-		if OldestDate.Sub(inpDate) > 0 {
+		if OldestDate.Sub(newArticle.ReleaseDate) > 0 {
 			err["date"] = ErrInputMsg["dateTooOld"]
 		}
 	}
@@ -99,7 +97,7 @@ func validateArticleFormat(newArticle Article) (err map[string]interface{}) {
 		err["tags"] = ErrInputMsg["tagsTooMany"]
 	} else {
 		for _, t := range newArticle.Tags {
-			if len(t) > TagsCharLmit {
+			if len(t.Value) > TagsCharLmit {
 				err["tags"] = ErrInputMsg["tagsTooLong"]
 				break
 			}

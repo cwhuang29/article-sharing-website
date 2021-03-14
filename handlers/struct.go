@@ -7,7 +7,14 @@ const (
 	IsMember
 	IsMemberAndVerified
 	IsAdmin
+	IsAdminAndVerified
 )
+
+func (s UserStatus) String() string {
+	return [...]string{"guest", "member", "verified member", "admin", "verified admin"}[s]
+}
+
+type Tag string
 
 type Article struct {
 	Title    string   `form:"title" json:"title" binding:"required"`

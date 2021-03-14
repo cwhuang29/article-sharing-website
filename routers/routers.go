@@ -43,7 +43,7 @@ func addRoutes() {
 	admin.Use(AdminRequired())
 	{
 		admin.GET("/overview", handlers.AdminOverview)
-		admin.GET("/check-permisssion", handlers.CheckPermission)
+		admin.GET("/check-permisssion", handlers.CheckPermissionAndArticleExists)
 		admin.GET("/create/article", handlers.CreateArticleView)
 		admin.GET("/update/article", handlers.UpdateArticleView)
 

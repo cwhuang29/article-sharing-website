@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/cwhuang29/article-sharing-website/databases/models"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"mime/multipart"
@@ -68,7 +69,7 @@ func getFilesFromForm(c *gin.Context, files []*multipart.FileHeader) (fileNamesM
 	return
 }
 
-func getValuesFromForm(c *gin.Context, formVal map[string][]string) Article {
+func getValuesFromForm(c *gin.Context, formVal map[string][]string) models.Article {
 	defer func() {
 		if err := recover(); err != nil {
 			logrus.Errorf("Create article error when retrieving values from form:", err)
@@ -78,27 +79,48 @@ func getValuesFromForm(c *gin.Context, formVal map[string][]string) Article {
 		}
 	}()
 
-	return Article{
-		Title:    formVal["title"][0], // If the form does not contain "title" field, the array's value extraction will panic
-		Subtitle: formVal["subtitle"][0],
-		Date:     formVal["date"][0],
-		Authors:  formVal["authors"],
-		Category: formVal["category"][0],
-		Tags:     formVal["tags"],
-		Content:  formVal["content"][0],
+	date, err := time.Parse("2006-01-02", formVal["date"][0])
+	if err != nil {
+		date = OldestDate
+	}
+
+	auths := strings.Join(formVal["authors"], ",")
+
+	tags := []models.Tag{}
+	if formVal["tags"][0] != "" {
+		formTags := strings.Split(formVal["tags"][0], ",") // JS's form.append() transformed array to a comma seperated string
+		tags = make([]models.Tag, len(formTags))
+		for i, t := range formTags {
+			tags[i].Value = t
+		}
+	}
+
+	return models.Article{
+		Title:       formVal["title"][0], // If the form does not contain "title" field, the array's value extraction will panic // Without tags
+		Subtitle:    formVal["subtitle"][0],
+		ReleaseDate: date,
+		Authors:     auths,
+		Category:    formVal["category"][0],
+		Tags:        tags,
+		Content:     formVal["content"][0],
 	}
 }
 
-func handleForm(c *gin.Context) (newArticle Article, err error) {
+func handleForm(c *gin.Context) (newArticle models.Article, invalids map[string]interface{}, err error) {
 	var form *multipart.Form
+	var fileNamesMapping map[string]string
+
 	form, err = c.MultipartForm() // form: &{map[authors:[Jasia] category:[Medication] ... title:[abcde]] map[uploadImages:[0xc0001f91d0 0xc0001f8000]]}
 	if err != nil {
 		return
 	}
 
 	newArticle = getValuesFromForm(c, form.Value)
+	invalids = validateArticleValues(newArticle)
+	if len(invalids) != 0 {
+		return
+	}
 
-	var fileNamesMapping map[string]string
 	if fileNamesMapping, err = getFilesFromForm(c, form.File["uploadImages"]); err == nil {
 		for key := range fileNamesMapping {
 			newArticle.Content = strings.Replace(newArticle.Content, key, fileNamesMapping[key], -1)

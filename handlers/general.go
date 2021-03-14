@@ -12,7 +12,7 @@ func About(c *gin.Context) {
 	c.HTML(http.StatusOK, "about.html", gin.H{"currPageCSS": "css/about.css"}) // Call the HTML method of the Context to render a template
 }
 
-func CheckPermission(c *gin.Context) {
+func CheckPermissionAndArticleExists(c *gin.Context) {
 	id := checkArticleId(c, "articleId")
 	if id == 0 {
 		errHead := "Article ID is An Integer"
@@ -35,7 +35,7 @@ func WeeklyUpdate(c *gin.Context) {
 	today := time.Now().UTC().Truncate(24 * time.Hour)
 	sevenDaysAgo := today.AddDate(0, 0, -7)
 
-	dbFormatArticle := databases.GetArticlesInNDays(sevenDaysAgo)
+	dbFormatArticle := databases.GetArticlesInATimePeriod(sevenDaysAgo, today.AddDate(0, 0, 1))
 	if len(dbFormatArticle) == 0 {
 		c.HTML(http.StatusOK, "overview.html", gin.H{
 			"currPageCSS": "css/overview.css",
@@ -121,8 +121,8 @@ func Browse(c *gin.Context) {
 		return
 	}
 
-	dbFormatArticle, succeed := databases.GetArticleFullContent(id)
-	if succeed != true {
+	dbFormatArticle := databases.GetArticle(id)
+	if dbFormatArticle.ID == 0 {
 		errHead := "Article Not Found"
 		errBody := "Go back to previous page and try again."
 		c.HTML(http.StatusNotFound, "browse.html", gin.H{
@@ -134,9 +134,15 @@ func Browse(c *gin.Context) {
 	}
 
 	article := articleFormatDBToDetailed(dbFormatArticle, true)
-	uuid := getUUID()
 
-	c.SetCookie("csrf_token", uuid, csrfTokenAge, "/", "", true, true)
+	uuid := ""
+	cookieEmail, _ := c.Cookie("login_email")
+	adminEmail, _ := c.Cookie("is_admin")
+	if cookieEmail == adminEmail && databases.IsAdminUser(adminEmail) {
+		uuid = getUUID()
+		c.SetCookie("csrf_token", uuid, csrfTokenAge, "/", "", true, true)
+	}
+
 	c.HTML(http.StatusOK, "browse.html", gin.H{
 		"currPageCSS": "css/browse.css",
 		"csrfToken":   uuid,

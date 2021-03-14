@@ -3,13 +3,8 @@ package databases
 import (
 	"github.com/cwhuang29/article-sharing-website/databases/models"
 	"github.com/sirupsen/logrus"
-	"time"
+	"strconv"
 )
-
-func GetUser(email string) (user models.User) {
-	db.Table("users").Where("email = ?", email).Find(&user)
-	return
-}
 
 func IsAdminUser(email string) bool {
 	var user models.User
@@ -21,7 +16,18 @@ func IsAdminUser(email string) bool {
 	return true
 }
 
-func InsertUserToDB(user models.User) (int, bool) {
+func GetUser(email string) (user models.User) {
+	db.Table("users").Where("email = ?", email).Find(&user)
+	return
+}
+
+func GetLoginCredentials(email string) (loginSession []models.Login) {
+	user := GetUser(email)
+	db.Table("logins").Where("user_id  = ?", user.ID).Preload("User").Find(&loginSession) // Preload users when find loginSession
+	return
+}
+
+func InsertUser(user models.User) (int, bool) {
 	if err := db.Create(&user).Error; err != nil {
 		logrus.Error(err.Error())
 		return -1, false
@@ -31,12 +37,12 @@ func InsertUserToDB(user models.User) (int, bool) {
 }
 
 func InsertLoginToken(email string, token string, maxAge int) {
-	loginToken := models.Login{Email: email, Token: token, MaxAge: maxAge, LastLogin: time.Now().UTC()}
+	user := GetUser(email)
+	loginToken := models.Login{User: user, Token: token, MaxAge: maxAge}
 	db.Create(&loginToken)
 
 	// Notice: In the beginning there is only one token per user,
 	// which is not user-friendly because when user login with cellphone, their web accounts will be logout.
-
 	// var loginToken models.Login
 	// tx := db.Table("logins").Where("email  = ?", email).Find(&loginToken)
 	// if tx.RowsAffected == 0 {
@@ -55,14 +61,11 @@ func InsertLoginToken(email string, token string, maxAge int) {
 }
 
 func DeleteLoginToken(email string, token string) {
-	db.Delete(&models.Login{}, "email = ? and token = ?", email, token)
+	user := GetUser(email)
+	db.Delete(&models.Login{}, "user_id = ? and token = ?", user.ID, token)
 }
 
 func DeleteExpiredLoginTokens(email string) {
-	db.Exec("delete from logins where email = \"" + email + "\" and last_login + max_age - now() < 0")
-}
-
-func GetLoginCredentials(email string) (loginSession []models.Login) {
-	db.Table("logins").Where("email  = ?", email).Find(&loginSession)
-	return
+	user := GetUser(email)
+	db.Exec("delete from logins where user_id = \"" + strconv.Itoa(user.ID) + "\" and last_login + max_age - now() < 0")
 }
