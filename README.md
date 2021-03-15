@@ -93,7 +93,8 @@ sudo yum -y install mysql
 - [ ]  Reset password
 - [ ]  Support Google login
 - [ ]  Login Throttling
-- [ ]  Search articles based on tags
+- [x]  Tag-based search
+- [x]  Preserve fetched data while going to the previous page
 - [ ]  Like/Save buttons
 - [ ]  Admin overview page (e.g. show statistics)
 - [ ]  Preview feature (before submitting the article)

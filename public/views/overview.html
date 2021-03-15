@@ -10,7 +10,6 @@
         </div>
         <div style="display:none" id="articles-count">{{ .initialCount }}</div>
         <div id="articles-container">
-            <div class="articles-parent">
             <!-- Notice: The following section is for weekly update page only (server will send all content in latest 7 days, which should not be too much). -->
             <!--         For other pages, server respond with no content, and clients will fetch data subsequently. -->
             <!--         Unlike other templates, variables are start with capital because server transfer an object type parameter instead of key-value pairs. -->
@@ -30,24 +29,20 @@
                                     <span class="tag is-primary">{{ .Category }}</span>
                                 </a>
                             </div>
-                            <p class="title">{{ .Title }}</p>
-                            <p class="subtitle">{{ .Subtitle }}</p>
+                            <p class="title"></p>
+                            <p class="subtitle"></p>
                             <div class="columns overview-content"></div>
                         </div>
                     </div>
                 </div>
                 <script>
                     var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                    var title = "{{ .Title }}";
-                    if (isMobile && title.length > 55) {
-                        title = title.substr(0, 55) + " ...";
-                    }
-                    title = title.replaceAll(' ', '&nbsp;');
+                    var title = "{{ .Title }}"; // To prevent some html-syntax content from being rendered by browser
                     var titles = document.querySelectorAll('.title');
                     titles[titles.length - 1].innerHTML = title;
 
-                    if (isMobile) {
-                        var subtitle = "{{ .Subtitle }}".replaceAll(' ', '&nbsp;');
+                    if (!isMobile) { // Don't show subtitle on mobile devices
+                        var subtitle = "{{ .Subtitle }}"; // To prevent some html-syntax content from being rendered by browser
                         var subtitles = document.querySelectorAll('.subtitle');
                         subtitles[subtitles.length - 1].innerHTML = subtitle;
                     }
@@ -75,7 +70,6 @@
                     showNoticeMsg(errHead, errBody);
                 </script>
             {{ end }}
-            </div>
         </div>
     </div>
     {{ template "footer" . }}

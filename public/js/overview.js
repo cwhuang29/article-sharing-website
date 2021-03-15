@@ -1,18 +1,105 @@
 const fetchNewContentAnchor = 0.8;
 const limit = 10;
-let offset = 0,
-  prevOffset = -1;
+let offset = 0;
+let stopFetching = false;
 
-const formatArticle = (id, title, subtitle, tags, category, content) => {
+const storeNewContentToSession = (content) => {
+  let sessionContent = window.sessionStorage.getItem("overviewContent") || "";
+  window.sessionStorage.setItem("overviewContent", sessionContent + content);
+  window.sessionStorage.setItem("offset", offset);
+};
+
+const appendNewContent = (content) => {
+  ele = document.createElement("div");
+  ele.innerHTML = content;
+
+  let lastArticlesParent = articlesContainer.lastElementChild;
+  lastArticlesParent.insertAfter = content;
+  lastArticlesParent.parentNode.insertBefore(ele, lastArticlesParent.nextSibling);
+};
+
+const checkStatus = async (resp) => {
+  const contentType = resp.headers.get("content-type");
+
+  if (contentType && contentType.indexOf("application/json") !== -1 && resp.status < 400) {
+    return Promise.resolve(resp);
+  }
+  return Promise.reject(resp);
+};
+
+const fetchSucceed = async (resp) => {
+  await resp.json().then((data) => {
+    offset += data.size;
+    if (data.size < limit) {
+      stopFetching = true;
+    }
+
+    data.articleList = data.articleList || []; // If there is no data, the empty array returned by backend becomes null
+    if (data.articleList.length == 0) {
+      return;
+    }
+
+    let newContent = "";
+    data.articleList.forEach((a) => {
+      newContent += formatArticle(a);
+    });
+    appendNewContent(newContent);
+    storeNewContentToSession(newContent);
+  });
+  return Promise.resolve(true);
+};
+
+const fetchFailed = async (resp) => {
+  await resp.json().then((data) => {
+    c("Error: ", data.errHead, data.errBody);
+  });
+  return Promise.resolve(false);
+};
+
+const fetchContent = async (count) => {
+  if (stopFetching) {
+    return;
+  }
+
+  let path = location.pathname.split("/").pop();
+  if (path == "weekly-update") {
+    return;
+  } else if (path == "tags") {
+    type = "tag";
+    query = new URLSearchParams(window.location.search).get("query");
+  } else {
+    type = "category";
+    query = path; // Either "pharma" or "medication"
+  }
+
+  let para = "?" + new URLSearchParams({ type: type, query: query, offset: offset, limit: limit });
+  let url = "fetch" + para;
+  let res = await fetchData(url).then(checkStatus).then(fetchSucceed).catch(fetchFailed);
+
+  if (!res) {
+    if (count < 3) {
+      fetchContent(++count); // Try again
+    } else {
+      showErrMsg("Failed to Fetch Content", "Please reload the page and try again.");
+    }
+  }
+};
+
+const fetchInitialContent = async () => {
+  if (offset == 0) {
+    await fetchContent(0);
+    if (offset == 0) {
+      showNoticeMsg("Oops ... ", "There is no articles.");
+    }
+  }
+};
+
+const formatArticle = (article) => {
+  let { ID: id, Title: title, Subtitle: subtitle, Tags: tags, Category: category, Content: content } = article;
   let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-  if (isMobile && title.length > 55) {
-    title = title.substr(0, 55) + " ...";
-  }
-  title = title.replaceAll(" ", "&nbsp;");
-
   if (isMobile) {
-    subtitle = subtitle.replaceAll(" ", "&nbsp;");
+    subtitle = ""; // Don't show subtitle on mobile devices
   }
 
   let tagHTML = "";
@@ -65,107 +152,42 @@ const formatArticle = (id, title, subtitle, tags, category, content) => {
             </div>`;
 };
 
-const appendNewContent = (content) => {
-  ele = document.createElement("div");
-  ele.classList.add("articles-parent");
-  ele.innerHTML = content;
-
-  lastArticlesParents.insertAfter = newContent;
-  lastArticlesParents.parentNode.insertBefore(ele, lastArticlesParents.nextSibling);
-  lastArticlesParents = ele;
-};
-
-const checkStatus = async (resp) => {
-  const contentType = resp.headers.get("content-type");
-
-  if (contentType && contentType.indexOf("application/json") !== -1 && resp.status < 400) {
-    return Promise.resolve(resp);
-  }
-  return Promise.reject(resp);
-};
-
-const fetchSucceed = async (resp) => {
-  await resp.json().then((data) => {
-    prevOffset = offset;
-    offset += data.size;
-
-    data.articleList = data.articleList || []; // If there is no data, the empty array returned by backend becomes null
-    if (data.articleList.length == 0) {
-      return;
-    }
-
-    newContent = "";
-    data.articleList.forEach((a) => {
-      newContent += formatArticle(a.ID, a.Title, a.Subtitle, a.Tags, a.Category, a.Content);
-    });
-    appendNewContent(newContent);
-  });
-  return Promise.resolve(true);
-};
-
-const fetchFailed = async (resp) => {
-  await resp.json().then((data) => {
-    c("Error: ", data.errHead, data.errBody);
-  });
-  return Promise.resolve(false);
-};
-
-const fetchOlderContent = async (count) => {
-  if (offset == prevOffset) {
-    return;
-  }
-
-  let urlPath = location.pathname.split("/");
-  let path = urlPath[urlPath.length - 1];
-
-  if (path == "weekly-update") {
-    return;
-  } else if (path == "tags") {
-    type = "tag";
-    query = new URLSearchParams(window.location.search).get("query");
-  } else {
-    type = "category";
-    query = path; // Either "pharma" or "medication"
-  }
-
-  let para = "?" + new URLSearchParams({ type: type, query: query, offset: offset, limit: limit });
-  let url = "fetch" + para;
-  let res = await fetchData(url).then(checkStatus).then(fetchSucceed).catch(fetchFailed);
-
-  if (!res) {
-    if (count < 3) {
-      fetchOlderContent(++count);
-    } else {
-      showErrMsg("Failed to Fetch Content", "Please reload the page and try again.");
-    }
-  }
-};
-
-const fetchInitialContent = async () => {
-  if (offset == 0) {
-    await fetchOlderContent(0);
-    if (offset == 0) {
-      showNoticeMsg("Oops ... ", "There is no articles.");
-    }
-  }
-};
-
 onDOMContentLoaded = (function () {
-  lastArticlesParents = document.getElementsByClassName("articles-parent")[0];
+  // For weekly-update page, the offset initial value may not be zero
   offset = Number(document.getElementById("articles-count").innerText) || 0; // offset == # means we'll skip # articles in next fetch
 
-  fetchInitialContent();
-
-  document.getElementById("articles-container").addEventListener("click", (e) => {
+  articlesContainer = document.querySelector("#articles-container");
+  articlesContainer.addEventListener("click", (e) => {
     window.location.href = "/articles/browse?articleId=" + e.target.closest("div.tile.is-child").children[0].dataset.articleid;
   });
 
-  let lastFetch = 0,
-    delay = 800;
+  let path = location.pathname.split("/").pop();
+  let para = new URLSearchParams(window.location.search).get("query") || "";
+  let sessionPath = window.sessionStorage.getItem("path");
+  let sessionPara = window.sessionStorage.getItem("para");
+
+  window.sessionStorage.setItem("path", path); // If 2nd argument is null, the stored value will be a string "null"
+  window.sessionStorage.setItem("para", para);
+  if (performance.navigation.type == performance.navigation.TYPE_RELOAD || path != sessionPath || para != sessionPara) {
+    // e.g. Reload page (either clicking the button or keyboard shortcuts), from "/pharma" to "/medication", or from "/tag?query=foo" to "/tag?query=bar"
+    window.sessionStorage.removeItem("offset");
+    window.sessionStorage.removeItem("overviewContent");
+  }
+
+  let overviewContent = window.sessionStorage.getItem("overviewContent");
+  if (overviewContent) {
+    offset = Number(window.sessionStorage.getItem("offset"));
+    document.querySelector("#articles-container").innerHTML = overviewContent;
+  } else {
+    fetchInitialContent();
+  }
+
+  let lastFetch = 0;
+  let delay = 300;
   window.onscroll = () => {
     if (lastFetch < Date.now() - delay && window.innerHeight + window.pageYOffset >= document.body.offsetHeight * fetchNewContentAnchor) {
       lastFetch = Date.now();
-      fetchOlderContent(0);
+      fetchContent(0);
     }
   };
 })();

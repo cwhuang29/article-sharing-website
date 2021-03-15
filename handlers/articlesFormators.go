@@ -5,10 +5,24 @@ import (
 	"strings"
 )
 
+var (
+	titleLength    = 55
+	subtitleLength = 90
+)
+
 func articleFormatDBToOverview(article models.Article) (ov OverviewArticle) {
 	ov.ID = article.ID
-	ov.Title = article.Title
-	ov.Subtitle = article.Subtitle
+
+	if len(article.Title) > titleLength {
+		ov.Title = article.Title[:titleLength] + " ..."
+	} else {
+		ov.Title = article.Title
+	}
+	if len(article.Subtitle) > subtitleLength {
+		ov.Subtitle = article.Subtitle[:subtitleLength] + " ..."
+	} else {
+		ov.Subtitle = article.Subtitle
+	}
 	ov.Date = article.ReleaseDate.String()
 	ov.Authors = strings.Split(article.Authors, ",")
 	ov.Category = strings.ToLower(article.Category) // Because router only accepts lower case path
