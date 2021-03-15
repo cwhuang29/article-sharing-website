@@ -13,9 +13,9 @@ func About(c *gin.Context) {
 }
 
 func CheckPermissionAndArticleExists(c *gin.Context) {
-	id := checkArticleId(c, "articleId")
+	id := getParaArticleId(c, "articleId")
 	if id == 0 {
-		errHead := "Article ID is An Integer"
+		errHead := "Article ID is An Positive Integer"
 		errBody := "Please try again."
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody})
 		return
@@ -43,50 +43,54 @@ func WeeklyUpdate(c *gin.Context) {
 			"errHead":     "Oops ...",
 			"errBody":     "No new articles in the past 7 days.",
 		})
-	} else {
-		var articleList []OverviewArticle
-		for _, a := range dbFormatArticle {
-			articleList = append(articleList, articleFormatDBToOverview(a))
-		}
-		c.HTML(http.StatusOK, "overview.html", gin.H{
-			"currPageCSS":  "css/overview.css",
-			"title":        "Weekly News",
-			"articleList":  articleList,
-			"initialCount": len(articleList),
-		})
+		return
 	}
+
+	var articleList []OverviewArticle
+
+	for _, a := range dbFormatArticle {
+		articleList = append(articleList, articleFormatDBToOverview(a))
+	}
+	c.HTML(http.StatusOK, "overview.html", gin.H{
+		"currPageCSS":  "css/overview.css",
+		"title":        "Weekly News",
+		"articleList":  articleList,
+		"initialCount": len(articleList),
+	})
 }
 
 func FetchData(c *gin.Context) {
 	errHead := "Invalid Parameter"
 
-	category := c.DefaultQuery("category", "")
-	if category == "" {
-		errBody := "Parameter category can not be empty."
+	types := c.DefaultQuery("type", "")
+	if types == "" {
+		errBody := "Parameter type can not be empty."
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody, "size": 0})
+		return
+	}
+
+	query := c.DefaultQuery("query", "")
+	if query == "" {
+		errBody := "Parameter query can not be empty."
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody, "size": 0})
 		return
 	}
 
 	offset, err := strconv.Atoi(c.Query("offset"))
-	if err != nil {
-		errBody := "Parameter offset should be a positive integer."
+	if err != nil || offset < 0 {
+		errBody := "Parameter offset should be a non-negative integer."
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody, "size": 0})
 		return
 	}
 
 	limit, err := strconv.Atoi(c.Query("limit"))
-	if err != nil {
+	if err != nil || limit <= 0 {
 		errBody := "Parameter limit should be a positive integer."
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody, "size": 0})
 		return
 	}
 
-	data, err := fetchData(category, offset, limit)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": err.Error(), "size": 0})
-		return
-	}
-
+	data, err := fetchData(types, query, offset, limit)
 	c.JSON(http.StatusOK, gin.H{"articleList": data, "size": len(data)}) // Notice: if the data is an empty array [], frontend will get `null` instead of empty array
 }
 
@@ -100,6 +104,19 @@ func Overview(c *gin.Context) {
 	c.HTML(http.StatusOK, "overview.html", gin.H{
 		"currPageCSS": "css/overview.css",
 		"title":       title,
+	})
+}
+
+func SearchTags(c *gin.Context) {
+	tag := getParaTagValue(c, "query")
+	if tag == "" {
+		c.Redirect(http.StatusFound, "/articles/weekly-update")
+	}
+
+	updateTagsStats(tag)
+	c.HTML(http.StatusOK, "overview.html", gin.H{
+		"currPageCSS": "css/overview.css",
+		"title":       "Results for: " + tag,
 	})
 }
 

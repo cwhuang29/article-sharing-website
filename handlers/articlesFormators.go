@@ -11,7 +11,7 @@ func articleFormatDBToOverview(article models.Article) (ov OverviewArticle) {
 	ov.Subtitle = article.Subtitle
 	ov.Date = article.ReleaseDate.String()
 	ov.Authors = strings.Split(article.Authors, ",")
-	ov.Category = article.Category
+	ov.Category = strings.ToLower(article.Category) // Because router only accepts lower case path
 
 	ov.Tags = []string{}
 	for _, t := range article.Tags {
@@ -31,7 +31,7 @@ func articleFormatDBToDetailed(article models.Article, parseMarkdown bool) (dt A
 	dt.Subtitle = article.Subtitle
 	dt.Date = article.ReleaseDate.Format("2006-01-02")
 	dt.Authors = strings.Split(article.Authors, ",")
-	dt.Category = article.Category
+	dt.Category = strings.ToLower(article.Category)
 
 	dt.Tags = []string{} // Without initial, html template brokes (var tags = {{ .tags }};)
 	for _, t := range article.Tags {

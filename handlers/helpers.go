@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"reflect"
 	"regexp"
@@ -9,6 +8,7 @@ import (
 	"time"
 
 	"github.com/cwhuang29/article-sharing-website/databases"
+	"github.com/cwhuang29/article-sharing-website/databases/models"
 	"github.com/google/uuid"
 
 	"github.com/russross/blackfriday"
@@ -51,7 +51,7 @@ func isExpired(startTime time.Time, period int) bool {
 	return false
 }
 
-func checkArticleId(c *gin.Context, key string) int {
+func getParaArticleId(c *gin.Context, key string) int {
 	if c.Query(key) == "" {
 		return 0
 	}
@@ -64,16 +64,27 @@ func checkArticleId(c *gin.Context, key string) int {
 	return id
 }
 
-func fetchData(category string, offset int, limit int) (articleList []OverviewArticle, err error) {
-	if offset < 0 {
-		err = fmt.Errorf("Invalid parameter: offset should not be negative.")
-		return
-	} else if limit <= 0 {
-		err = fmt.Errorf("Invalid parameter: limit should not be negative.")
-		return
+func getParaTagValue(c *gin.Context, key string) string {
+	return c.Query(key)
+}
+
+func updateTagsStats(tag string) {
+	databases.UpdateTagsStats(tag)
+}
+
+func fetchData(types, query string, offset, limit int) (articleList []OverviewArticle, err error) {
+	var dbFormatArticle []models.Article
+
+	switch types {
+	case "tag":
+		dbFormatArticle = databases.GetSameTagArticles(query, offset, limit)
+		for i := 0; i < len(dbFormatArticle); i++ {
+			dbFormatArticle[i].Tags = databases.GetTags(dbFormatArticle[i])
+		}
+	case "category":
+		dbFormatArticle = databases.GetSameCategoryArticles(query, offset, limit)
 	}
 
-	dbFormatArticle := databases.GetArticlesList(category, offset, limit)
 	for _, a := range dbFormatArticle {
 		articleList = append(articleList, articleFormatDBToOverview(a))
 	}

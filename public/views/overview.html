@@ -11,8 +11,9 @@
         <div style="display:none" id="articles-count">{{ .initialCount }}</div>
         <div id="articles-container">
             <div class="articles-parent">
-            <!-- Notice: Below syntax is for weekly update page only (server will send all content in latest 7 days, which should not be too much).  -->
+            <!-- Notice: The following section is for weekly update page only (server will send all content in latest 7 days, which should not be too much). -->
             <!--         For other pages, server respond with no content, and clients will fetch data subsequently. -->
+            <!--         Unlike other templates, variables are start with capital because server transfer an object type parameter instead of key-value pairs. -->
             {{ if .articleList }}
                 {{ range .articleList }}
                 <div class="tile is-ancestor">
@@ -21,7 +22,9 @@
                             <div data-articleid="{{ .ID }}"></div>
                             <div class="article-list-tag">
                                 {{ range $t := .Tags }}
+                                <a href="/articles/tags?query={{ $t }}">
                                     <span class="tag is-warning">{{ $t }}</span>
+                                </a>
                                 {{ end }}
                                 <a href="/articles/{{ .Category }}">
                                     <span class="tag is-primary">{{ .Category }}</span>
@@ -68,8 +71,8 @@
                 {{ end }}
             {{ else }}
                 <script>
-                    var errHead = '{{ .errHead }}', errBody = '{{ .errBody }}'
-                    if (errHead != "" && errHead != null) showNoticeMsg(errHead, errBody);
+                    var errHead = '{{ .errHead }}', errBody = '{{ .errBody }}';
+                    showNoticeMsg(errHead, errBody);
                 </script>
             {{ end }}
             </div>

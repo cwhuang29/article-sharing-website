@@ -5,6 +5,7 @@ let offset = 0,
 
 const formatArticle = (id, title, subtitle, tags, category, content) => {
   let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
   if (isMobile && title.length > 55) {
     title = title.substr(0, 55) + " ...";
   }
@@ -16,7 +17,7 @@ const formatArticle = (id, title, subtitle, tags, category, content) => {
 
   let tagHTML = "";
   tags.forEach((t) => {
-    tagHTML += `<span class="tag is-warning">${t}</span>&nbsp;`;
+    tagHTML += `<a href="/articles/tags?query=${t}"><span class="tag is-warning">${t}</span></a>&nbsp;`;
   });
 
   category = `<a href="/articles/${category}"><span class="tag is-primary">${category}</span></a>`;
@@ -115,13 +116,19 @@ const fetchOlderContent = async (count) => {
   }
 
   let urlPath = location.pathname.split("/");
-  let category = urlPath[urlPath.length - 1];
+  let path = urlPath[urlPath.length - 1];
 
-  if (category == "weekly-update") {
+  if (path == "weekly-update") {
     return;
+  } else if (path == "tags") {
+    type = "tag";
+    query = new URLSearchParams(window.location.search).get("query");
+  } else {
+    type = "category";
+    query = path; // Either "pharma" or "medication"
   }
 
-  let para = "?" + new URLSearchParams({ category: category, offset: offset, limit: limit });
+  let para = "?" + new URLSearchParams({ type: type, query: query, offset: offset, limit: limit });
   let url = "fetch" + para;
   let res = await fetchData(url).then(checkStatus).then(fetchSucceed).catch(fetchFailed);
 
@@ -129,7 +136,7 @@ const fetchOlderContent = async (count) => {
     if (count < 3) {
       fetchOlderContent(++count);
     } else {
-      showErrMsg("Failed to fetch content!", "Please reload the page and try again.");
+      showErrMsg("Failed to Fetch Content", "Please reload the page and try again.");
     }
   }
 };
@@ -138,7 +145,7 @@ const fetchInitialContent = async () => {
   if (offset == 0) {
     await fetchOlderContent(0);
     if (offset == 0) {
-      showNoticeMsg("Oops ... ", "There is no articles in this category.");
+      showNoticeMsg("Oops ... ", "There is no articles.");
     }
   }
 };

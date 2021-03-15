@@ -15,6 +15,11 @@ func IsArticleExists(id int) (succeed bool) {
 	return
 }
 
+func GetTags(article models.Article) (tags []models.Tag) {
+	db.Model(&article).Association("Tags").Find(&tags)
+	return
+}
+
 func GetArticle(id int) (article models.Article) {
 	db.Preload("Tags").Where("id = ?", id).First(&article)
 	return
@@ -30,13 +35,44 @@ func GetArticlesInATimePeriod(start, end time.Time) (articles []models.Article) 
 	return
 }
 
-func GetArticlesList(category string, offset int, limit int) (articles []models.Article) {
+func GetSameCategoryArticles(category string, offset int, limit int) (articles []models.Article) {
 	db.Limit(limit).Offset(offset).Order("id desc").Preload("Tags").Where("category = ?", category).Find(&articles) // No articles is not an error
 	return
 }
 
+func GetSameTagArticles(tagValue string, offset, limit int) (articles []models.Article) {
+	var tags models.Tag
+
+	db.Preload("Articles").Where("value = ?", tagValue).First(&tags)
+
+	start := len(tags.Articles) - 1 - offset
+	end := start - limit
+
+	if start < 0 {
+		return
+	}
+
+	if end < -1 {
+		end = -1
+	}
+
+	for i := start; i > end; i-- {
+		articles = append(articles, tags.Articles[i])
+	}
+	return
+}
+
+func UpdateTagsStats(tagValue string) {
+	var tag models.Tag
+
+	db.Where("value = ?", tagValue).First(&tag)
+	if err := db.Model(tag).Updates(models.Tag{Views: tag.Views + 1}).Error; err != nil {
+		logrus.Error(err.Error())
+	}
+}
+
 func insertArticlesAndTagsAssociation(tx *gorm.DB, article models.Article, tag models.Tag) error {
-	// Ths association created is based on primary keys (which are article.ID and tag.ID)
+	// Ths association created (a new record in the join table articles_tags) is based on primary keys (article.ID and tag.ID)
 	return tx.Model(&article).Association("Tags").Append(&tag)
 }
 
@@ -74,12 +110,6 @@ func insertArticle(article models.Article) (models.Article, error) {
 }
 
 func updateArticle(article models.Article) (models.Article, error) {
-	// db.Save(&article) will save all fields when performing the Updating SQL (including created_at)
-	// if err := db.Model(&article).Where("id = ?", article.ID).Updates(models.Article{ // Update only several keys
-	//     Title:       article.Title,
-	//     Subtitle:    article.Subtitle,
-	// }).Error; err != nil { }
-
 	if err := db.Model(&article).Where("id = ?", article.ID).Updates(article).Error; err != nil { //  Where clause can be omitted cause article.ID is the primary key
 		logrus.Error(err.Error())
 		return models.Article{}, err
@@ -166,7 +196,7 @@ func DeleteArticle(id int) bool {
 		return false
 	}
 
-	// This won't remove any tags (the ID field should not be empty): db.Where("id = ?", id).Select("Tags").Delete(&models.Article{})
+	// This won't remove any tags (the ID field should NOT be empty): db.Where("id = ?", id).Select("Tags").Delete(&models.Article{})
 	if err := db.Select("Tags").Delete(&article).Error; err != nil {
 		logrus.Error(err.Error())
 		return false

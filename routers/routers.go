@@ -63,6 +63,7 @@ func addRoutes() {
 		articles.GET("/medication", handlers.Overview)
 		articles.GET("/pharma", handlers.Overview)
 		articles.GET("/fetch", handlers.FetchData)
+		articles.GET("/tags", handlers.SearchTags)
 	}
 
 	router.GET("/register", handlers.RegisterView)

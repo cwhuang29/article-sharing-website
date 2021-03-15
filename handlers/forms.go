@@ -91,13 +91,13 @@ func getValuesFromForm(c *gin.Context, formVal map[string][]string) models.Artic
 		formTags := strings.Split(formVal["tags"][0], ",") // JS's form.append() transformed array to a comma seperated string
 		tags = make([]models.Tag, len(formTags))
 		for i, t := range formTags {
-			tags[i].Value = t
+			tags[i].Value = strings.TrimSpace(t)
 		}
 	}
 
 	return models.Article{
-		Title:       formVal["title"][0], // If the form does not contain "title" field, the array's value extraction will panic // Without tags
-		Subtitle:    formVal["subtitle"][0],
+		Title:       strings.TrimSpace(formVal["title"][0]), // If the form does not contain "title" field, the array's value extraction will panic
+		Subtitle:    strings.TrimSpace(formVal["subtitle"][0]),
 		ReleaseDate: date,
 		Authors:     auths,
 		Category:    formVal["category"][0],
