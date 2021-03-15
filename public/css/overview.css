@@ -46,12 +46,13 @@
     max-height: 280px;
     overflow: hidden;
 }
+
 .tile > .title,
 .tile > .subtitle,
-.tile > .columns,
-.tile > .article-list-tag > .is-primary {
-    cursor: pointer;
-}
-.article-list-tag {
+.tile > .columns {
     cursor: default;
+}
+
+.tile > .article-list-tag {
+    cursor: pointer;
 }

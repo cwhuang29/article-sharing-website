@@ -13,8 +13,8 @@ func CSRFProtection() gin.HandlerFunc {
 		csrfHeaders := c.Request.Header["X-Csrf-Token"]
 		csrfToken, _ := c.Cookie("csrf_token")
 
-		if len(csrfHeaders) != 1 || csrfHeaders[0] != csrfToken {
-			errHead := "Unauthorized"
+		if len(csrfHeaders) != 1 || csrfToken == "" || csrfHeaders[0] != csrfToken {
+			errHead := "Error"
 			errBody := "You are not allowed to perform this action."
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"errHead": errHead, "errBody": errBody})
 			return
@@ -34,7 +34,7 @@ func AdminRequired() gin.HandlerFunc {
 				status = http.StatusForbidden
 			}
 
-			errHead := "Unauthorized"
+			errHead := "Error"
 			errBody := "You are not allowed to perform this action."
 			c.AbortWithStatusJSON(status, gin.H{"errHead": errHead, "errBody": errBody}) // If use JSON(), handlers functions will be triggered subsequentlly
 		}
@@ -48,6 +48,6 @@ func AdminRequired() gin.HandlerFunc {
 			"latency": time.Since(t),
 			"email":   cookieEmail,
 		}
-		logrus.WithFields(fields).Info("Admins related routes")
+		logrus.WithFields(fields).Info("Admins routes")
 	}
 }

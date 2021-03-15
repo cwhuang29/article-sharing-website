@@ -24,9 +24,9 @@ func CreateArticleView(c *gin.Context) {
 }
 
 func UpdateArticleView(c *gin.Context) {
-	id := checkArticleId(c, "articleId")
+	id := getParaArticleId(c, "articleId")
 	if id == 0 {
-		errHead := "Article ID is An Integer"
+		errHead := "Article ID is An Positive Integer"
 		errBody := "Please try again."
 		c.HTML(http.StatusBadRequest, "browse.html", gin.H{
 			"currPageCSS": "css/browse.css",
@@ -88,14 +88,14 @@ func CreateArticle(c *gin.Context) {
 		return
 	}
 	logrus.Infof("Create article with id %v", id)
-	c.Header("Location", "/articles/browse?articleId="+strconv.Itoa(id)) // With Location header and status code 3XX (but not 2XX), response.redirected becomes true
+	c.Header("Location", "/articles/browse?articleId="+strconv.Itoa(id)) // With Location header and status code 3XX (not 2XX), response.redirected becomes true
 	c.JSON(http.StatusCreated, gin.H{"articleId": id})
 }
 
 func UpdateArticle(c *gin.Context) {
-	id := checkArticleId(c, "articleId")
+	id := getParaArticleId(c, "articleId")
 	if id == 0 {
-		errHead := "Article ID is An Integer"
+		errHead := "Article ID is An Positive Integer"
 		errBody := "Please try again."
 		c.JSON(http.StatusBadRequest, gin.H{"bindingError": false, "errHead": errHead, "errBody": errBody})
 		return
@@ -137,9 +137,9 @@ func DeleteArticle(c *gin.Context) {
 	errHead := "Delete Article Failed"
 	errBody := "Please try again."
 
-	id := checkArticleId(c, "articleId")
+	id := getParaArticleId(c, "articleId")
 	if id == 0 {
-		errHead = "Article ID is An Integer"
+		errHead = "Article ID is An Positive Integer"
 		c.JSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody})
 		return
 	}

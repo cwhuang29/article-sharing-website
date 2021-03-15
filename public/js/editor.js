@@ -20,10 +20,11 @@ const editorPlaceholder = `Tip:\nUpload images in advance so that you can get th
 const createArticleEndpoint = "/admin/create/article";
 const updateArticleEndpoint = "/admin/update/article";
 const baseURL = window.location.protocol + "//" + window.location.host + "/";
+let easyMDE;
 
 const loadMarkdownEditor = () => {
   // https://github.com/Ionaru/easy-markdown-editor
-  return (easyMDE = new EasyMDE({
+  return new EasyMDE({
     element: document.getElementById("content-text-area"),
     previewRender: function (plainText) {
       c(marked(plainText));
@@ -42,7 +43,7 @@ const loadMarkdownEditor = () => {
     tabSize: 4,
     toolbarTips: true,
     imageMaxSize: 1024 * 1024 * 4, // 4 Mb
-  }));
+  });
 };
 
 const tagsConstructor = (e) => {
@@ -77,21 +78,20 @@ const tagsDeconstructor = (e) => {
   }
 };
 
-const getInputValue = (easyMDE) => {
+const getInputValue = () => {
   var title = document.getElementsByName("title")[0].value.trim();
   var subtitle = document.getElementsByName("subtitle")[0].value.trim();
   var date = document.getElementsByName("date")[0].value;
   var authors = [...document.getElementsByName("authors")].filter((author) => author.checked).map((author) => author.value);
   var category = document.getElementsByName("category")[0].value;
   var tags = [...document.getElementsByName("tags")].filter((tag) => tag.tagName.toLowerCase() == "span").map((tag) => tag.textContent.trim());
-  // Insert newlines into head and tail of images. Otherwise when render markdown to html, the image won't display preperly
-  // Side effect: after modifying article multiple times, there will be lots of empty lines
-  var content = easyMDE.value().replace(/(!\[.*\]\(.*\))/g, "\n$1\n");
+  var content = easyMDE.value();
 
-  return [title, subtitle, date, authors, category, tags, content];
+  return { title: title, subtitle: subtitle, date: date, authors: authors, category: category, tags: tags, content: content };
 };
 
-const validateInput = (title, subtitle, date, authors, category, tags, content) => {
+const validateInput = (values) => {
+  const { title, subtitle, date, authors, category, tags, content } = values;
   var canSubmit = true;
 
   if (title.length == 0) {
@@ -220,7 +220,8 @@ const submitArticle = async (method, url, formData) => {
     .catch(fetchFailed);
 };
 
-const generateForm = (title, subtitle, date, authors, category, tags, content) => {
+const generateForm = (values) => {
+  const { title, subtitle, date, authors, category, tags, content } = values;
   const formData = new FormData();
 
   formData.append("title", title);
@@ -249,15 +250,15 @@ const generateForm = (title, subtitle, date, authors, category, tags, content) =
   return formData;
 };
 
-const handleSubmit = async (method, endpoint, button) => {
+const submitHandler = async (method, endpoint, button) => {
   button.classList.add("is-loading");
-  let [title, subtitle, date, authors, category, tags, content] = getInputValue(easyMDE);
-  let res = validateInput(title, subtitle, date, authors, category, tags, content);
+  const values = getInputValue();
+  let res = validateInput(values);
 
   if (!res) {
     button.classList.remove("is-loading");
   } else {
-    const formData = generateForm(title, subtitle, date, authors, category, tags, content);
+    const formData = generateForm(values);
     if (formData != null) {
       await submitArticle(method, endpoint, formData);
     }
@@ -266,18 +267,18 @@ const handleSubmit = async (method, endpoint, button) => {
 };
 
 const submitPost = () => {
-  handleSubmit("POST", createArticleEndpoint, submitBtn);
+  submitHandler("POST", createArticleEndpoint, submitBtn);
 };
 
 const savePost = () => {
   let articleId = new URLSearchParams(window.location.search).get("articleId");
   let para = "?" + new URLSearchParams({ articleId: articleId });
 
-  handleSubmit("PUT", updateArticleEndpoint + para, saveBtn);
+  submitHandler("PUT", updateArticleEndpoint + para, saveBtn);
 };
 
 onDOMContentLoaded = (function () {
-  let easyMDE = loadMarkdownEditor();
+  easyMDE = loadMarkdownEditor();
 
   let filesCount = 1;
   let fileUploadDefaultMsg = "No image uploaded";

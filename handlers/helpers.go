@@ -26,7 +26,7 @@ func GetUserStatus(c *gin.Context) (status UserStatus, cookieEmail string) {
 	adminEmail, _ := c.Cookie("is_admin")
 
 	memberOrAdmin := IsMember
-	if cookieEmail == adminEmail && databases.IsAdminUser(adminEmail) {
+	if adminEmail != "" && cookieEmail == adminEmail && databases.IsAdminUser(adminEmail) {
 		memberOrAdmin = IsAdmin
 	}
 

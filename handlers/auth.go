@@ -18,7 +18,7 @@ func storeLoginToken(email string, loginMaxAge int) (token string) {
 	return
 }
 
-func clearLoginToken(email string, token string) {
+func clearLoginToken(email, token string) {
 	/*
 	 * Notice: Users may have multiple tokens based on different user agents they have logged in from, and those
 	 * tokens must be removed from DB when expired. For instance, the user has logged in from the cellphone and laptop.

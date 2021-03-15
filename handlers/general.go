@@ -155,7 +155,7 @@ func Browse(c *gin.Context) {
 	uuid := ""
 	cookieEmail, _ := c.Cookie("login_email")
 	adminEmail, _ := c.Cookie("is_admin")
-	if cookieEmail == adminEmail && databases.IsAdminUser(adminEmail) {
+	if adminEmail != "" && cookieEmail == adminEmail && databases.IsAdminUser(adminEmail) {
 		uuid = getUUID()
 		c.SetCookie("csrf_token", uuid, csrfTokenAge, "/", "", true, true)
 	}

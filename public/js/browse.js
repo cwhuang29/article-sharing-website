@@ -73,6 +73,7 @@ const modifyOrDelete = async () => {
     .catch(fetchFailed);
 
   if (!res) {
+    closeModalBody();
     return;
   }
 

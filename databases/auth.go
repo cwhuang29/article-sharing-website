@@ -36,7 +36,7 @@ func InsertUser(user models.User) (int, bool) {
 	return user.ID, true
 }
 
-func InsertLoginToken(email string, token string, maxAge int) {
+func InsertLoginToken(email, token string, maxAge int) {
 	user := GetUser(email)
 	loginToken := models.Login{User: user, Token: token, MaxAge: maxAge}
 	db.Create(&loginToken)
@@ -60,7 +60,7 @@ func InsertLoginToken(email string, token string, maxAge int) {
 	// db.Save(&loginToken)
 }
 
-func DeleteLoginToken(email string, token string) {
+func DeleteLoginToken(email, token string) {
 	user := GetUser(email)
 	db.Delete(&models.Login{}, "user_id = ? and token = ?", user.ID, token)
 }
