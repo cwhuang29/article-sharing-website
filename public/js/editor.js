@@ -1,4 +1,5 @@
 const TAGS_LIMIT = 5;
+const INITIAL_INPUT_SIZE = 30; // Autosave only if user have typed something
 const TAGS_CHAR_LIMIT = 20;
 const FILES_UPLOAD_LIMIT = 10;
 const FILE_ID_LENGTH = 10;
@@ -21,6 +22,72 @@ const createArticleEndpoint = "/admin/create/article";
 const updateArticleEndpoint = "/admin/update/article";
 const baseURL = window.location.protocol + "//" + window.location.host + "/";
 let easyMDE;
+
+const getLocalStorageKey = () => {
+  let key = "article-create";
+  if (window.location.pathname.indexOf("create") == -1) {
+    key = "article-update-" + new URLSearchParams(window.location.search).get("articleId");
+  }
+  return key;
+};
+
+const clearInputLocalStorage = () => {
+  window.localStorage.removeItem(getLocalStorageKey());
+};
+
+const saveInputToLocalStorage = () => {
+  const key = getLocalStorageKey();
+  const values = getInputValue();
+  const totalInputSize = Object.entries(values).reduce((ttl, val) => (ttl += val[1].length), 0);
+
+  if (totalInputSize > INITIAL_INPUT_SIZE) {
+    window.localStorage.setItem(key, JSON.stringify(values));
+  }
+};
+
+const setupLocalStorage = () => {
+  const key = getLocalStorageKey();
+  const values = window.localStorage.getItem(key);
+  if (!values) {
+    showNoticeMsg("Article will be automatically saved", "Enjoy your journey : )");
+  } else {
+    showNoticeMsg("You can now continue editing", "Enjoy your journey : )");
+    writeInputValueToForm(values);
+  }
+};
+
+const encodeHTMLEntities = (val) => {
+  /*
+   * Input: <scrpit>console.log(1)</script>
+   * Output: &lt;script&gt;console.log(1)&lt;/script&gt;
+   */
+  let e = document.createElement("textarea");
+  e.innerHTML = val;
+  return e.innerHTML;
+};
+
+const writeInputValueToForm = (values) => {
+  const { title, subtitle, date, authors, category, tags, content } = JSON.parse(values);
+  document.getElementsByName("title")[0].value = title;
+  document.getElementsByName("subtitle")[0].value = subtitle;
+  document.getElementsByName("date")[0].value = date;
+  document.getElementsByName("category")[0].value = category;
+  easyMDE.value(content); // Not working: document.getElementsByName("content")[0].value = content;
+
+  [...document.getElementsByName("authors")].forEach((ele, idx) => {
+    if (authors.includes(ele.value)) {
+      document.getElementsByName("authors")[idx].checked = true;
+    }
+  });
+
+  var tagsHTMLHead = '<span class="tag is-warning is-medium" name="tags" style="margin-right: 9px;">';
+  var tagsHTMLTail = '<button class="delete is-small"></button></span>';
+  var tagsBody = "";
+  tags.forEach((ele) => {
+    tagsBody += `${tagsHTMLHead}${encodeHTMLEntities(ele)}${tagsHTMLTail}`;
+  });
+  document.getElementById("tags-list").innerHTML = tagsBody;
+};
 
 const loadMarkdownEditor = () => {
   // https://github.com/Ionaru/easy-markdown-editor
@@ -189,6 +256,7 @@ const fetchSucceed = async (resp) => {
    *                          As setting redirect to "follow", browser will send a request via the Location header (but won't render website)
    *                          Thus the following manual redirect (window.location.header = resp.url) will send the same request to server again (waste bandwidth)
    */
+  window.localStorage.removeItem(getLocalStorageKey());
   window.location.href = resp.headers.get("Location");
   return Promise.resolve();
 };
@@ -280,6 +348,20 @@ const savePost = () => {
 onDOMContentLoaded = (function () {
   easyMDE = loadMarkdownEditor();
 
+  setupLocalStorage();
+  window.setInterval(() => saveInputToLocalStorage(), 1000 * 60 * 5); // 5 min
+  document.getElementById("clearAutosaveButton").addEventListener("click", () => clearInputLocalStorage());
+  document.getElementById("saveNowButton").addEventListener("click", () => saveInputToLocalStorage());
+
+  // Since the prompt message can't be customized, and the default message is "Changes you made may not be saved"
+  // which is quite confusing (cause the changes have been saved). So I remove this feature.
+  // window.addEventListener("beforeunload", (e) => {
+  //   saveInputToLocalStorage();
+  //   e.preventDefault(); // If you prevent default behavior in Mozilla Firefox prompt will always be shown
+  //   e.returnValue = ""; // Chrome requires returnValue to be set
+  //   return "Are you sure you want to leave? All your changes will be saved."; // Be ignored in modern browsers
+  // });
+
   let filesCount = 1;
   let fileUploadDefaultMsg = "No image uploaded";
   let fileGroups = document.getElementById("fileInputGroups");
@@ -351,17 +433,17 @@ onDOMContentLoaded = (function () {
   tagsList = document.querySelector("#tags-list");
   tagsList.addEventListener("click", tagsDeconstructor);
 
-  submitBtn = document.querySelector("#submit_button");
+  submitBtn = document.querySelector("#submitButton");
   if (submitBtn) {
     submitBtn.addEventListener("click", submitPost);
   }
 
-  saveBtn = document.getElementById("save_button");
+  saveBtn = document.getElementById("saveButton");
   if (saveBtn) {
     saveBtn.addEventListener("click", savePost);
   }
 
-  cancelBtn = document.getElementById("cancel_button");
+  cancelBtn = document.getElementById("cancelButton");
   if (cancelBtn) {
     cancelBtn.addEventListener("click", () => {
       let articleId = new URLSearchParams(window.location.search).get("articleId");
@@ -370,15 +452,3 @@ onDOMContentLoaded = (function () {
     });
   }
 })();
-/*
-    const createArticles = (title, subtitle, date, authors, category, tags, content) => {
-        var request = new XMLHttpRequest();
-        request.open('GET', `/admin/create/article`, true);
-        request.onload = function() {
-          if (request.status >= 200 && request.status < 400) {
-            console.log(request.responseText);
-          }
-        };
-        request.send();
-    }
-*/

@@ -12,7 +12,7 @@
         <div class="field">
           <label class="label">Title</label>
           <div class="control">
-            <input class="input" type="text" name="title" placeholder="News title (max: 20 words)">
+            <input class="input" type="text" name="title" placeholder="News title (max: 20 words)" autocomplete="off">
           </div>
           <p class="help is-danger" id="err_msg_title"></p>
         </div>
@@ -20,7 +20,7 @@
         <div class="field">
           <label class="label">Subtitle</label>
           <div class="control">
-            <input class="input" type="text" name="subtitle" placeholder="News subtitle (max: 40 words)">
+            <input class="input" type="text" name="subtitle" placeholder="News subtitle (max: 40 words)" autocomplete="off">
           </div>
           <p class="help is-danger" id="err_msg_subtitle"></p>
         </div>
@@ -76,7 +76,7 @@
           <label class="label">Content</label>
           <div class="control">
 			<textarea class="textarea" name="content" id="content-text-area"></textarea>
-            <p class="help is-danger" id="err_msg_content" style="margin-top: -27px;"></p>
+            <p class="help is-danger" id="err_msg_content" style="margin-top: -22px;"></p>
           </div>
         </div>
 
@@ -94,21 +94,44 @@
         </div>
 
         {{ if eq .function "create" }}
-            <div class="field">
-              <div class="control">
-                <button class="button is-warning " id="submit_button">Submit</button>
+            <div class="field" style="display: flex">
+              <div style="flex: 70%">
+                <button class="button is-link" id="saveNowButton" style="margin-right: 10px; margin-bottom: 10px">Save Now</button>
+                <button class="button is-link is-light" id="clearAutosaveButton" style="margin-right: 10px; margin-bottom: 10px;">Clear Autosave</button>
               </div>
+              <div style="flex: 30%">
+                <button class="button is-warning " id="submitButton" style="float: right">Submit</button>
+              </div>
+            </div>
+            <div class="field">
+              <p class="help">
+                Notice: <br>
+                &bull; Images will not be autosaved, and hence the link you get after uploading images will be invalid once you have left/reload this page. So make sure you <strong>re-upload images</strong> if continue editing.
+                <br>
+                 &bull; To discard autosave values (not values on the webpage), click the "Clear Autosave" button and reload the page.
+              </p>
             </div>
         {{ else if eq .function "update" }}
-            <div class="field is-grouped">
-              <div class="control">
-                <button class="button is-warning" id="save_button">Save</button>
+            <div class="field" style="display: flex">
+              <div style="flex: 70%">
+                <button class="button is-link" id="saveNowButton" style="margin-right: 10px; margin-bottom: 10px">Save Now</button>
+                <button class="button is-link is-light" id="clearAutosaveButton" style="margin-right: 10px; margin-bottom: 10px;">Clear Autosave</button>
               </div>
-              <div class="control">
-                <button class="button is-warning is-light" id="cancel_button">Cancel</button>
+              <div style="flex: 30%">
+                <button class="button is-warning" id="saveButton" style="float: right; margin-left: 10px; margin-bottom:10px;">Save</button>
+                <button class="button is-warning is-light" id="cancelButton" style="float: right; margin-left: 10px; margin-bottom: 10px;">Cancel</button>
               </div>
             </div>
+            <div class="field">
+              <p class="help">
+                Notice: <br>
+                &bull; Images will not be autosaved, and hence the link you get after uploading images will be invalid once you have left/reload this page. So make sure you <strong>re-upload images</strong> if continue editing.
+                <br>
+                 &bull; To discard autosave values (not values on the webpage), click the "Clear Autosave" button and reload the page.
+              </p>
+            </div>
             <script>
+                // TODO Replace following code block with the writeInputValue function
                 document.getElementsByName("title")[0].value = '{{ .articleTitle }}';
                 document.getElementsByName("subtitle")[0].value = '{{ .subtitle }}';
                 document.getElementsByName("date")[0].value = '{{ .date }}';
@@ -124,14 +147,21 @@
                         document.getElementsByName("category")[0].selectedIndex = idx;
                     }
                 });
+
+                const encHTML = (val) => {
+                  let e = document.createElement("textarea");
+                  e.innerHTML = val;
+                  return e.innerHTML;
+                };
                 var tags = {{ .tags }};
-                var tagsHTMLHead = '<span class="tag is-warning is-medium" name="tags" style="margin-right: 9px;">';
-                var tagsHTMLTail = '<button class="delete is-small"></button></span>';
+                var tagsHTMLHead = "<span class='tag is-warning is-medium' name='tags' style='margin-right: 9px;'>";
+                var tagsHTMLTail = "<button class='delete is-small'></button></span>";
                 var tagsBody = "";
-                tags.forEach((ele) => {
-                    tagsBody += tagsHTMLHead + ele + tagsHTMLTail;
+                tags.forEach((t) => {
+                    tagsBody += `${tagsHTMLHead}${encHTML(t)}${tagsHTMLTail}`
                 });
                 document.getElementById("tags-list").innerHTML = tagsBody;
+
                 document.getElementsByName("content")[0].value = '{{ .content }}';
             </script>
         {{ end }}
