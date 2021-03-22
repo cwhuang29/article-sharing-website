@@ -38,7 +38,7 @@ func loadAssets() {
 	router.LoadHTMLFiles(htmlFiles...)
 }
 
-func addRoutes() {
+func injectRoutes() {
 	admin := router.Group("/admin") // /overview/... -> /admin/overview/...
 	admin.Use(AdminRequired())
 	{
@@ -67,33 +67,46 @@ func addRoutes() {
 	}
 
 	router.GET("/register", handlers.RegisterView)
-	router.POST("/register", handlers.Register)
 	router.GET("/login", handlers.LoginView)
+	router.POST("/register", handlers.Register)
 	router.POST("/login", handlers.LoginJSON)
 	router.POST("/logout", handlers.Logout)
+
 	router.GET("/password/reset", handlers.PasswordResetRequest)
-	router.POST("/password/email", handlers.PasswordResetEmail)
 	router.GET("/password/reset/:token", handlers.PasswordResetView)
+	router.POST("/password/email", handlers.PasswordResetEmail)
 	router.POST("/password/reset", handlers.PasswordReset)
 
 	router.GET("/about", handlers.About)
 	router.GET("/contact-us", handlers.ContactUs)
-
 	router.GET("/", func(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/articles/weekly-update")
 	})
-	router.GET("/test", func(c *gin.Context) {
-		c.JSON(http.StatusOK, "每週國際藥聞｜Irene報乎你知")
-		// c.Fail(500, errors.New("something failed!"))
-	})
+}
+
+func serve() {
+	cfg := config.GetConfig()
+
+	http := cfg.App.HttpPort
+	https := cfg.App.HttpsPort
+
+	if http != "" && https != "" {
+		go router.Run(":" + http)
+		router.RunTLS(":"+https, "./certs/server.crt", "./certs/server.key")
+	} else if http != "" {
+		router.Run(":" + http)
+	} else if https != "" {
+		router.RunTLS(":"+https, "./certs/server.crt", "./certs/server.key")
+	} else {
+		panic("Either app.httpPort or app.HttpsPort should be set")
+	}
 }
 
 func Router() {
 	// gin.SetMode(gin.ReleaseMode)
+	router.MaxMultipartMemory = 16 << 20 // Set a lower memory limit for multipart forms (default is 32 MiB)
 
 	loadAssets()
-	addRoutes()
-
-	// router.MaxMultipartMemory = 8 << 20 // 8 MiB. Set a lower memory limit for multipart forms (default is 32 MiB)
-	router.Run(":" + config.GetConfig().App.Port)
+	injectRoutes()
+	serve()
 }

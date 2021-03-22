@@ -17,14 +17,15 @@ The admin users are created by the following mechanism:
 3. Register with these corresponding emails on the website
 
 ## Setup
-The credentials are stored in `config.yml`. Some of them are not yet implemented, but the most important fields are `app.port`, `database`, and `admin.email`.  If set `database.driver` to `sqlite`, then `database.host` and `database.port` can be ignored.
+The credentials are stored in `config.yml`. Some of them are not yet implemented, but the most important fields are `app.httpPort`, `app.httpsPort`, `database`, and `admin.email`.  If set `database.driver` to `sqlite`, then `database.host` and `database.port` can be ignored.
 
-There are three environment variables that can be overwritten, which are `APP_PORT`, `DB_PORT`, and `DB_HOST`.
+There are three environment variables that can be overwritten, which are `APP_HTTP_PORT`, `APP_HTTPS_PORT`, `DB_PORT`, and `DB_HOST`.
 
 #### Local
 ```bash
 # Set the env values if needed
-# export APP_PORT=8080
+# export APP_HTTP_PORT=8080
+# export APP_HTTPS_PORT=8443
 # export DB_PORT=3306
 # export DB_HOST=127.0.0.1
 go run cmd/main.go
@@ -40,7 +41,9 @@ docker build . --target builder -t cwhuang29/article-sharing-website:dev
 ```bash
 docker build . -t cwhuang29/article-sharing-website:prod
 ```
+
 2. Run
+* Database
 ```bash
 docker run -d \
     --name db \
@@ -50,23 +53,34 @@ docker run -d \
     -e MYSQL_PASSWORD=a1234567 \
     mysql:5.7.32 \
     mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-
+```
+* Server
+```bash
 docker run -d \
     --name web \
     --link db:db \
-    -e APP_PORT=80 \
+    -e APP_HTTP_PORT=80 \
+    -e APP_HTTPS_PORT=443 \
     -e DB_PORT=3306 \
     -e DB_HOST=db \
     -p 80:80 \
+    -p 443:443 \
     cwhuang29/article-sharing-website:prod
 ```
 
-### Others
+## Others
+
+#### Dump database
 To dump the database, run
 ```bash
 docker exec -it db mysqldump -u user01 -pa1234567 inews > data.sql
 ```
 
+#### SSL/TLS Certificates
+Since all cookies are sent only with encrypted requests and responses, you may want to get certificates for localhost. Here is a good example: [How to get HTTPS working on your local development environment in 5 minutes](https://www.freecodecamp.org/news/how-to-get-https-working-on-your-local-development-environment-in-5-minutes-7af615770eec/).
+After setting up the certificates, copy `server.crt` and `server.key` to the `certs/` folder, and then connect to URL `https://localhost`.
+
+#### Install environment on AWS
 If you want to host the website on AWS EC2, run the following script to install Docker and MySQL
 ```bash
 # Install Docker
@@ -89,6 +103,7 @@ sudo yum -y install mysql
 - [x]  Pagination
 - [x]  Middleware
 - [x]  CSRF token
+- [x]  Support HTTPS
 - [ ]  Logger
 - [ ]  Reset password
 - [ ]  Support Google login
