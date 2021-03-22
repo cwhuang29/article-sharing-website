@@ -79,9 +79,9 @@ func Register(c *gin.Context) {
 	token := storeLoginToken(newUser.Email, loginMaxAge)
 	c.Header("Location", landingPage)
 	c.SetCookie("login_token", token, loginMaxAge, "/", "", true, true)
-	c.SetCookie("login_email", newUser.Email, loginMaxAge, "/", "", true, false) // Frontend relys on this cookie
+	c.SetCookie("login_email", newUser.Email, loginMaxAge, "/", "", true, false) // Frontend relies on this cookie
 	if newUser.Admin {
-		c.SetCookie("is_admin", newUser.Email, loginMaxAge, "/", "", true, false) // Frontend relys on this cookie
+		c.SetCookie("is_admin", newUser.Email, loginMaxAge, "/", "", true, false) // Frontend relies on this cookie
 	}
 	c.JSON(http.StatusCreated, gin.H{})
 }
@@ -123,9 +123,9 @@ func LoginJSON(c *gin.Context) {
 	token := storeLoginToken(user.Email, loginMaxAge)
 	c.Header("Location", landingPage)
 	c.SetCookie("login_token", token, loginMaxAge, "/", "", true, true)
-	c.SetCookie("login_email", user.Email, loginMaxAge, "/", "", true, false) // Frontend relys on this cookie
+	c.SetCookie("login_email", user.Email, loginMaxAge, "/", "", true, false) // Frontend relies on this cookie
 	if user.Admin {
-		c.SetCookie("is_admin", user.Email, loginMaxAge, "/", "", true, false) // Frontend relys on this cookie
+		c.SetCookie("is_admin", user.Email, loginMaxAge, "/", "", true, false) // Frontend relies on this cookie
 	}
 	c.JSON(http.StatusOK, gin.H{})
 }
@@ -143,9 +143,9 @@ func Logout(c *gin.Context) {
 
 	clearLoginToken(email, token)
 
-	c.SetCookie("login_token", "", 0, "/", "", false, true)
-	c.SetCookie("login_email", "", 0, "/", "", false, true)
-	c.SetCookie("is_admin", "", 0, "/", "", false, true)
+	c.SetCookie("login_token", "", 0, "/", "", true, true)
+	c.SetCookie("login_email", "", 0, "/", "", true, true)
+	c.SetCookie("is_admin", "", 0, "/", "", true, true)
 
 	c.Header("Location", landingPage)
 	c.JSON(http.StatusResetContent, gin.H{})

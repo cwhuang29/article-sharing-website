@@ -14,6 +14,12 @@ func (e *ConfigError) Error() string {
 	return fmt.Sprintf("%v %v can't be empty", strings.Title(strings.ToLower(e.errType)), strings.Title(strings.ToLower(e.err)))
 }
 
+type env struct {
+	key    string
+	errMsg string
+	target *string
+}
+
 type Config struct {
 	App      `yaml:"app,omitempty"`
 	Database `yaml:"database,omitempty"`
@@ -21,10 +27,11 @@ type Config struct {
 }
 
 type App struct {
-	Name  string `yaml:"name,omitempty"`
-	Port  string `yaml:"port,omitempty"`
-	Debug bool   `yaml:"debug,omitempty"`
-	Log   string `yaml:"log,omitempty"`
+	Name      string `yaml:"name,omitempty"`
+	HttpPort  string `yaml:"httpPort,omitempty"`
+	HttpsPort string `yaml:"httpsPort,omitempty"`
+	Debug     string `yaml:"debug,omitempty"`
+	Log       string `yaml:"log,omitempty"`
 }
 
 type Database struct {

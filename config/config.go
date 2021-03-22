@@ -9,8 +9,10 @@ import (
 
 var (
 	config *Config
+	envs   []env
 )
 
+// Return a copy of config
 func GetConfig() Config {
 	tmp := *config
 
@@ -18,6 +20,7 @@ func GetConfig() Config {
 	for i, a := range config.Admin.Email {
 		adminEmails[i] = a
 	}
+	tmp.Admin.Email = adminEmails
 	return tmp
 }
 
@@ -39,56 +42,63 @@ func (c *Config) load(configFilePath string) error {
 }
 
 func (c *Config) check() *ConfigError {
-	if c.App.Name == "" {
-		return &ConfigError{errType: "app", err: "name"}
-	} else if c.Database.Driver == "" {
+	if c.Database.Driver == "" {
 		return &ConfigError{errType: "database", err: "driver"}
-	} else if c.Database.Username == "" {
+	}
+
+	if c.Database.Username == "" {
 		return &ConfigError{errType: "database", err: "username"}
-	} else if c.Database.Password == "" {
+	}
+
+	if c.Database.Password == "" {
 		return &ConfigError{errType: "database", err: "password"}
-	} else if len(c.Admin.Email) == 0 {
+	}
+
+	if len(c.Admin.Email) == 0 {
 		return &ConfigError{errType: "admin", err: "email"}
 	}
+
 	return nil
 }
 
 func (c *Config) setDefaultValue() {
-	if c.App.Port == "0" {
-		c.App.Port = "8080"
-		logrus.Infof("App port is not set in the config file. Set to default value 8080")
+	if c.App.HttpPort == "" && c.App.HttpsPort == "" {
+		c.App.HttpPort = "8080"
+		logrus.Info("Both app.httpPort and app.httpsPort are not set in the config file. Set app.HttpsPort to default value 8080")
 	}
 
 	if c.Database.Host == "" {
 		c.Database.Host = "127.0.0.1"
-		logrus.Infof("Database host is not set in the config file. Set to default value 127.0.0.1")
+		logrus.Info("database.host is not set in the config file. Set to default value 127.0.0.1")
 	}
 
-	if c.Database.Port == "0" {
-		c.Database.Port = "3306"
-		logrus.Infof("Database port is not set in the config file. Set to default value 3306")
+	if c.Database.Port == "" {
+		var p string
+
+		if c.Database.Driver == "mysql" {
+			p = "3306"
+		}
+
+		c.Database.Port = p
+		logrus.Info("database.port is not set in the config file. Set to default value " + p)
 	}
 }
 
 func (c *Config) setOverwriteValue() {
-	dbHost := os.Getenv("DB_HOST")
-	if dbHost != "" {
-		logrus.Info("Database host is overwrote by env DB_HOST. Set to " + dbHost + ".")
-		c.Database.Host = dbHost
+	envs = []env{
+		{"DB_HOST", "database.host", &config.Database.Host},
+		{"DB_PORT", "database.port", &config.Database.Port},
+		{"APP_HTTP_PORT", "app.httpPort", &config.App.HttpPort},
+		{"APP_HTTPS_PORT", "app.httpsPort", &config.App.HttpsPort},
 	}
 
-	dbPort := os.Getenv("DB_PORT")
-	if dbPort != "" {
-		logrus.Info("Database port is overwrote by env DB_PORT. Set to " + dbPort + ".")
-		c.Database.Port = dbPort
+	for _, e := range envs {
+		value := os.Getenv(e.key)
+		if value != "" {
+			*e.target = value
+			logrus.Info(e.errMsg + " is overwrote by env " + e.key + ". Set to " + value + ".")
+		}
 	}
-
-	appPort := os.Getenv("APP_PORT")
-	if appPort != "" {
-		logrus.Info("App port is overwrote by env APP_PORT. Set to " + appPort + ".")
-		c.App.Port = appPort
-	}
-
 }
 
 func Initial(configFilePath string) error {

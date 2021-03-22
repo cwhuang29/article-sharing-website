@@ -94,6 +94,17 @@ const fetchInitialContent = async () => {
   }
 };
 
+const encodeHTMLEntities = (val) => {
+  /*
+   * To prevent from XSS attack
+   * Input: <scrpit>console.log(1)</script>
+   * Output: &lt;script&gt;console.log(1)&lt;/script&gt;
+   */
+  let e = document.createElement("textarea");
+  e.innerHTML = val;
+  return e.innerHTML;
+};
+
 const formatArticle = (article) => {
   let { ID: id, Title: title, Subtitle: subtitle, Tags: tags, Category: category, Content: content } = article;
   let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -104,7 +115,7 @@ const formatArticle = (article) => {
 
   let tagHTML = "";
   tags.forEach((t) => {
-    tagHTML += `<a href="/articles/tags?query=${t}"><span class="tag is-warning">${t}</span></a>&nbsp;`;
+    tagHTML += `<a href="/articles/tags?query=${encodeURIComponent(t)}"><span class="tag is-warning">${encodeHTMLEntities(t)}</span></a>&nbsp;`;
   });
 
   category = `<a href="/articles/${category}"><span class="tag is-primary">${category}</span></a>`;

@@ -16,6 +16,29 @@ func GetDB() *gorm.DB {
 	return db
 }
 
+func getMysqlDSN(cfg config.Database) (dsn string) {
+	// Example: "user:pwd@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
+	dsn = cfg.Username + ":" + cfg.Password + "@tcp(" + cfg.Host + ":" + cfg.Port + ")/" + cfg.Database + "?charset=utf8mb4&parseTime=True"
+	return
+}
+
+func connect(cfg config.Database) (err error) {
+	switch driver := cfg.Driver; driver {
+	case "mysql":
+		dsn := getMysqlDSN(cfg)
+		if db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: true}); err != nil {
+			return err
+		}
+	case "sqlite":
+		if db, err = gorm.Open(sqlite.Open("tmp.db"), &gorm.Config{}); err != nil {
+			return err
+		}
+	default:
+		panic("Please select a correct database driver (mysql or sqlite).")
+	}
+	return nil
+}
+
 func createTables() {
 	if !(db.Migrator().HasTable(&models.Article{}) || db.Migrator().HasTable(&models.Tag{})) {
 		db.AutoMigrate(&models.Article{}, &models.Tag{})
@@ -44,29 +67,14 @@ func registerAdminEmail(emails []string) {
 	}
 }
 
-func Initial() error {
-	var err error
-
+func Initial() (err error) {
 	cfg := config.GetConfig()
 
-	dbConfig := cfg.Database
-	switch driver := dbConfig.Driver; driver {
-	case "mysql":
-		// dsn := "user:pwd@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
-		dsn := dbConfig.Username + ":" + dbConfig.Password + "@tcp(" + dbConfig.Host + ":" + dbConfig.Port + ")/" + dbConfig.Database + "?charset=utf8mb4&parseTime=True"
-		if db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: true}); err != nil {
-			return err
-		}
-	case "sqlite":
-		if db, err = gorm.Open(sqlite.Open("tmp.db"), &gorm.Config{}); err != nil {
-			return err
-		}
-	default:
-		panic("Please select a correct database driver.")
+	if err = connect(cfg.Database); err != nil {
+		return
 	}
-
 	createTables()
 	createConstraints()
 	registerAdminEmail(cfg.Admin.Email)
-	return nil
+	return
 }

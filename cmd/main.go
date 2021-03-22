@@ -22,7 +22,7 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err != nil {
 		logrus.Fatal(err)
 	}
-	logrus.Infof("Parsing config file: %s ...", viper.ConfigFileUsed())
+	logrus.Infof("Parsing config file: %s.", viper.ConfigFileUsed())
 }
 
 func setupConfig() {
