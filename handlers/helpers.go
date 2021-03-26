@@ -43,6 +43,15 @@ func GetUserStatus(c *gin.Context) (status UserStatus, cookieEmail string) {
 	return
 }
 
+// To reduce the number of queries to database, don't call GetUserStatus() here.
+// If it is a critical (non-read) operation, there will be more rigorous validation in other functions.
+func detectIfUserIsAdmin(c *gin.Context) bool {
+	if admin, _ := c.Cookie("is_admin"); admin != "" {
+		return true
+	}
+	return false
+}
+
 func isExpired(startTime time.Time, period int) bool {
 	now := time.Now().UTC().Truncate(time.Second)
 	if now.Sub(startTime).Seconds() > float64(period) {
@@ -72,17 +81,17 @@ func updateTagsStats(tag string) {
 	databases.UpdateTagsStats(tag)
 }
 
-func fetchData(types, query string, offset, limit int) (articleList []OverviewArticle, err error) {
+func fetchData(types, query string, offset, limit int, isAdmin bool) (articleList []Article, err error) {
 	var dbFormatArticle []models.Article
 
 	switch types {
 	case "tag":
-		dbFormatArticle = databases.GetSameTagArticles(query, offset, limit)
+		dbFormatArticle = databases.GetSameTagArticles(query, offset, limit, isAdmin)
 		for i := 0; i < len(dbFormatArticle); i++ {
-			dbFormatArticle[i].Tags = databases.GetTags(dbFormatArticle[i])
+			dbFormatArticle[i].Tags = databases.GetArticleTags(dbFormatArticle[i])
 		}
 	case "category":
-		dbFormatArticle = databases.GetSameCategoryArticles(query, offset, limit)
+		dbFormatArticle = databases.GetSameCategoryArticles(query, offset, limit, isAdmin)
 	}
 
 	for _, a := range dbFormatArticle {

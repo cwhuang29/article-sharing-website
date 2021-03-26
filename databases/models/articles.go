@@ -14,6 +14,7 @@ type Article struct {
 	Category    string         `gorm:"not null" json:"category" yaml:"category"`
 	Tags        []Tag          `gorm:"many2many:articles_tags;"`
 	Content     string         `gorm:"not null" json:"content" yaml:"content"`
+	AdminOnly   bool           `gorm:"default:false" json:"admin_only" yaml:"adminOnly"`
 	CreatedAt   time.Time      `json:"-"`
 	UpdatedAt   time.Time      `json:"-"`
 	DeletedAt   gorm.DeletedAt `json:"-"`

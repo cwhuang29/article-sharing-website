@@ -4,13 +4,18 @@ figure > img {
     margin-left: auto;
     margin-right: auto;
 }
+
 figure {
     margin-bottom: -15%;
 }
+
+/*
 .tag:not(.is-link) {
-    background-color: #f6f6f6 !important;
-    color: #363636 !important;
+   background-color: #f6f6f6 !important;
+   color: #363636 !important;
 }
+*/
+
 #modal-message {
     background-color: #fbfbfb;
     border-radius: 7px;

@@ -106,7 +106,7 @@ const encodeHTMLEntities = (val) => {
 };
 
 const formatArticle = (article) => {
-  let { ID: id, Title: title, Subtitle: subtitle, Tags: tags, Category: category, Content: content } = article;
+  let { id, adminOnly, title, subtitle, tags, category, content } = article;
   let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
   if (isMobile) {
@@ -118,7 +118,12 @@ const formatArticle = (article) => {
     tagHTML += `<a href="/articles/tags?query=${encodeURIComponent(t)}"><span class="tag is-warning">${encodeHTMLEntities(t)}</span></a>&nbsp;`;
   });
 
-  category = `<a href="/articles/${category}"><span class="tag is-primary">${category}</span></a>`;
+  cate = `<a href="/articles/${category}"><span class="tag is-primary">${category}</span></a>`;
+
+  admin = "";
+  if (adminOnly) {
+    admin = `&nbsp;<span class="tag is-danger">Admin Only</span>`; // To notify admins
+  }
 
   let img = /<img.*>/.exec(content); // Note that there is a <p></p> tag surrounded
   let img_add_class = '<img class="article-list-img-h" ';
@@ -152,8 +157,7 @@ const formatArticle = (article) => {
                     <div class="tile is-child box article-list-container">
                         <div data-articleid=${id}></div>
                         <div class="article-list-tag">
-                            ${tagHTML}
-                            ${category}
+                            ${tagHTML}${cate}${admin}
                         </div>
                         <p class="title">${title}</p>
                         <p class="subtitle">${subtitle}</p>

@@ -21,13 +21,16 @@
                             <div data-articleid="{{ .ID }}"></div>
                             <div class="article-list-tag">
                                 {{ range $t := .Tags }}
-                                <a href="/articles/tags?query={{ $t }}">
-                                    <span class="tag is-warning">{{ $t }}</span>
-                                </a>
+                                    <a href="/articles/tags?query={{ $t }}">
+                                        <span class="tag is-warning">{{ $t }}</span>
+                                    </a>
                                 {{ end }}
                                 <a href="/articles/{{ .Category }}">
                                     <span class="tag is-primary">{{ .Category }}</span>
                                 </a>
+                                {{ if eq .AdminOnly true }}
+                                    <span class="tag is-danger">Admin Only</span>
+                                {{ end }}
                             </div>
                             <p class="title"></p>
                             <p class="subtitle"></p>

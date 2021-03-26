@@ -28,10 +28,23 @@
             </div>
             <div class="pb-3" style="cursor: default">
                 <div class="field is-grouped is-grouped-multiline">
+                  {{ if eq .adminOnly true }}
+                    <div class="control">
+                      <span class="tag is-danger">Admin Only</span>
+                    </div>
+                  {{ end }}
                   <div class="control">
                     <div class="tags has-addons">
                       <span class="tag is-link">Date</span>
                       <span class="tag">{{ .date }}</span>
+                    </div>
+                  </div>
+                  <div class="control">
+                    <div class="tags has-addons">
+                      <span class="tag is-link">Category</span>
+                      <a href="/articles/{{ .category }}">
+                        <span class="tag">{{ .category }}</span>
+                      </a>
                     </div>
                   </div>
                   {{ range .author }}
@@ -42,17 +55,9 @@
                       </div>
                     </div>
                   {{ end }}
-                  <div class="control">
-                    <div class="tags has-addons">
-                      <span class="tag is-link">Category</span>
-                      <a href="/articles/{{ .category }}">
-                        <span class="tag">{{ .category }}</span>
-                      </a>
-                    </div>
-                  </div>
                   {{ range $t := .tags }}
                     <div class="control">
-                      <div class="tags has-addons">
+                      <div class="tags">
                         <a href="/articles/tags?query={{ $t }}">
                           <span class="tag">{{ $t }}</span>
                         </a>

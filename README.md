@@ -70,6 +70,12 @@ docker run -d \
 
 ## Others
 
+#### Connect to database
+Instead of connecting to the database container directly, we can run another MySQL container and query the database.
+```
+docker run -it --rm --link db:db mysql:5.7.32 mysql -hdb -u user01 -pa1234567 inews
+```
+
 #### Dump database
 To dump the database, run
 ```bash
@@ -78,7 +84,7 @@ docker exec -it db mysqldump -u user01 -pa1234567 inews > data.sql
 
 #### SSL/TLS Certificates
 Since all cookies are sent only with encrypted requests and responses, you may want to get certificates for localhost. Here is a good example: [How to get HTTPS working on your local development environment in 5 minutes](https://www.freecodecamp.org/news/how-to-get-https-working-on-your-local-development-environment-in-5-minutes-7af615770eec/).
-After setting up the certificates, copy `server.crt` and `server.key` to the `certs/` folder, and then connect to URL `https://localhost`.
+After setting up the certificates, copy `server.crt` and `server.key` to the `certs/` folder (in the root of the project), and then connect to URL `https://localhost`.
 
 #### Install environment on AWS
 If you want to host the website on AWS EC2, run the following script to install Docker and MySQL
@@ -104,6 +110,7 @@ sudo yum -y install mysql
 - [x]  Middleware
 - [x]  CSRF token
 - [x]  Support HTTPS
+- [x]  Add an "only administrators can view" option
 - [ ]  Logger
 - [ ]  Reset password
 - [ ]  Support Google login

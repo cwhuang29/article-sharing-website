@@ -25,7 +25,6 @@ func CSRFProtection() gin.HandlerFunc {
 func AdminRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		t := time.Now()
-		cookieEmail, _ := c.Cookie("login_email")
 
 		userStatus, _ := handlers.GetUserStatus(c)
 		if userStatus < handlers.IsAdmin {
@@ -41,6 +40,7 @@ func AdminRequired() gin.HandlerFunc {
 
 		c.Next()
 
+		cookieEmail, _ := c.Cookie("login_email")
 		fields := map[string]interface{}{
 			"method":  c.Request.Method,
 			"url":     c.Request.URL.String(),

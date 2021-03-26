@@ -14,29 +14,18 @@ func (s UserStatus) String() string {
 	return [...]string{"guest", "member", "verified member", "admin", "verified admin"}[s]
 }
 
-type Tag string
-
+// Notice: The field names should be exact the same as the fields in html template.
+// Rewrite by `json:"customize_name"` won't work (but when fetching data by JS, it works)
 type Article struct {
-	Title    string   `form:"title" json:"title" binding:"required"`
-	Subtitle string   `form:"subtitle" json:"subtitle" binding:"-"`
-	Date     string   `form:"date" json:"date" binding:"required"`
-	Authors  []string `form:"authors" json:"authors" binding:"required"`
-	Category string   `form:"Category" json:"Category" binding:"required"`
-	Tags     []string `form:"Tags" json:"Tags" binding:"required"`
-	Content  string   `form:"Content" json:"Content" binding:"required"`
-}
-
-// Notice: The field names should be the same as the fields in html template.
-// Rewrite by `json:"customize_name"` won't work
-type OverviewArticle struct {
-	ID       int
-	Title    string
-	Subtitle string
-	Date     string
-	Authors  []string
-	Category string
-	Tags     []string
-	Content  string
+	ID        int      `json:"id"`
+	Title     string   `json:"title"`
+	Subtitle  string   `json:"subtitle"`
+	Date      string   `json:"date"`
+	Authors   []string `json:"authors"`
+	Category  string   `json:"category"`
+	Tags      []string `json:"tags"`
+	Content   string   `json:"content"`
+	AdminOnly bool     `json:"adminOnly"`
 }
 
 type Login struct {

@@ -5,57 +5,60 @@ import (
 	"strings"
 )
 
-var (
+const (
 	titleLength    = 55
 	subtitleLength = 90
 )
 
-func articleFormatDBToOverview(article models.Article) (ov OverviewArticle) {
-	ov.ID = article.ID
+func articleFormatDBToOverview(article models.Article) (a Article) {
+	a.ID = article.ID
 
 	if len(article.Title) > titleLength {
-		ov.Title = article.Title[:titleLength] + " ..."
+		a.Title = article.Title[:titleLength] + " ..."
 	} else {
-		ov.Title = article.Title
+		a.Title = article.Title
 	}
 	if len(article.Subtitle) > subtitleLength {
-		ov.Subtitle = article.Subtitle[:subtitleLength] + " ..."
+		a.Subtitle = article.Subtitle[:subtitleLength] + " ..."
 	} else {
-		ov.Subtitle = article.Subtitle
+		a.Subtitle = article.Subtitle
 	}
-	ov.Date = article.ReleaseDate.String()
-	ov.Authors = strings.Split(article.Authors, ",")
-	ov.Category = strings.ToLower(article.Category) // Because router only accepts lower case path
+	a.Date = article.ReleaseDate.String()
+	a.Authors = strings.Split(article.Authors, ",")
+	a.Category = strings.ToLower(article.Category) // Because router only accepts lower case path
 
-	ov.Tags = []string{}
+	a.Tags = []string{}
 	for _, t := range article.Tags {
-		ov.Tags = append(ov.Tags, t.Value)
+		a.Tags = append(a.Tags, t.Value)
 	}
 
 	truncate := false
 	if len(article.Content) > overviewContentLength {
 		truncate = true
 	}
-	ov.Content = parseMarkdownToHTML(article.Content, truncate)
+	a.Content = parseMarkdownToHTML(article.Content, truncate)
+	a.AdminOnly = article.AdminOnly
 	return
 }
 
-func articleFormatDBToDetailed(article models.Article, parseMarkdown bool) (dt Article) {
-	dt.Title = article.Title
-	dt.Subtitle = article.Subtitle
-	dt.Date = article.ReleaseDate.Format("2006-01-02")
-	dt.Authors = strings.Split(article.Authors, ",")
-	dt.Category = strings.ToLower(article.Category)
+func articleFormatDBToDetailed(article models.Article, parseMarkdown bool) (a Article) {
+	a.Title = article.Title
+	a.Subtitle = article.Subtitle
+	a.Date = article.ReleaseDate.Format("2006-01-02")
+	a.Authors = strings.Split(article.Authors, ",")
+	a.Category = strings.ToLower(article.Category)
 
-	dt.Tags = []string{} // Without initial, html template brokes (var tags = {{ .tags }};)
+	a.Tags = []string{} // Without initial, html template brokes (var tags = {{ .tags }};)
 	for _, t := range article.Tags {
-		dt.Tags = append(dt.Tags, t.Value)
+		a.Tags = append(a.Tags, t.Value)
 	}
 
 	if parseMarkdown {
-		dt.Content = parseMarkdownToHTML(article.Content, false)
+		a.Content = parseMarkdownToHTML(article.Content, false)
 	} else {
-		dt.Content = article.Content
+		a.Content = article.Content
 	}
+
+	a.AdminOnly = article.AdminOnly
 	return
 }

@@ -26,7 +26,7 @@ COPY --from=builder /app/config.yml /app/config.yml
 WORKDIR /app
 
 ENV APP_HTTP_PORT=80
-ENV APP_HTTPS_PORT=443
+# ENV APP_HTTPS_PORT=443
 ENV DB_PORT=3306
 ENV DB_HOST=db 
 ENV GIN_MODE=release

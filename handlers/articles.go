@@ -36,7 +36,7 @@ func UpdateArticleView(c *gin.Context) {
 		return
 	}
 
-	dbFormatArticle := databases.GetArticle(id)
+	dbFormatArticle := databases.GetArticle(id, true)
 	if dbFormatArticle.ID == 0 {
 		errHead := "Article Not Found"
 		errBody := "Please try again."
@@ -56,6 +56,7 @@ func UpdateArticleView(c *gin.Context) {
 		"currPageCSS":  "css/editor.css",
 		"csrfToken":    uuid,
 		"function":     "update",
+		"adminOnly":    article.AdminOnly,
 		"title":        "Edit: " + article.Title,
 		"articleTitle": article.Title,
 		"subtitle":     article.Subtitle,
@@ -101,7 +102,7 @@ func UpdateArticle(c *gin.Context) {
 		return
 	}
 
-	if succeed := databases.IsArticleExists(id); succeed != true {
+	if succeed := databases.IsArticleExists(id, true); succeed != true {
 		errHead := "Article Not Found"
 		errBody := "Please try again."
 		c.JSON(http.StatusNotFound, gin.H{"bindingError": false, "errHead": errHead, "errBody": errBody})
@@ -144,7 +145,7 @@ func DeleteArticle(c *gin.Context) {
 		return
 	}
 
-	if res := databases.DeleteArticle(id); !res {
+	if res := databases.DeleteArticle(id, true); !res {
 		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "errHead": errHead, "errBody": errBody})
 		return
 	}

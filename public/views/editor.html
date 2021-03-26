@@ -10,6 +10,12 @@
         </div>
 
         <div class="field">
+          <label class="checkbox">
+            <input type="checkbox" id="adminOnly">&nbsp;&nbsp;Only administrators can view this article
+          </label>
+        </div>
+
+        <div class="field">
           <label class="label">Title</label>
           <div class="control">
             <input class="input" type="text" name="title" placeholder="News title (max: 20 words)" autocomplete="off">
@@ -33,14 +39,12 @@
 
         <div class="field">
           <label class="label">Author</label>
-            <div id='authors'>
-              <input type='checkbox' name='authors' id='authors[0]' value='Irene'/>
-              <label for='authors[0]'> Irene&nbsp;&nbsp;&nbsp; </label>
-              <input type='checkbox' name='authors' id='authors[1]' value='Jasia'/>
-              <label for='authors[1]'> Jasia&nbsp;&nbsp;&nbsp; </label>
-              <input type='checkbox' name='authors' id='authors[2]' value='Yoto'/>
-              <label for='authors[2]'> Yoto&nbsp;&nbsp;&nbsp; </label>
-            </div>
+            <input type='checkbox' name='authors' id='authors[0]' value='Irene'/>
+            <label for='authors[0]'> Irene&nbsp;&nbsp;&nbsp; </label>
+            <input type='checkbox' name='authors' id='authors[1]' value='Jasia'/>
+            <label for='authors[1]'> Jasia&nbsp;&nbsp;&nbsp; </label>
+            <input type='checkbox' name='authors' id='authors[2]' value='Yoto'/>
+            <label for='authors[2]'> Yoto&nbsp;&nbsp;&nbsp; </label>
             <p class="help is-danger" id="err_msg_authors"></p>
         </div>
 
@@ -132,6 +136,7 @@
             </div>
             <script>
                 // TODO Replace following code block with the writeInputValue function
+                document.querySelector("#adminOnly").checked = ('{{ .adminOnly }}' == 'true');
                 document.getElementsByName("title")[0].value = '{{ .articleTitle }}';
                 document.getElementsByName("subtitle")[0].value = '{{ .subtitle }}';
                 document.getElementsByName("date")[0].value = '{{ .date }}';
@@ -154,7 +159,7 @@
                   return e.innerHTML;
                 };
                 var tags = {{ .tags }};
-                var tagsHTMLHead = "<span class='tag is-warning is-medium' name='tags' style='margin-right: 9px;'>";
+                var tagsHTMLHead = "<span class='tag is-warning is-medium' name='tags' style='margin-right: 8px; margin-bottom: 5px'>";
                 var tagsHTMLTail = "<button class='delete is-small'></button></span>";
                 var tagsBody = "";
                 tags.forEach((t) => {

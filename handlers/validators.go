@@ -22,8 +22,8 @@ var (
 	}
 )
 
-func validateLoginFormat(email string, password string) (err map[string]interface{}) {
-	err = make(map[string]interface{})
+func validateLoginFormat(email string, password string) (err map[string]string) {
+	err = make(map[string]string)
 
 	if len(email) == 0 {
 		err["email"] = ErrInputMsg["empty"]
@@ -37,8 +37,8 @@ func validateLoginFormat(email string, password string) (err map[string]interfac
 	return
 }
 
-func validateUserFormat(newUser models.User) (err map[string]interface{}) {
-	err = make(map[string]interface{})
+func validateUserFormat(newUser models.User) (err map[string]string) {
+	err = make(map[string]string)
 
 	if len(newUser.FirstName) == 0 {
 		err["first_name"] = ErrInputMsg["empty"]
@@ -69,8 +69,8 @@ func validateUserFormat(newUser models.User) (err map[string]interface{}) {
 	return err
 }
 
-func validateArticleValues(newArticle models.Article) (err map[string]interface{}) {
-	err = make(map[string]interface{})
+func validateArticleValues(newArticle models.Article) (err map[string]string) {
+	err = make(map[string]string)
 
 	if len(newArticle.Title) == 0 {
 		err["title"] = ErrInputMsg["short"]

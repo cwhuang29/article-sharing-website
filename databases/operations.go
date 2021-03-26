@@ -1,49 +1,78 @@
 package databases
 
 import (
+	"errors"
 	"github.com/cwhuang29/article-sharing-website/databases/models"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"time"
 )
 
-func IsArticleExists(id int) (succeed bool) {
-	if tx := db.Where("id = ?", id).First(&models.Article{}); tx.RowsAffected == 0 {
-		return
-	}
-	succeed = true
-	return
-}
-
-func GetTags(article models.Article) (tags []models.Tag) {
+func GetArticleTags(article models.Article) (tags []models.Tag) {
 	db.Model(&article).Association("Tags").Find(&tags)
 	return
 }
 
-func GetArticle(id int) (article models.Article) {
+func IsArticleExists(id int, isAdmin bool) (succeed bool) {
+	var article models.Article
+
+	if tx := db.Where("id = ?", id).First(&article); tx.RowsAffected == 0 {
+		return
+	}
+
+	if isAdmin == true || isAdmin == false && article.AdminOnly == false {
+		succeed = true
+	}
+	return
+}
+
+func GetArticle(id int, isAdmin bool) (article models.Article) {
 	db.Preload("Tags").Where("id = ?", id).First(&article)
+
+	if isAdmin == false && article.AdminOnly == true {
+		article = models.Article{}
+	}
 	return
 }
 
-func GetArticleWithoutTags(id int) (article models.Article) {
+func GetArticleWithoutTags(id int, isAdmin bool) (article models.Article) {
 	db.Where("id = ?", id).First(&article)
+
+	if isAdmin == false && article.AdminOnly == true {
+		article = models.Article{}
+	}
 	return
 }
 
-func GetArticlesInATimePeriod(start, end time.Time) (articles []models.Article) {
-	db.Order("id desc").Preload("Tags").Where("created_at >= ? and created_at < ?", start, end).Find(&articles)
+func GetArticlesInATimePeriod(start, end time.Time, isAdmin bool) (articles []models.Article) {
+	switch isAdmin {
+	case true:
+		db.Order("id desc").Preload("Tags").Where("created_at >= ? and created_at < ?", start, end).Find(&articles)
+	case false:
+		db.Order("id desc").Preload("Tags").Where("created_at >= ? and created_at < ? and admin_only = ?", start, end, isAdmin).Find(&articles)
+	}
 	return
 }
 
-func GetSameCategoryArticles(category string, offset int, limit int) (articles []models.Article) {
-	db.Limit(limit).Offset(offset).Order("id desc").Preload("Tags").Where("category = ?", category).Find(&articles) // No articles is not an error
+func GetSameCategoryArticles(category string, offset, limit int, isAdmin bool) (articles []models.Article) {
+	switch isAdmin {
+	case true:
+		db.Limit(limit).Offset(offset).Order("id desc").Preload("Tags").Where("category = ?", category).Find(&articles)
+	case false:
+		db.Limit(limit).Offset(offset).Order("id desc").Preload("Tags").Where("category = ? and admin_only = ?", category, isAdmin).Find(&articles)
+	}
 	return
 }
 
-func GetSameTagArticles(tagValue string, offset, limit int) (articles []models.Article) {
+func GetSameTagArticles(tagValue string, offset, limit int, isAdmin bool) (articles []models.Article) {
 	var tags models.Tag
 
-	db.Preload("Articles").Where("value = ?", tagValue).First(&tags)
+	switch isAdmin {
+	case true:
+		db.Preload("Articles").Where("value = ?", tagValue).First(&tags)
+	case false:
+		db.Preload("Articles").Where("value = ? and isAdmin = ?", tagValue, isAdmin).First(&tags)
+	}
 
 	start := len(tags.Articles) - 1 - offset
 	end := start - limit
@@ -66,9 +95,24 @@ func UpdateTagsStats(tagValue string) {
 	var tag models.Tag
 
 	db.Where("value = ?", tagValue).First(&tag)
-	if err := db.Model(tag).Updates(models.Tag{Views: tag.Views + 1}).Error; err != nil {
+	if err := db.Model(&tag).Updates(models.Tag{Views: tag.Views + 1}).Error; err != nil {
 		logrus.Error(err.Error())
 	}
+}
+
+func DeleteArticle(id int, isAdmin bool) bool {
+	article := GetArticleWithoutTags(id, isAdmin)
+	if article.ID == 0 {
+		return false
+	}
+
+	// The following query won't remove any tags (the primary key, i.e. ID field, of the struct should NOT be empty):
+	//     db.Where("id = ?", id).Select("Tags").Delete(&models.Article{})
+	if err := db.Select("Tags").Delete(&article).Error; err != nil {
+		logrus.Error(err.Error())
+		return false
+	}
+	return true
 }
 
 func insertArticlesAndTagsAssociation(tx *gorm.DB, article models.Article, tag models.Tag) error {
@@ -91,8 +135,8 @@ func deleteArticlesAndTagsAssociation(article models.Article, tag models.Tag) bo
 	return true
 }
 
-func insertTag(tag models.Tag) (models.Tag, error) {
-	if err := db.FirstOrCreate(&tag, models.Tag{Value: tag.Value}).Error; err != nil {
+func insertTag(tx *gorm.DB, tag models.Tag) (models.Tag, error) {
+	if err := tx.FirstOrCreate(&tag, models.Tag{Value: tag.Value}).Error; err != nil {
 		logrus.Error(err.Error())
 		return models.Tag{}, err
 	}
@@ -110,7 +154,17 @@ func insertArticle(article models.Article) (models.Article, error) {
 }
 
 func updateArticle(article models.Article) (models.Article, error) {
-	if err := db.Model(&article).Where("id = ?", article.ID).Updates(article).Error; err != nil { //  Where clause can be omitted cause article.ID is the primary key
+	// When update with struct, GORM will only update non-zero fields. Use map type variable to update or Select() to specify fields to update
+	// Where clause can be omitted cause article.ID is the primary key
+	if err := db.Model(&article).Where("id = ?", article.ID).Updates(map[string]interface{}{
+		"title":        article.Title,
+		"subtitle":     article.Subtitle,
+		"authors":      article.Authors,
+		"release_date": article.ReleaseDate,
+		"category":     article.Category,
+		"content":      article.Content,
+		"admin_only":   article.AdminOnly,
+	}).Error; err != nil {
 		logrus.Error(err.Error())
 		return models.Article{}, err
 	}
@@ -118,7 +172,7 @@ func updateArticle(article models.Article) (models.Article, error) {
 	return article, nil
 }
 
-func SubmitArticle(article models.Article, action string) (int, bool) {
+func SubmitArticle(article models.Article, action string) (newArticleID int, succeed bool) {
 	/*
 	 * We can create articles, tags and their associations (in the articles_tags table) directly by db.Create(&article).
 	 * However, when different articles have same tags, those tags will have duplicate entries in the tag table
@@ -126,50 +180,53 @@ func SubmitArticle(article models.Article, action string) (int, bool) {
 	 * but I prefer to keep this function as it is a good example for how to use transactions
 	 */
 
-	if action != "create" && action != "update" {
-		return -1, false
-	}
+	newArticleID = -1
+	succeed = false
 
 	var err error
 	var newArticle models.Article
 	var currTags, prevTags []models.Tag
 
-	tx := db.Begin()
+	tx := db.Begin() // Use 'tx' from this point, not 'db'
 	if tx.Error != nil {
-		return -1, false
+		return
 	}
 
 	currTags = article.Tags
 	article.Tags = []models.Tag{}
 
-	if action == "create" {
+	switch action {
+	case "create":
 		newArticle, err = insertArticle(article)
-	} else if action == "update" {
+	case "update":
 		prevTags = getArticlesAndTagsAssociation(article.ID)
 		newArticle, err = updateArticle(article)
+	default:
+		err = errors.New("")
 	}
+
 	if err != nil {
-		return -1, false
+		return
 	}
 
 	for _, tag := range currTags {
 		var t models.Tag
-		t, err = insertTag(tag)
+		t, err = insertTag(tx, tag)
 		if err != nil {
 			tx.Rollback()
-			return -1, false
+			return
 		}
 
 		err = insertArticlesAndTagsAssociation(tx, newArticle, t)
 		if err != nil {
 			tx.Rollback()
-			return -1, false
+			return
 		}
 	}
 
 	res := tx.Commit()
 	if res.Error != nil {
-		return -1, false
+		return
 	}
 
 	if action == "update" {
@@ -188,18 +245,4 @@ func SubmitArticle(article models.Article, action string) (int, bool) {
 	}
 
 	return newArticle.ID, true
-}
-
-func DeleteArticle(id int) bool {
-	article := GetArticleWithoutTags(id)
-	if article.ID == 0 {
-		return false
-	}
-
-	// This won't remove any tags (the ID field should NOT be empty): db.Where("id = ?", id).Select("Tags").Delete(&models.Article{})
-	if err := db.Select("Tags").Delete(&article).Error; err != nil {
-		logrus.Error(err.Error())
-		return false
-	}
-	return true
 }

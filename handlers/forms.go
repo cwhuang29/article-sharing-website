@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"mime/multipart"
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -73,9 +72,6 @@ func getValuesFromForm(c *gin.Context, formVal map[string][]string) models.Artic
 	defer func() {
 		if err := recover(); err != nil {
 			logrus.Errorf("Create article error when retrieving values from form:", err)
-			errHead := "An Error Occurred"
-			errBody := "Please try again."
-			c.JSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody})
 		}
 	}()
 
@@ -95,7 +91,13 @@ func getValuesFromForm(c *gin.Context, formVal map[string][]string) models.Artic
 		}
 	}
 
+	adminOnly, err := strconv.ParseBool(formVal["adminOnly"][0])
+	if err != nil {
+		adminOnly = true // Since there may be some unexpected errors, hide this article from non-admins
+	}
+
 	return models.Article{
+		AdminOnly:   adminOnly,
 		Title:       strings.TrimSpace(formVal["title"][0]), // If the form does not contain "title" field, the array's value extraction will panic
 		Subtitle:    strings.TrimSpace(formVal["subtitle"][0]),
 		ReleaseDate: date,
@@ -106,7 +108,7 @@ func getValuesFromForm(c *gin.Context, formVal map[string][]string) models.Artic
 	}
 }
 
-func handleForm(c *gin.Context) (newArticle models.Article, invalids map[string]interface{}, err error) {
+func handleForm(c *gin.Context) (newArticle models.Article, invalids map[string]string, err error) {
 	var form *multipart.Form
 	var fileNamesMapping map[string]string
 
@@ -116,6 +118,10 @@ func handleForm(c *gin.Context) (newArticle models.Article, invalids map[string]
 	}
 
 	newArticle = getValuesFromForm(c, form.Value)
+	if newArticle.Title == "" {
+		err = fmt.Errorf("Error occurred when extracting values from form.")
+		return
+	}
 	invalids = validateArticleValues(newArticle)
 	if len(invalids) != 0 {
 		return

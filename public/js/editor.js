@@ -1,5 +1,4 @@
 const TAGS_LIMIT = 5;
-const INITIAL_INPUT_SIZE = 30; // Autosave only if user have typed something
 const TAGS_CHAR_LIMIT = 20;
 const FILES_UPLOAD_LIMIT = 10;
 const FILE_ID_LENGTH = 10;
@@ -22,6 +21,7 @@ const createArticleEndpoint = "/admin/create/article";
 const updateArticleEndpoint = "/admin/update/article";
 const baseURL = window.location.protocol + "//" + window.location.host + "/";
 let easyMDE;
+let INITIAL_INPUT_SIZE = 0; // Autosave only if user have typed something
 
 const getLocalStorageKey = () => {
   let key = "article-create";
@@ -35,12 +35,17 @@ const clearInputLocalStorage = () => {
   window.localStorage.removeItem(getLocalStorageKey());
 };
 
+const calculateObjectValueSize = (obj) => {
+  return Object.entries(obj).reduce((ttl, val) => (ttl += val[1].length || 0), 0); // In case of non-string type
+};
+
 const saveInputToLocalStorage = () => {
   const key = getLocalStorageKey();
   const values = getInputValue();
-  const totalInputSize = Object.entries(values).reduce((ttl, val) => (ttl += val[1].length), 0);
+  const totalInputSize = calculateObjectValueSize(values);
 
-  if (totalInputSize > INITIAL_INPUT_SIZE) {
+  if (Math.abs(totalInputSize - INITIAL_INPUT_SIZE) > 0) {
+    // If user is updating articles, the INITIAL_INPUT_SIZE may be super large
     window.localStorage.setItem(key, JSON.stringify(values));
   }
 };
@@ -52,7 +57,7 @@ const setupLocalStorage = () => {
     showNoticeMsg("Article will be automatically saved", "Enjoy your journey : )");
   } else {
     showNoticeMsg("You can now continue editing", "Enjoy your journey : )");
-    writeInputValueToForm(values);
+    writeLocalStorageValue(values);
   }
 };
 
@@ -66,8 +71,10 @@ const encodeHTMLEntities = (val) => {
   return e.innerHTML;
 };
 
-const writeInputValueToForm = (values) => {
-  const { title, subtitle, date, authors, category, tags, content } = JSON.parse(values);
+const writeLocalStorageValue = (values) => {
+  const { adminOnly, title, subtitle, date, authors, category, tags, content } = JSON.parse(values);
+
+  document.querySelector("#adminOnly").checked = adminOnly;
   document.getElementsByName("title")[0].value = title;
   document.getElementsByName("subtitle")[0].value = subtitle;
   document.getElementsByName("date")[0].value = date;
@@ -80,7 +87,7 @@ const writeInputValueToForm = (values) => {
     }
   });
 
-  var tagsHTMLHead = '<span class="tag is-warning is-medium" name="tags" style="margin-right: 9px;">';
+  var tagsHTMLHead = '<span class="tag is-warning is-medium" name="tags" style="margin-right: 8px; margin-bottom: 5px">';
   var tagsHTMLTail = '<button class="delete is-small"></button></span>';
   var tagsBody = "";
   tags.forEach((ele) => {
@@ -131,7 +138,7 @@ const tagsConstructor = (e) => {
     document.getElementById("err_msg_tags").innerText = "";
     tagsCount += 1;
 
-    var newTag = `<span class="tag is-warning is-medium" name="tags" style="margin-right: 9px;">${val}<button class="delete is-small"></button></span>`;
+    var newTag = `<span class="tag is-warning is-medium" name="tags" style="margin-right: 8px; margin-bottom: 5px">${val}<button class="delete is-small"></button></span>`;
     tagsList.innerHTML += newTag;
     tagsInputBox.value = "";
   }
@@ -146,6 +153,7 @@ const tagsDeconstructor = (e) => {
 };
 
 const getInputValue = () => {
+  var adminOnly = document.querySelector("#adminOnly").checked;
   var title = document.getElementsByName("title")[0].value.trim();
   var subtitle = document.getElementsByName("subtitle")[0].value.trim();
   var date = document.getElementsByName("date")[0].value;
@@ -154,11 +162,11 @@ const getInputValue = () => {
   var tags = [...document.getElementsByName("tags")].filter((tag) => tag.tagName.toLowerCase() == "span").map((tag) => tag.textContent.trim());
   var content = easyMDE.value();
 
-  return { title: title, subtitle: subtitle, date: date, authors: authors, category: category, tags: tags, content: content };
+  return { adminOnly: adminOnly, title: title, subtitle: subtitle, date: date, authors: authors, category: category, tags: tags, content: content };
 };
 
 const validateInput = (values) => {
-  const { title, subtitle, date, authors, category, tags, content } = values;
+  const { adminOnly, title, subtitle, date, authors, category, tags, content } = values;
   var canSubmit = true;
 
   if (title.length == 0) {
@@ -289,9 +297,10 @@ const submitArticle = async (method, url, formData) => {
 };
 
 const generateForm = (values) => {
-  const { title, subtitle, date, authors, category, tags, content } = values;
+  const { adminOnly, title, subtitle, date, authors, category, tags, content } = values;
   const formData = new FormData();
 
+  formData.append("adminOnly", adminOnly);
   formData.append("title", title);
   formData.append("subtitle", subtitle);
   formData.append("date", date);
@@ -349,7 +358,11 @@ onDOMContentLoaded = (function () {
   easyMDE = loadMarkdownEditor();
 
   setupLocalStorage();
-  window.setInterval(() => saveInputToLocalStorage(), 1000 * 60 * 5); // 5 min
+
+  const values = getInputValue();
+  INITIAL_INPUT_SIZE = calculateObjectValueSize(values);
+
+  window.setInterval(() => saveInputToLocalStorage(), 5000);
   document.getElementById("clearAutosaveButton").addEventListener("click", () => clearInputLocalStorage());
   document.getElementById("saveNowButton").addEventListener("click", () => saveInputToLocalStorage());
 

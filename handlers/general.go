@@ -21,7 +21,7 @@ func CheckPermissionAndArticleExists(c *gin.Context) {
 		return
 	}
 
-	if succeed := databases.IsArticleExists(id); succeed != true {
+	if succeed := databases.IsArticleExists(id, true); succeed != true {
 		errHead := "Article ID Not Found"
 		errBody := "Please try again."
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errHead": errHead, "errBody": errBody})
@@ -34,8 +34,10 @@ func CheckPermissionAndArticleExists(c *gin.Context) {
 func WeeklyUpdate(c *gin.Context) {
 	today := time.Now().UTC().Truncate(24 * time.Hour)
 	sevenDaysAgo := today.AddDate(0, 0, -7)
+	tomorrow := today.AddDate(0, 0, 1)
 
-	dbFormatArticle := databases.GetArticlesInATimePeriod(sevenDaysAgo, today.AddDate(0, 0, 1))
+	isAdmin := detectIfUserIsAdmin(c)
+	dbFormatArticle := databases.GetArticlesInATimePeriod(sevenDaysAgo, tomorrow, isAdmin)
 	if len(dbFormatArticle) == 0 {
 		c.HTML(http.StatusOK, "overview.html", gin.H{
 			"currPageCSS": "css/overview.css",
@@ -46,7 +48,7 @@ func WeeklyUpdate(c *gin.Context) {
 		return
 	}
 
-	var articleList []OverviewArticle
+	var articleList []Article
 
 	for _, a := range dbFormatArticle {
 		articleList = append(articleList, articleFormatDBToOverview(a))
@@ -90,7 +92,8 @@ func FetchData(c *gin.Context) {
 		return
 	}
 
-	data, err := fetchData(types, query, offset, limit)
+	isAdmin := detectIfUserIsAdmin(c)
+	data, err := fetchData(types, query, offset, limit, isAdmin)
 	c.JSON(http.StatusOK, gin.H{"articleList": data, "size": len(data)}) // Notice: if the data is an empty array [], frontend will get `null` instead of empty array
 }
 
@@ -138,7 +141,8 @@ func Browse(c *gin.Context) {
 		return
 	}
 
-	dbFormatArticle := databases.GetArticle(id)
+	isAdmin := detectIfUserIsAdmin(c)
+	dbFormatArticle := databases.GetArticle(id, isAdmin)
 	if dbFormatArticle.ID == 0 {
 		errHead := "Article Not Found"
 		errBody := "Go back to previous page and try again."
@@ -164,6 +168,7 @@ func Browse(c *gin.Context) {
 		"currPageCSS": "css/browse.css",
 		"csrfToken":   uuid,
 		"success":     true,
+		"adminOnly":   article.AdminOnly,
 		"title":       article.Title,
 		"subtitle":    article.Subtitle,
 		"date":        article.Date,
