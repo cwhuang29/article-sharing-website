@@ -4,8 +4,12 @@
 }
 
 .main-padding-container {
-    padding-left: 8rem;
-    padding-right: 8rem;
+    padding-left: 14rem;
+    padding-right: 14rem;
+    text-align: justify;
+    text-justify: inter-word;
+    /* text-justify: inter-ideograph; Only few browsers support this value*/
+    line-height: 140%;
 }
 
 @media only screen and (hover: none) and (pointer: coarse) {

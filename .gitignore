@@ -16,3 +16,4 @@
 
 public/upload/*/*
 certs/*
+tmp.db # The name of sqlite database by default

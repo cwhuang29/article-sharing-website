@@ -6,23 +6,25 @@ import (
 )
 
 const (
-	titleLength    = 55
-	subtitleLength = 90
+	titleSizeLimit    = 34.
+	subtitleSizeLimit = 54.
 )
 
 func articleFormatDBToOverview(article models.Article) (a Article) {
 	a.ID = article.ID
 
-	if len(article.Title) > titleLength {
-		a.Title = article.Title[:titleLength] + " ..."
+	if len(article.Title) > titleSizeLimit {
+		a.Title = decodeRunes(article.Title, titleSizeLimit) + " ..."
 	} else {
 		a.Title = article.Title
 	}
-	if len(article.Subtitle) > subtitleLength {
-		a.Subtitle = article.Subtitle[:subtitleLength] + " ..."
+
+	if len(article.Subtitle) > subtitleSizeLimit {
+		a.Subtitle = decodeRunes(article.Subtitle, subtitleSizeLimit) + " ..."
 	} else {
 		a.Subtitle = article.Subtitle
 	}
+
 	a.Date = article.ReleaseDate.String()
 	a.Authors = strings.Split(article.Authors, ",")
 	a.Category = strings.ToLower(article.Category) // Because router only accepts lower case path

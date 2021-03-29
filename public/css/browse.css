@@ -1,14 +1,3 @@
-figure > img {
-    max-height: 70%;
-    max-width: 70%;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-figure {
-    margin-bottom: -15%;
-}
-
 /*
 .tag:not(.is-link) {
    background-color: #f6f6f6 !important;
@@ -28,4 +17,11 @@ figure {
     left: 50%;
     top: 50%;
     z-index: 1000;
+    padding: 0.75rem; /* Otherwise the content's location is too high */
+}
+
+@media only screen and (hover: none) and (pointer: coarse) {
+    #modal-message {
+        padding: 0rem;
+    }
 }

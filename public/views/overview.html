@@ -59,8 +59,8 @@
                         if (img[0][img[0].length - 5] == '<'){ // If the image is embedded in a list, then it will be surrounded by <li></li> instead of <p></p>
                             truncEnd -= 1;
                         }
-                        var img_tag = `<div class="column is-5" style="text-align: center;">` + img_add_class + img[0].substring(4, truncEnd) + '</div>'; // substring(): to remove "</p>"
-                        content = '<div class="column is-7">' + '{{ .Content }}'.replaceAll(/<img.*>/g, '').replaceAll(/<pre>/g, '').replaceAll(/<\/pre>/g, '') + '</div>' + img_tag; // i: case insensitive. g: replace multiple occurrences
+                        var img_tag = `<div class="column is-4" style="text-align: right;">` + img_add_class + img[0].substring(4, truncEnd) + '</div>'; // substring(): to remove "</p>"
+                        content = '<div class="column is-8">' + '{{ .Content }}'.replaceAll(/<img.*>/g, '').replaceAll(/<pre>/g, '').replaceAll(/<\/pre>/g, '') + '</div>' + img_tag; // i: case insensitive. g: replace multiple occurrences
                     } else {
                         content = '<div class="column is-12">' + '{{ .Content }}'.replaceAll(/<img.*>/g, '').replaceAll(/<pre>/g, '').replaceAll(/<\/pre>/g, '') + '</div>';
                     }

@@ -8,7 +8,7 @@
           <div class="modal-background"></div>
           <div class="modal-content" style="z-index: 10000 !important">
             <div style="text-align: center">
-              <div class="p-3" id="modal-message">
+              <div id="modal-message">
                 <p class="mb-4 mt-2" style="font-size: 1.25rem;" id="confirm-modal-title"></p>
                 <div>
                   <button class="button is-primary mr-5" id="yesBtn">&nbsp;Yes&nbsp;</button>
@@ -66,16 +66,15 @@
                   {{ end }}
                 </div>
             </div>
-            <div class="block" style="text-align: center">
-                <p class="title is-2">{{ .title }}</p>
-                <p class="subtitle is-4">{{ .subtitle }}</p>
-                <p class="title is-2"></p>
-                <p class="subtitle is-4"></p>
+            <div class="block" style="text-align: center; padding-top: 15px;">
+                <p class="title is-2 mt-3">{{ .title }}</p>
+                <p class="subtitle is-5 pt-2">{{ .subtitle }}</p>
             </div>
+            <div style="padding-top: 15px"></div>
             <div class="content is-normal">
             </div>
             <script>
-                var imgHead = '<div class="block px-2" style="max-width: 90%; max-height: 500px; overflow-y: hidden; margin-left: auto; margin-right: auto;"><figure class="image is-16by9">';
+                var imgHead = '<div class="block px-2" style="max-width: 800px; max-height: 600px; overflow-y: hidden; margin-left: auto; margin-right: auto;"><figure class="image is-16by9">';
                 var imgTail = '</figure></div>';
                 var content = "{{ .content }}".replace(/<p>(<img.*>)<\/p>/g, imgHead + "$1" + imgTail) ;
 

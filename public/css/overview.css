@@ -7,13 +7,14 @@
     padding-top: 0rem !important;
     padding-bottom: 0.8rem !important;
 }
-.column.is-7 {
+.column.is-8 {
     padding-top: 0rem !important;
     padding-bottom: 4.8rem !important;
 }
-.column.is-5 {
+.column.is-4 {
     padding-top: 0rem !important;
     padding-bottom: 0rem !important;
+    text-align: right;
 }
 .tile.is-parent {
     margin-left: auto;
@@ -25,7 +26,7 @@
 .overview-content {
     max-height: 100px;
     overflow: hidden;
-    padding-left: 6px; /* Get some space for content's 1., 2., ... */
+    padding-left: 6px; /* Get some space for content's numbered list */
 }
 .title,
 .subtitle {
@@ -41,18 +42,17 @@
     float: right;
     justify-content: space-between !important;
     position: relative !important;
+    margin-left: 18px;
 }
 .article-list-container {
     max-height: 280px;
     overflow: hidden;
 }
-
 .tile > .title,
 .tile > .subtitle,
 .tile > .columns {
     cursor: default;
 }
-
 .tile > .article-list-tag {
     cursor: pointer;
 }

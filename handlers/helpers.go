@@ -1,24 +1,43 @@
 package handlers
 
 import (
+	"github.com/cwhuang29/article-sharing-website/databases"
+	"github.com/cwhuang29/article-sharing-website/databases/models"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/russross/blackfriday"
+	"golang.org/x/crypto/bcrypt"
 	"reflect"
 	"regexp"
 	"strconv"
 	"time"
-
-	"github.com/cwhuang29/article-sharing-website/databases"
-	"github.com/cwhuang29/article-sharing-website/databases/models"
-	"github.com/google/uuid"
-
-	"github.com/russross/blackfriday"
-	"golang.org/x/crypto/bcrypt"
+	"unicode/utf8"
 )
 
 var (
 	overviewContentLength = 800
 	emailRegex            = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 )
+
+// Each mandarin symbol takes 3 - 4 bytes.
+// The following `limit` is a value to measured how many characters can be displayed,
+// It measures not only number of characters, but also the size of each character.
+func decodeRunes(s string, limit float64) string {
+	idx := 0
+
+	for cnt := 0.; cnt < limit; {
+		_, width := utf8.DecodeRuneInString(s[idx:])
+		// fmt.Printf("%#U starts at byte position %d\n", runeValue, charWidth)
+
+		idx += width
+		if width == 1 {
+			cnt += 1 // English alphabets
+		} else {
+			cnt += 1.78 // Chinese words are about 1.8 times wider than English alphabets
+		}
+	}
+	return s[:idx]
+}
 
 func GetUserStatus(c *gin.Context) (status UserStatus, cookieEmail string) {
 	cookieEmail, _ = c.Cookie("login_email") // If no such cookie, c.Cookie() returns empty string with error `named cookie not present`

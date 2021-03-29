@@ -133,9 +133,9 @@ const formatArticle = (article) => {
       // If the image is embedded in a list, then it will be surrounded by <li></li> instead of <p></p>
       truncEnd -= 1;
     }
-    let img_tag = `<div class="column is-5" style="text-align: center;">` + img_add_class + img[0].substring(4, truncEnd) + "</div>"; // substring(): to remove "</p>"
+    let img_tag = `<div class="column is-4" style="text-align: right;">` + img_add_class + img[0].substring(4, truncEnd) + "</div>"; // substring(): to remove "</p>"
     content =
-      '<div class="column is-7">' +
+      '<div class="column is-8">' +
       content
         .replaceAll(/<img.*>/g, "")
         .replaceAll(/<pre>/g, "")

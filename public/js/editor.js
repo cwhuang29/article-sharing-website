@@ -158,7 +158,8 @@ const getInputValue = () => {
   var subtitle = document.getElementsByName("subtitle")[0].value.trim();
   var date = document.getElementsByName("date")[0].value;
   var authors = [...document.getElementsByName("authors")].filter((author) => author.checked).map((author) => author.value);
-  var category = document.getElementsByName("category")[0].value;
+  // If toLowerCase() is omitted, sqlite can't find out records in function GetSameCategoryArticles() (but MySQL works fine)
+  var category = document.getElementsByName("category")[0].value.toLowerCase(); // From "Medication" to "medication"
   var tags = [...document.getElementsByName("tags")].filter((tag) => tag.tagName.toLowerCase() == "span").map((tag) => tag.textContent.trim());
   var content = easyMDE.value();
 
