@@ -71,9 +71,29 @@
                 </div>
               </div>
               <div id="tags-list" class="column" style="margin-top: 4px; cursor: default">
-                  <!-- <span class="tag is-warning is-medium" name="tags">Hello<button class="delete is-small"></button></span> -->
+              <!-- <span class="tag is-warning is-medium" name="tags">Hello<button class="delete is-small"></button></span> -->
               </div>
             </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Outline</label>
+          <div class="control">
+            <!-- If the input is pure Mandarin, then the best maxlength is 232 -->
+			<textarea class="textarea" name="outline" id="overview-text-area" maxlength="510" rows="3" placeholder="Recommend: 230 words (Mandarin) or 510 characters (English)"></textarea>
+            <span class='help'>If you want to break to a newline, type the <code>&lt;br&gt;</code> symbol</span>
+          </div>
+          <div class='file has-name is-warning is-small' style="padding-top: 10px;">
+            <label class='file-label'>
+              <input class='file-input' type='file' id='coverPhoto'>
+              <span class='file-cta'>
+                <span class='file-icon'> 📂 </span>
+                <span class='file-label'>Upload cover photo</span>
+              </span>
+              <span class='file-name' id=coverPhotoName>No image uploaded</span>
+            </label>
+          </div>
+          <p class="help">Image which displays on overview page</p>
         </div>
 
         <div class="field">
@@ -84,7 +104,7 @@
           </div>
         </div>
 
-        <div id='fileInputGroups' class="block">
+        <div id='filesGroupInContent' class="block">
           <div class='file has-name is-warning is-small pb-1'>
             <label class='file-label'>
               <input class='file-input' type='file'>
@@ -107,14 +127,6 @@
                 <button class="button is-warning " id="submitButton" style="float: right">Submit</button>
               </div>
             </div>
-            <div class="field">
-              <p class="help">
-                Notice: <br>
-                &bull; Images will not be autosaved, and hence the link you get after uploading images will be invalid once you have left/reload this page. So make sure you <strong>re-upload images</strong> if continue editing.
-                <br>
-                 &bull; To discard autosave values (not values on the webpage), click the "Clear Autosave" button and reload the page.
-              </p>
-            </div>
         {{ else if eq .function "update" }}
             <div class="field" style="display: flex">
               <div style="flex: 70%">
@@ -126,31 +138,23 @@
                 <button class="button is-warning is-light" id="cancelButton" style="float: right; margin-left: 10px; margin-bottom: 10px;">Cancel</button>
               </div>
             </div>
-            <div class="field">
-              <p class="help">
-                Notice: <br>
-                &bull; Images will not be autosaved, and hence the link you get after uploading images will be invalid once you have left/reload this page. So make sure you <strong>re-upload images</strong> if continue editing.
-                <br>
-                 &bull; To discard autosave values (not values on the webpage), click the "Clear Autosave" button and reload the page.
-              </p>
-            </div>
             <script>
-                // TODO Replace following code block with the writeInputValue function
+                // TODO Replace following code block with the writeLocalStorageValue function
                 document.querySelector("#adminOnly").checked = ('{{ .adminOnly }}' == 'true');
                 document.getElementsByName("title")[0].value = '{{ .articleTitle }}';
                 document.getElementsByName("subtitle")[0].value = '{{ .subtitle }}';
                 document.getElementsByName("date")[0].value = '{{ .date }}';
                 var authorList = {{ .author }}; // To make an array type variable, don't quote it
                 [...document.getElementsByName("authors")].forEach((ele, idx) => {
-                    if (authorList.includes(ele.value)) {
-                        document.getElementsByName("authors")[idx].checked = true;
-                    }
+                  if (authorList.includes(ele.value)) {
+                    document.getElementsByName("authors")[idx].checked = true;
+                  }
                 });
                 var cate = '{{ .category }}';
                 [...document.getElementsByName("category")[0]].forEach((ele, idx) => {
-                    if (ele.value.toLowerCase() == cate) {
-                        document.getElementsByName("category")[0].selectedIndex = idx;
-                    }
+                  if (ele.value.toLowerCase() == cate) {
+                    document.getElementsByName("category")[0].selectedIndex = idx;
+                  }
                 });
 
                 const encHTML = (val) => {
@@ -163,17 +167,41 @@
                 var tagsHTMLTail = "<button class='delete is-small'></button></span>";
                 var tagsBody = "";
                 tags.forEach((t) => {
-                    tagsBody += `${tagsHTMLHead}${encHTML(t)}${tagsHTMLTail}`
+                  tagsBody += `${tagsHTMLHead}${encHTML(t)}${tagsHTMLTail}`
                 });
                 document.getElementById("tags-list").innerHTML = tagsBody;
 
+                if ('{{ .coverPhoto }}' != '') {
+                  document.querySelector("#coverPhotoName").textContent = '{{ .coverPhoto }}';
+                }
+                document.getElementsByName("outline")[0].value = '{{ .outline }}';
                 document.getElementsByName("content")[0].value = '{{ .content }}';
             </script>
         {{ end }}
+        <div class="field">
+          <p class="help" style="text-align: left;">
+            Notice (for the content field):
+            <br>
+            &bull; The recommended aspect ratios are 16x9
+            <br>
+            &bull; Create a <strong>superscript</strong> (appears half a character above the normal line) by <code>&lt;sup&gt;This is superscript&lt;/sup&gt;</code>
+            <br>
+            &bull; Create a <strong>link</strong> that points to other place in the same article: First, create a link by <code>&lt;a name="mylink"&gt;&lt;/a&gt;</code>. Second. jump to it by <code>&lt;a href="#mylink"&gt;[Jump to link]&lt;/a&gt;</code>
+            <br>
+            &bull; Create a <strong>superscript that links to other content in the same article</strong>: First, create a link by <code>&lt;a name="mytitle"&gt;&lt;/a&gt;</code> (put it in front of the title). Second, create a superscript by <code>&lt;sup&gt;&lt;a href="#mytitle"&gt;[Jump to title]&lt;/a&gt;&lt;/sup&gt;</code>
+            <br>
+            &bull; Images will not be autosaved, and hence the link you get after uploading images will be invalid once you have left/reload this page. So make sure you <strong>re-upload images</strong> if continue editing.
+            <br>
+            &bull; To discard autosave values (not values on the webpage), click the "Clear Autosave" button and reload the page.
+          </p>
+        </div>
     </div>
     {{ template "footer" . }}
     <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
 	<script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script> <!--  Parse md to html -->
-    <script src="/js/editor.js"></script>
+    <script src="/js/editor/fileUploadHandler.js"></script>
+    <script src="/js/editor/tag.js"></script>
+    <script src="/js/editor/editor.js"></script>
+    <script src="/js/editor/autosave.js"></script>
 </body>

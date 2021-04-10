@@ -22,15 +22,15 @@
     max-width: 1100px;
     min-height: 140px;
     max-height: 350px;
+    margin-bottom: 10px;
+}
+.article-list-container {
+    max-height: 260px;
+    overflow: hidden;
 }
 .overview-content {
-    max-height: 100px;
+    max-height: 114px;
     overflow: hidden;
-    padding-left: 6px; /* Get some space for content's numbered list */
-}
-.title,
-.subtitle {
-    padding-left: 6px; /* To align with content */
 }
 .article-list-img-h {
     height: 160px !important;
@@ -39,20 +39,19 @@
     height: 100% !important;
 }
 .article-list-tag {
-    float: right;
     justify-content: space-between !important;
     position: relative !important;
-    margin-left: 18px;
+    margin-bottom: 5.3px;
+    margin-left: 3.3px;
+    text-align: left; /* To rewrite the justify value set by .main-padding-container */
+    cursor: pointer;
 }
-.article-list-container {
-    max-height: 280px;
-    overflow: hidden;
+.tag {
+    margin-bottom: 3.3px;
+    margin-right: 6px;
 }
 .tile > .title,
 .tile > .subtitle,
 .tile > .columns {
     cursor: default;
-}
-.tile > .article-list-tag {
-    cursor: pointer;
 }

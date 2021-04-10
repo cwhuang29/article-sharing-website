@@ -13,9 +13,72 @@ const appendNewContent = (content) => {
   ele = document.createElement("div");
   ele.innerHTML = content;
 
-  let lastArticlesParent = articlesContainer.lastElementChild;
-  lastArticlesParent.insertAfter = content;
-  lastArticlesParent.parentNode.insertBefore(ele, lastArticlesParent.nextSibling);
+  let anchor = articlesContainer.lastElementChild;
+  anchor.parentNode.insertBefore(ele, anchor.nextSibling);
+};
+
+const isMobile = () => {
+  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+};
+
+const toTitleCase = (s) => {
+  if (typeof s == "string" && s.length > 0) {
+    return s[0].toUpperCase() + s.substr(1);
+  }
+  return "";
+};
+
+const encodeHTMLEntities = (val) => {
+  /*
+   * Input: <scrpit>console.log(1)</script>
+   * Output: &lt;script&gt;console.log(1)&lt;/script&gt;
+   */
+  let e = document.createElement("textarea");
+  e.innerHTML = val;
+  return e.innerHTML;
+};
+
+const formatArticle = (article) => {
+  let { id, adminOnly, title, subtitle, tags, category, outline, cover_photo } = article;
+
+  let titleTag = `<p class="title">${title}</p>`;
+
+  let subtitleTag = ""; // Don't show subtitle on mobile devices
+  if (!isMobile()) {
+    subtitleTag = `<p style="font-size: 110%; font-weight: 600; margin-bottom: 4.5px">${subtitle}</p>`;
+  }
+
+  let tagHTML = "";
+  tags.forEach((t) => {
+    tagHTML += `<a href="/articles/tags?query=${encodeURIComponent(t)}"><span class="tag is-warning">${encodeHTMLEntities(t)}</span></a>`;
+  });
+
+  categoryTag = `<a href="/articles/${category}"><span class="tag is-primary">${toTitleCase(category)}</span></a>`;
+
+  adminTag = "";
+  if (adminOnly) {
+    adminTag = `<span class="tag is-danger">Admin Only</span>`;
+  }
+
+  let overviewContent;
+  let outlineTag = `<p>${outline}</p>`;
+  if (cover_photo) {
+    let imgTag = `<div class="column is-4" style="text-align: right;"><img class="article-list-img-h" src="/${cover_photo}"></div>`;
+    overviewContent = `<div class="column is-8">${subtitleTag}${outlineTag}</div>${imgTag}`;
+  } else {
+    overviewContent = `<div class="column is-12">${subtitleTag}${outlineTag}</div>`;
+  }
+
+  return `<div class="tile is-ancestor">
+                <div class="tile is-parent">
+                    <div class="tile is-child box article-list-container">
+                        <div data-articleid=${id}></div>
+                        <div class="article-list-tag">${adminTag}${categoryTag}${tagHTML}</div>
+                        ${titleTag}
+                        <div class="columns overview-content">${overviewContent}</div>
+                    </div>
+                </div>
+            </div>`;
 };
 
 const checkStatus = async (resp) => {
@@ -63,7 +126,8 @@ const fetchContent = async (count) => {
 
   let path = location.pathname.split("/").pop();
   if (path == "weekly-update") {
-    return;
+    type = "time";
+    query = null;
   } else if (path == "tags") {
     type = "tag";
     query = new URLSearchParams(window.location.search).get("query");
@@ -72,8 +136,8 @@ const fetchContent = async (count) => {
     query = path; // Either "pharma" or "medication"
   }
 
-  let para = "?" + new URLSearchParams({ type: type, query: query, offset: offset, limit: limit });
-  let url = "fetch" + para;
+  let para = new URLSearchParams({ type: type, query: query, offset: offset, limit: limit });
+  let url = "fetch?" + para;
   let res = await fetchData(url).then(checkStatus).then(fetchSucceed).catch(fetchFailed);
 
   if (!res) {
@@ -85,97 +149,7 @@ const fetchContent = async (count) => {
   }
 };
 
-const fetchInitialContent = async () => {
-  if (offset == 0) {
-    await fetchContent(0);
-    if (offset == 0) {
-      showNoticeMsg("Oops ... ", "There is no articles.");
-    }
-  }
-};
-
-const encodeHTMLEntities = (val) => {
-  /*
-   * To prevent from XSS attack
-   * Input: <scrpit>console.log(1)</script>
-   * Output: &lt;script&gt;console.log(1)&lt;/script&gt;
-   */
-  let e = document.createElement("textarea");
-  e.innerHTML = val;
-  return e.innerHTML;
-};
-
-const formatArticle = (article) => {
-  let { id, adminOnly, title, subtitle, tags, category, content } = article;
-  let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-  if (isMobile) {
-    subtitle = ""; // Don't show subtitle on mobile devices
-  }
-
-  let tagHTML = "";
-  tags.forEach((t) => {
-    tagHTML += `<a href="/articles/tags?query=${encodeURIComponent(t)}"><span class="tag is-warning">${encodeHTMLEntities(t)}</span></a>&nbsp;`;
-  });
-
-  cate = `<a href="/articles/${category}"><span class="tag is-primary">${category}</span></a>`;
-
-  admin = "";
-  if (adminOnly) {
-    admin = `&nbsp;<span class="tag is-danger">Admin Only</span>`; // To notify admins
-  }
-
-  let img = /<img.*>/.exec(content); // Note that there is a <p></p> tag surrounded
-  let img_add_class = '<img class="article-list-img-h" ';
-  if (img != null) {
-    truncEnd = img[0].length - 4;
-    if (img[0][img[0].length - 5] == "<") {
-      // If the image is embedded in a list, then it will be surrounded by <li></li> instead of <p></p>
-      truncEnd -= 1;
-    }
-    let img_tag = `<div class="column is-4" style="text-align: right;">` + img_add_class + img[0].substring(4, truncEnd) + "</div>"; // substring(): to remove "</p>"
-    content =
-      '<div class="column is-8">' +
-      content
-        .replaceAll(/<img.*>/g, "")
-        .replaceAll(/<pre>/g, "")
-        .replaceAll(/<\/pre>/g, "") +
-      "</div>" +
-      img_tag;
-  } else {
-    content =
-      '<div class="column is-12">' +
-      content
-        .replaceAll(/<img.*>/g, "")
-        .replaceAll(/<pre>/g, "")
-        .replaceAll(/<\/pre>/g, "") +
-      "</div>";
-  }
-
-  return `<div class="tile is-ancestor">
-                <div class="tile is-parent">
-                    <div class="tile is-child box article-list-container">
-                        <div data-articleid=${id}></div>
-                        <div class="article-list-tag">
-                            ${tagHTML}${cate}${admin}
-                        </div>
-                        <p class="title">${title}</p>
-                        <p class="subtitle">${subtitle}</p>
-                        <div class="columns overview-content">${content}</div>
-                    </div>
-                </div>
-            </div>`;
-};
-
-onDOMContentLoaded = (function () {
-  // For weekly-update page, the offset initial value may not be zero
-  offset = Number(document.getElementById("articles-count").innerText) || 0; // offset == # means we'll skip # articles in next fetch
-
-  articlesContainer = document.querySelector("#articles-container");
-  articlesContainer.addEventListener("click", (e) => {
-    window.location.href = "/articles/browse?articleId=" + e.target.closest("div.tile.is-child").children[0].dataset.articleid;
-  });
-
+const sessionStorageHandler = async () => {
   let path = location.pathname.split("/").pop();
   let para = new URLSearchParams(window.location.search).get("query") || "";
   let sessionPath = window.sessionStorage.getItem("path");
@@ -194,8 +168,27 @@ onDOMContentLoaded = (function () {
     offset = Number(window.sessionStorage.getItem("offset"));
     document.querySelector("#articles-container").innerHTML = overviewContent;
   } else {
-    fetchInitialContent();
+    await fetchContent(0);
+    if (offset == 0) {
+      let path = location.pathname.split("/").pop();
+      let errMsg = "There is no articles";
+      if (path == "weekly-update") {
+        errMsg = "No new articles in the past 7 days";
+      }
+      showNoticeMsg("Oops ... ", errMsg);
+    }
   }
+};
+
+onDOMContentLoaded = (function () {
+  offset = 0; // offset == # means we'll skip # articles in next fetch
+
+  sessionStorageHandler();
+
+  articlesContainer = document.querySelector("#articles-container");
+  articlesContainer.addEventListener("click", (e) => {
+    window.location.href = "/articles/browse?articleId=" + e.target.closest("div.tile.is-child").children[0].dataset.articleid;
+  });
 
   let lastFetch = 0;
   let delay = 300;

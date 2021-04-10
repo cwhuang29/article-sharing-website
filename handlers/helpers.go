@@ -20,9 +20,10 @@ var (
 )
 
 // Each mandarin symbol takes 3 - 4 bytes.
-// The following `limit` is a value to measured how many characters can be displayed,
-// It measures not only number of characters, but also the size of each character.
-func decodeRunes(s string, limit float64) string {
+// The following `limit` is a value to measured how many "characters" can be displayed,
+// It measures not only number of characters, but also the width of each character.
+// `ratio` is the width ratio of Chinese words versus English characters
+func decodeRuneStringForFrontend(s string, limit float64, ratio float64) string {
 	idx := 0
 
 	for cnt := 0.; cnt < limit; {
@@ -31,9 +32,9 @@ func decodeRunes(s string, limit float64) string {
 
 		idx += width
 		if width == 1 {
-			cnt += 1 // English alphabets
+			cnt += 1 // e.g. English alphabets
 		} else {
-			cnt += 1.78 // Chinese words are about 1.8 times wider than English alphabets
+			cnt += ratio
 		}
 	}
 	return s[:idx]
@@ -104,6 +105,16 @@ func fetchData(types, query string, offset, limit int, isAdmin bool) (articleLis
 	var dbFormatArticle []models.Article
 
 	switch types {
+	case "time":
+		// For first time, load the weekly articles (all articles in the latest 7 days)
+		if offset == 0 {
+			today := time.Now().UTC().Truncate(24 * time.Hour)
+			sevenDaysAgo := today.AddDate(0, 0, -7)
+			tomorrow := today.AddDate(0, 0, 1)
+			dbFormatArticle = databases.GetArticlesInATimePeriod(sevenDaysAgo, tomorrow, isAdmin)
+		} else {
+			dbFormatArticle = databases.GetArticles(offset, limit, isAdmin)
+		}
 	case "tag":
 		dbFormatArticle = databases.GetSameTagArticles(query, offset, limit, isAdmin)
 		for i := 0; i < len(dbFormatArticle); i++ {

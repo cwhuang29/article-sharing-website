@@ -36,7 +36,7 @@ func connect(cfg config.Database) (err error) {
 	default:
 		panic("Please select a correct database driver (mysql or sqlite).")
 	}
-	return nil
+	return
 }
 
 func createTables() {

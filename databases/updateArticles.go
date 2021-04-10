@@ -5,91 +5,7 @@ import (
 	"github.com/cwhuang29/article-sharing-website/databases/models"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
-	"time"
 )
-
-func GetArticleTags(article models.Article) (tags []models.Tag) {
-	db.Model(&article).Association("Tags").Find(&tags)
-	return
-}
-
-func IsArticleExists(id int, isAdmin bool) (succeed bool) {
-	var article models.Article
-
-	if tx := db.Where("id = ?", id).First(&article); tx.RowsAffected == 0 {
-		return
-	}
-
-	if isAdmin == true || isAdmin == false && article.AdminOnly == false {
-		succeed = true
-	}
-	return
-}
-
-func GetArticle(id int, isAdmin bool) (article models.Article) {
-	db.Preload("Tags").Where("id = ?", id).First(&article)
-
-	if isAdmin == false && article.AdminOnly == true {
-		article = models.Article{}
-	}
-	return
-}
-
-func GetArticleWithoutTags(id int, isAdmin bool) (article models.Article) {
-	db.Where("id = ?", id).First(&article)
-
-	if isAdmin == false && article.AdminOnly == true {
-		article = models.Article{}
-	}
-	return
-}
-
-func GetArticlesInATimePeriod(start, end time.Time, isAdmin bool) (articles []models.Article) {
-	switch isAdmin {
-	case true:
-		db.Order("id desc").Preload("Tags").Where("created_at >= ? and created_at < ?", start, end).Find(&articles)
-	case false:
-		db.Order("id desc").Preload("Tags").Where("created_at >= ? and created_at < ? and admin_only = ?", start, end, isAdmin).Find(&articles)
-	}
-	return
-}
-
-func GetSameCategoryArticles(category string, offset, limit int, isAdmin bool) (articles []models.Article) {
-	switch isAdmin {
-	case true:
-		db.Limit(limit).Offset(offset).Order("id desc").Preload("Tags").Where("category = ?", category).Find(&articles)
-	case false:
-		db.Limit(limit).Offset(offset).Order("id desc").Preload("Tags").Where("category = ? and admin_only = ?", category, isAdmin).Find(&articles)
-	}
-	return
-}
-
-func GetSameTagArticles(tagValue string, offset, limit int, isAdmin bool) (articles []models.Article) {
-	var tags models.Tag
-
-	switch isAdmin {
-	case true:
-		db.Preload("Articles").Where("value = ?", tagValue).First(&tags)
-	case false:
-		db.Preload("Articles").Where("value = ? and isAdmin = ?", tagValue, isAdmin).First(&tags)
-	}
-
-	start := len(tags.Articles) - 1 - offset
-	end := start - limit
-
-	if start < 0 {
-		return
-	}
-
-	if end < -1 {
-		end = -1
-	}
-
-	for i := start; i > end; i-- {
-		articles = append(articles, tags.Articles[i])
-	}
-	return
-}
 
 func UpdateTagsStats(tagValue string) {
 	var tag models.Tag
@@ -155,16 +71,24 @@ func insertArticle(article models.Article) (models.Article, error) {
 
 func updateArticle(article models.Article) (models.Article, error) {
 	// When update with struct, GORM will only update non-zero fields. Use map type variable to update or Select() to specify fields to update
-	// Where clause can be omitted cause article.ID is the primary key
-	if err := db.Model(&article).Where("id = ?", article.ID).Updates(map[string]interface{}{
+	// Where clause can be omitted since article.ID is the primary key
+	a := map[string]interface{}{
 		"title":        article.Title,
 		"subtitle":     article.Subtitle,
 		"authors":      article.Authors,
 		"release_date": article.ReleaseDate,
 		"category":     article.Category,
+		"outline":      article.Outline,
 		"content":      article.Content,
 		"admin_only":   article.AdminOnly,
-	}).Error; err != nil {
+	}
+
+	// If user doesn't upload new cover photo while editing articles, we have to keep the original one
+	if article.CoverPhoto != "" {
+		a["cover_photo"] = article.CoverPhoto
+	}
+
+	if err := db.Model(&article).Where("id = ?", article.ID).Updates(a).Error; err != nil {
 		logrus.Error(err.Error())
 		return models.Article{}, err
 	}

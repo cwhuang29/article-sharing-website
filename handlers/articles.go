@@ -64,6 +64,8 @@ func UpdateArticleView(c *gin.Context) {
 		"author":       article.Authors,
 		"category":     article.Category,
 		"tags":         article.Tags,
+		"outline":      article.Outline,
+		"coverPhoto":   article.CoverPhoto,
 		"content":      article.Content,
 	})
 }

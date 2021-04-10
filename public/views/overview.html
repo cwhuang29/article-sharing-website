@@ -8,73 +8,34 @@
         <div class="block" style="text-align: center">
             <h2 class="title is-2 has-text-warning">{{ .title  }}</h2>
         </div>
-        <div style="display:none" id="articles-count">{{ .initialCount }}</div>
         <div id="articles-container">
-            <!-- Notice: The following section is for weekly update page only (server will send all content in latest 7 days, which should not be too much). -->
-            <!--         For other pages, server respond with no content, and clients will fetch data subsequently. -->
-            <!--         Unlike other templates, variables are start with capital because server transfer an object type parameter instead of key-value pairs. -->
-            {{ if .articleList }}
-                {{ range .articleList }}
-                <div class="tile is-ancestor">
-                    <div class="tile is-parent">
-                        <div class="tile is-child box article-list-container">
-                            <div data-articleid="{{ .ID }}"></div>
-                            <div class="article-list-tag">
-                                {{ range $t := .Tags }}
-                                    <a href="/articles/tags?query={{ $t }}">
-                                        <span class="tag is-warning">{{ $t }}</span>
-                                    </a>
-                                {{ end }}
-                                <a href="/articles/{{ .Category }}">
-                                    <span class="tag is-primary">{{ .Category }}</span>
-                                </a>
-                                {{ if eq .AdminOnly true }}
-                                    <span class="tag is-danger">Admin Only</span>
-                                {{ end }}
-                            </div>
-                            <p class="title"></p>
-                            <p class="subtitle"></p>
-                            <div class="columns overview-content"></div>
-                        </div>
-                    </div>
-                </div>
-                <script>
-                    var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                    var title = "{{ .Title }}"; // To prevent some html-syntax content from being rendered by browser
-                    var titles = document.querySelectorAll('.title');
-                    titles[titles.length - 1].innerHTML = title;
-
-                    if (!isMobile) { // Don't show subtitle on mobile devices
-                        var subtitle = "{{ .Subtitle }}"; // To prevent some html-syntax content from being rendered by browser
-                        var subtitles = document.querySelectorAll('.subtitle');
-                        subtitles[subtitles.length - 1].innerHTML = subtitle;
-                    }
-
-                    var content;
-                    var content_tag = document.querySelectorAll('.overview-content');
-                    var img = /<img.*>/.exec("{{ .Content }}"); // Note that there is a <p></p> tag surrounded 
-                    var img_add_class = '<img class="article-list-img-h" ';
-                    if (img != null) {
-                        truncEnd = img[0].length - 4;
-                        if (img[0][img[0].length - 5] == '<'){ // If the image is embedded in a list, then it will be surrounded by <li></li> instead of <p></p>
-                            truncEnd -= 1;
-                        }
-                        var img_tag = `<div class="column is-4" style="text-align: right;">` + img_add_class + img[0].substring(4, truncEnd) + '</div>'; // substring(): to remove "</p>"
-                        content = '<div class="column is-8">' + '{{ .Content }}'.replaceAll(/<img.*>/g, '').replaceAll(/<pre>/g, '').replaceAll(/<\/pre>/g, '') + '</div>' + img_tag; // i: case insensitive. g: replace multiple occurrences
-                    } else {
-                        content = '<div class="column is-12">' + '{{ .Content }}'.replaceAll(/<img.*>/g, '').replaceAll(/<pre>/g, '').replaceAll(/<\/pre>/g, '') + '</div>';
-                    }
-                    content_tag[content_tag.length - 1].innerHTML = content;
-                </script>
-                {{ end }}
-            {{ else }}
-                <script>
-                    var errHead = '{{ .errHead }}', errBody = '{{ .errBody }}';
-                    showNoticeMsg(errHead, errBody);
-                </script>
-            {{ end }}
+            <div></div> <!-- Placeholder for appending new articles -->
         </div>
     </div>
     {{ template "footer" . }}
     <script src="/js/overview.js"></script>
 </body>
+
+<!--
+Note: HTML Template Usage (Those fields should be exacte the same as Go's struct definition)
+{{ if .articleList }}
+    {{ range .articleList }}
+        <div class="tile is-child box article-list-container">
+            <div class="article-list-tag">
+                {{ range $t := .Tags }}
+                    <a href="/articles/tags?query={{ $t }}">
+                        <span class="tag is-warning">{{ $t }}</span>
+                    </a>
+                {{ end }}
+                <a href="/articles/{{ .Category }}">
+                    <span class="tag is-primary">{{ .Category }}</span>
+                </a>
+                {{ if eq .AdminOnly true }}
+                    <span class="tag is-danger">Admin Only</span>
+                {{ end }}
+            </div>
+            <p class="title">{{ .Title }}</p>
+        </div>
+    {{ end }}
+{{ end }}
+-->

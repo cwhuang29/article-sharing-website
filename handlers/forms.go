@@ -17,7 +17,7 @@ var (
 	fileMaxSize      = 4 * 1000 * 1000 // 4MB
 )
 
-func writeFileLog(fileName, fileType, fileSize string) {
+func writeFileLog(fileName, fileSize, fileType string) {
 	fields := map[string]interface{}{
 		"fileName": fileName,
 		"fileType": fileType,
@@ -26,13 +26,39 @@ func writeFileLog(fileName, fileType, fileSize string) {
 	logrus.WithFields(fields).Info("File upload")
 }
 
-func checkAndFilterFileType(mainType string, fileType string) string {
+func mapFilesName(content string, fileNamesMapping map[string]string) string {
+	for key := range fileNamesMapping {
+		content = strings.Replace(content, key, fileNamesMapping[key], -1)
+	}
+
+	return content
+}
+
+func saveFile(c *gin.Context, file *multipart.FileHeader, fileName string) (err error) {
+	err = c.SaveUploadedFile(file, fileName)
+	if err != nil {
+		logrus.Errorf("Create article error when saving images:", err)
+	}
+	return
+}
+
+func checkFileSize(fileSize int64) bool {
+	return fileSize <= int64(fileMaxSize)
+}
+
+func checkFileType(fileType, mainType string) bool {
 	for _, t := range acceptedFileType[mainType] {
 		if fileType == t {
-			return fileType[strings.LastIndex(fileType, "/")+1:]
+			return true
 		}
 	}
-	return ""
+	return false
+}
+
+func generateFileName(fileType string) string {
+	fileID := time.Now().UTC().Format("20060102150405") + getUUID()
+	fileExt := fileType[strings.LastIndex(fileType, "/")+1:]
+	return fileDir + fileID + "." + fileExt
 }
 
 /*
@@ -40,31 +66,83 @@ func checkAndFilterFileType(mainType string, fileType string) string {
  * fmt.Println("filename:", file.Filename, "size:", file.Size, "header:", file.Header)
  * filename: d5821d5a77.png size: 5387170 header: map[Content-Disposition:[form-data; name="uploadImages"; filename="d5821d5a77.png"] Content-Type:[image/png]]
  */
-func getFilesFromForm(c *gin.Context, files []*multipart.FileHeader) (fileNamesMapping map[string]string, err error) {
+func getFile(file *multipart.FileHeader) (fileName string, err error) {
+	if ok := checkFileSize(file.Size); ok != true {
+		err = fmt.Errorf("File size of %v is too large!", file.Filename)
+		return
+	}
+
+	fileType := file.Header.Get("Content-Type")
+	if ok := checkFileType(fileType, "image"); ok != true {
+		err = fmt.Errorf("File type of %v is not permitted!", file.Filename)
+		return
+	}
+
+	fileName = generateFileName(fileType)
+	return
+
+}
+
+func getImagesInContent(files []*multipart.FileHeader) (fileNames []string, fileNamesMapping map[string]string, err error) {
+	var fileName string
+	fileNames = make([]string, len(files))
 	fileNamesMapping = make(map[string]string, len(files))
-	for _, file := range files {
-		if file.Size > int64(fileMaxSize) {
-			err = fmt.Errorf("File size of %v is too large!", file.Filename)
+
+	for i, file := range files {
+		if fileName, err = getFile(file); err != nil {
 			return
 		}
 
-		filteredType := checkAndFilterFileType("image", file.Header.Get("Content-Type"))
-		if filteredType == "" {
-			err = fmt.Errorf("File type of %v is not permitted!", file.Filename)
-			return
-		}
-
-		fileID := time.Now().UTC().Format("20060102150405") + getUUID()
-		fileName := fileDir + fileID + "." + filteredType
-		fileNamesMapping[file.Filename] = fileName[7:] // Get rid of "public/" prefix
-
-		err := c.SaveUploadedFile(file, fileName)
-		if err != nil {
-			logrus.Errorf("Create article error when saving images:", err)
-		}
-
+		fileNames[i] = fileName
+		fileNamesMapping[file.Filename] = fileName[7:] // Get rid of "public/" prefix since we truncate the prefix in router.go router.Static()
 		writeFileLog(fileName, strconv.FormatInt(file.Size, 10), file.Header.Get("Content-Type"))
 	}
+	return
+}
+
+func getCoverPhoto(file *multipart.FileHeader) (coverPhotoName string, err error) {
+	if coverPhotoName, err = getFile(file); err != nil {
+		return
+	}
+
+	writeFileLog(coverPhotoName, strconv.FormatInt(file.Size, 10), file.Header.Get("Content-Type"))
+	return
+}
+
+func getFilesFromForm(c *gin.Context, files map[string][]*multipart.FileHeader) (fileNamesMapping map[string]string, coverPhotoURL string, err error) {
+	defer func() {
+		if err := recover(); err != nil {
+			logrus.Errorf("Error occurred when retrieving files from the input form:", err)
+		}
+	}()
+
+	var coverPhotoName string
+	var coverPhoto *multipart.FileHeader
+
+	if len(files["coverPhoto"]) > 0 {
+		coverPhoto = files["coverPhoto"][0] // There is only one cover photo
+		if coverPhotoName, err = getCoverPhoto(coverPhoto); err != nil {
+			return
+		}
+	}
+
+	var fileNames []string
+	contentImages := files["contentImages"]
+
+	if fileNames, fileNamesMapping, err = getImagesInContent(contentImages); err != nil {
+		return
+	}
+
+	if coverPhoto != nil {
+		_ = saveFile(c, coverPhoto, coverPhotoName)
+		coverPhotoURL = coverPhotoName[7:] // Get rid of "public/" prefix
+		fmt.Println("Cover photo:", coverPhotoName)
+	}
+
+	for i, name := range fileNames {
+		_ = saveFile(c, contentImages[i], name)
+	}
+
 	return
 }
 
@@ -104,13 +182,13 @@ func getValuesFromForm(c *gin.Context, formVal map[string][]string) models.Artic
 		Authors:     auths,
 		Category:    formVal["category"][0],
 		Tags:        tags,
+		Outline:     formVal["outline"][0],
 		Content:     formVal["content"][0],
 	}
 }
 
 func handleForm(c *gin.Context) (newArticle models.Article, invalids map[string]string, err error) {
 	var form *multipart.Form
-	var fileNamesMapping map[string]string
 
 	form, err = c.MultipartForm() // form: &{map[authors:[Jasia] category:[Medication] ... title:[abcde]] map[uploadImages:[0xc0001f91d0 0xc0001f8000]]}
 	if err != nil {
@@ -122,15 +200,18 @@ func handleForm(c *gin.Context) (newArticle models.Article, invalids map[string]
 		err = fmt.Errorf("Error occurred when extracting values from form.")
 		return
 	}
+
 	invalids = validateArticleValues(newArticle)
 	if len(invalids) != 0 {
 		return
 	}
 
-	if fileNamesMapping, err = getFilesFromForm(c, form.File["uploadImages"]); err == nil {
-		for key := range fileNamesMapping {
-			newArticle.Content = strings.Replace(newArticle.Content, key, fileNamesMapping[key], -1)
-		}
+	fileNamesMapping, coverPhotoURL, err := getFilesFromForm(c, form.File)
+	if err != nil {
+		return
 	}
+	newArticle.Content = mapFilesName(newArticle.Content, fileNamesMapping)
+	newArticle.CoverPhoto = coverPhotoURL
+
 	return
 }

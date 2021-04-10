@@ -31,4 +31,6 @@ type User struct {
 | updated_at | datetime(3)         | YES  |     | NULL    |                |
 | deleted_at | datetime(3)         | YES  | MUL | NULL    |                |
 +------------+---------------------+------+-----+---------+----------------+
+
+3. Without specifying size, the column type will be longtext
 */

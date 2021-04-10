@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"github.com/cwhuang29/article-sharing-website/databases"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
-	"time"
+
+	"github.com/cwhuang29/article-sharing-website/databases"
+	"github.com/gin-gonic/gin"
 )
 
 func About(c *gin.Context) {
@@ -29,36 +29,6 @@ func CheckPermissionAndArticleExists(c *gin.Context) {
 	}
 
 	c.Status(http.StatusOK)
-}
-
-func WeeklyUpdate(c *gin.Context) {
-	today := time.Now().UTC().Truncate(24 * time.Hour)
-	sevenDaysAgo := today.AddDate(0, 0, -7)
-	tomorrow := today.AddDate(0, 0, 1)
-
-	isAdmin := detectIfUserIsAdmin(c)
-	dbFormatArticle := databases.GetArticlesInATimePeriod(sevenDaysAgo, tomorrow, isAdmin)
-	if len(dbFormatArticle) == 0 {
-		c.HTML(http.StatusOK, "overview.html", gin.H{
-			"currPageCSS": "css/overview.css",
-			"title":       "Weekly News",
-			"errHead":     "Oops ...",
-			"errBody":     "No new articles in the past 7 days.",
-		})
-		return
-	}
-
-	var articleList []Article
-
-	for _, a := range dbFormatArticle {
-		articleList = append(articleList, articleFormatDBToOverview(a))
-	}
-	c.HTML(http.StatusOK, "overview.html", gin.H{
-		"currPageCSS":  "css/overview.css",
-		"title":        "Weekly News",
-		"articleList":  articleList,
-		"initialCount": len(articleList),
-	})
 }
 
 func FetchData(c *gin.Context) {
@@ -94,14 +64,19 @@ func FetchData(c *gin.Context) {
 
 	isAdmin := detectIfUserIsAdmin(c)
 	data, err := fetchData(types, query, offset, limit, isAdmin)
-	c.JSON(http.StatusOK, gin.H{"articleList": data, "size": len(data)}) // Notice: if the data is an empty array [], frontend will get `null` instead of empty array
+	c.JSON(http.StatusOK, gin.H{"articleList": data, "size": len(data)}) // Notice: if the data is an empty array [], frontend will get `null` instead of an empty array
 }
 
 func Overview(c *gin.Context) {
 	// If frontend trigger this route via window.location.href="/articles/browse?articleId=1", then c.FullPath() is /articles/browse
-	title := "Pharma News"
-	if c.FullPath() == "/articles/medication" {
+	title := ""
+	switch c.FullPath() {
+	case "/articles/weekly-update":
+		title = "Weekly News"
+	case "/articles/medication":
 		title = "Medication Related News"
+	case "/articles/pharma":
+		title = "Pharma News"
 	}
 
 	c.HTML(http.StatusOK, "overview.html", gin.H{

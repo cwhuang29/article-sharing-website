@@ -57,9 +57,11 @@ func injectRoutes() {
 
 	articles := router.Group("/articles")
 	{
-		articles.GET("/", handlers.Browse)
+		articles.GET("/", func(c *gin.Context) {
+			c.Redirect(http.StatusFound, "/articles/weekly-update")
+		})
 		articles.GET("/browse", handlers.Browse)
-		articles.GET("/weekly-update", handlers.WeeklyUpdate) // The main page
+		articles.GET("/weekly-update", handlers.Overview) // The main page
 		articles.GET("/medication", handlers.Overview)
 		articles.GET("/pharma", handlers.Overview)
 		articles.GET("/fetch", handlers.FetchData)
