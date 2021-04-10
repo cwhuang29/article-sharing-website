@@ -54,7 +54,7 @@ docker run -d \
     mysql:5.7.32 \
     mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
 ```
-* Server
+* Web server
 ```bash
 docker run -d \
     --name web \
@@ -71,7 +71,7 @@ docker run -d \
 ## Others
 
 #### Connect to database
-Instead of connecting to the database container directly, we can run another MySQL container and query the database.
+Instead of connecting to the database container (which name is `db` in my case) directly, we can run another MySQL container and query the database container.
 ```
 docker run -it --rm --link db:db mysql:5.7.32 mysql -hdb -u user01 -pa1234567 inews
 ```
@@ -79,7 +79,13 @@ docker run -it --rm --link db:db mysql:5.7.32 mysql -hdb -u user01 -pa1234567 in
 #### Dump database
 To dump the database, run
 ```bash
-docker exec -it db mysqldump -u user01 -pa1234567 inews > data.sql
+docker exec -it db mysqldump -u user01 -pa1234567 inews > data-`date +"%Y-%m-%d-%H-%M-%S"`.sql
+```
+
+There is some warning messages while dumping out data. To avoid warning, you can run:
+```
+docker exec -it db mysqldump -u user01 -pa1234567 --no-tablespaces inews <tables, seperated by space> \
+    grep -v "Using a password on the command line interface can be insecure" > data-`date +"%Y-%m-%d-%H-%M-%S"`.sql
 ```
 
 #### SSL/TLS Certificates
@@ -111,6 +117,7 @@ sudo yum -y install mysql
 - [x]  CSRF token
 - [x]  Support HTTPS
 - [x]  Add an "only administrators can view" option
+- [x]  Outline and cover photo for the overview page
 - [ ]  Logger
 - [ ]  Reset password
 - [ ]  Support Google login
