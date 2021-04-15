@@ -7,15 +7,19 @@ import (
 	"net/http"
 )
 
-var (
+const (
 	landingPage = "/articles/weekly-update"
+	loginPage   = "/login"
 	loginMaxAge = 30 * 86400 // 1 month
 )
 
-func storeLoginToken(email string, loginMaxAge int) (token string) {
-	token = getUUID()
-	databases.InsertLoginToken(email, token, loginMaxAge)
-	return
+func storeLoginToken(id, loginMaxAge int) string {
+	token := getUUID()
+
+	if ok := databases.InsertLoginToken(id, token, loginMaxAge); !ok {
+		return storeLoginToken(id, loginMaxAge) // Try again if we got duplicate tokens
+	}
+	return token
 }
 
 func clearLoginToken(email, token string) {
@@ -25,8 +29,9 @@ func clearLoginToken(email, token string) {
 	 * When the user logged out on the laptop, we'll check whether the login token for the cellphone expired
 	 * It can be done at login, logout, or any other time. Currently, I'll do this task when the user logout
 	 */
-	databases.DeleteLoginToken(email, token)
-	databases.DeleteExpiredLoginTokens(email)
+	user := databases.GetUser(email)
+	databases.DeleteLoginToken(token)
+	databases.DeleteExpiredLoginTokens(user.ID)
 }
 
 func RegisterView(c *gin.Context) {
@@ -35,6 +40,8 @@ func RegisterView(c *gin.Context) {
 
 func Register(c *gin.Context) {
 	var newUser models.User
+	errHead := "An Error Occurred"
+	errBody := "Please reload the page and try again."
 
 	if err := c.ShouldBindJSON(&newUser); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"bindingError": true, "errHead": err.Error()})
@@ -47,10 +54,9 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	tmp := databases.GetUser(newUser.Email)
-	if tmp.ID != 0 {
-		errHead := "This email is already registered"
-		errBody := "Please use another email."
+	if tmp := databases.GetUser(newUser.Email); tmp.ID != 0 {
+		errHead = "This email is already registered"
+		errBody = "Please use another email."
 		c.JSON(http.StatusConflict, gin.H{"bindingError": false, "errHead": errHead, "errBody": errBody})
 		return
 	}
@@ -61,22 +67,18 @@ func Register(c *gin.Context) {
 
 	hashedPwd, err := hashPassword(newUser.Password)
 	if err != nil {
-		errHead := "An Error Occurred"
-		errBody := "Please reload the page and try again."
 		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "errHead": errHead, "errBody": errBody})
 		return
 	}
 
 	newUser.Password = string(hashedPwd)
-	_, res := databases.InsertUser(newUser)
+	id, res := databases.InsertUser(newUser)
 	if !res {
-		errHead := "An Error Occurred"
-		errBody := "Please reload the page and try again."
 		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "errHead": errHead, "errBody": errBody})
 		return
 	}
 
-	token := storeLoginToken(newUser.Email, loginMaxAge)
+	token := storeLoginToken(id, loginMaxAge)
 	c.Header("Location", landingPage)
 	c.SetCookie("login_token", token, loginMaxAge, "/", "", true, true)
 	c.SetCookie("login_email", newUser.Email, loginMaxAge, "/", "", true, false) // Frontend relies on this cookie
@@ -120,7 +122,7 @@ func LoginJSON(c *gin.Context) {
 		return
 	}
 
-	token := storeLoginToken(user.Email, loginMaxAge)
+	token := storeLoginToken(user.ID, loginMaxAge)
 	c.Header("Location", landingPage)
 	c.SetCookie("login_token", token, loginMaxAge, "/", "", true, true)
 	c.SetCookie("login_email", user.Email, loginMaxAge, "/", "", true, false) // Frontend relies on this cookie
@@ -149,16 +151,4 @@ func Logout(c *gin.Context) {
 
 	c.Header("Location", landingPage)
 	c.JSON(http.StatusResetContent, gin.H{})
-}
-
-func PasswordResetRequest(c *gin.Context) {
-}
-
-func PasswordResetEmail(c *gin.Context) {
-}
-
-func PasswordResetView(c *gin.Context) {
-}
-
-func PasswordReset(c *gin.Context) {
 }

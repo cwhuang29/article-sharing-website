@@ -74,26 +74,20 @@ func GetSameCategoryArticles(category string, offset, limit int, isAdmin bool) (
 func GetSameTagArticles(tagValue string, offset, limit int, isAdmin bool) (articles []models.Article) {
 	var tags models.Tag
 
-	switch isAdmin {
-	case true:
-		db.Preload("Articles").Where("value = ?", tagValue).First(&tags)
-	case false:
-		db.Preload("Articles").Where("value = ? and isAdmin = ?", tagValue, false).First(&tags)
-	}
+	db.Preload("Articles").Where("value = ?", tagValue).First(&tags)
 
-	start := len(tags.Articles) - 1 - offset
-	end := start - limit
+	for i := len(tags.Articles) - 1; i >= 0; i-- {
+		if offset > 0 && (isAdmin || !tags.Articles[i].AdminOnly) {
+			offset -= 1
+			continue
+		}
 
-	if start < 0 {
-		return
-	}
-
-	if end < -1 {
-		end = -1
-	}
-
-	for i := start; i > end; i-- {
-		articles = append(articles, tags.Articles[i])
+		if isAdmin || !tags.Articles[i].AdminOnly {
+			articles = append(articles, tags.Articles[i])
+		}
+		if len(articles) == limit {
+			break
+		}
 	}
 	return
 }

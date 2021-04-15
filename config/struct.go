@@ -16,7 +16,7 @@ func (e *ConfigError) Error() string {
 
 type env struct {
 	key    string
-	errMsg string
+	msg    string
 	target *string
 }
 
@@ -24,10 +24,12 @@ type Config struct {
 	App      `yaml:"app,omitempty"`
 	Database `yaml:"database,omitempty"`
 	Admin    `yaml:"admin,omitempty"`
+	Email    `yaml:"email,omitempty"`
 }
 
 type App struct {
 	Name      string `yaml:"name,omitempty"`
+	Url       string `yaml:"url,omitempty"`
 	HttpPort  string `yaml:"httpPort,omitempty"`
 	HttpsPort string `yaml:"httpsPort,omitempty"`
 	Debug     string `yaml:"debug,omitempty"`
@@ -45,4 +47,11 @@ type Database struct {
 
 type Admin struct {
 	Email []string `yaml:"email,omitempty"`
+}
+
+type Email struct {
+	Sender    string `yaml:"sender,omitempty"`
+	Region    string `yaml:"region,omitempty"`
+	NumPerDay string `yaml:"numPerDay,omitempty"`
+	NumPerSec string `yaml:"numPerSec,omitempty"`
 }

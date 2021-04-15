@@ -1,5 +1,6 @@
 app:
   name: inews
+  url: http://127.0.0.1 # Links inside reset password emails are generated based on this value
   httpPort: 80
   # httpsPort: 443
   debug: true
@@ -17,3 +18,9 @@ admin:
   email:
     - admin@gmail.com
     - admin123@gmail.com
+
+email:
+  sender: inewsforpharm@gmail.com
+  region: us-east-1
+  numPerDay: 50000
+  numPerSec: 14

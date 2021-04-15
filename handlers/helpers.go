@@ -15,8 +15,7 @@ import (
 )
 
 var (
-	overviewContentLength = 800
-	emailRegex            = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+	emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 )
 
 // Each mandarin symbol takes 3 - 4 bytes.
@@ -50,10 +49,11 @@ func GetUserStatus(c *gin.Context) (status UserStatus, cookieEmail string) {
 		memberOrAdmin = IsAdmin
 	}
 
-	creds := databases.GetLoginCredentials(cookieEmail)
-	for i := 0; i < len(creds); i++ {
-		isEpr := isExpired(creds[i].LastLogin, creds[i].MaxAge)
-		if cookieEmail == creds[i].User.Email && cookieToken == creds[i].Token && !isEpr {
+	user := databases.GetUser(cookieEmail)
+	creds := databases.GetLoginCredentials(user.ID)
+	for _, cred := range creds {
+		isEpr := isExpired(cred.LastLogin, cred.MaxAge)
+		if cookieEmail == cred.User.Email && cookieToken == cred.Token && !isEpr {
 			status = memberOrAdmin
 			return
 		}
@@ -63,13 +63,9 @@ func GetUserStatus(c *gin.Context) (status UserStatus, cookieEmail string) {
 	return
 }
 
-// To reduce the number of queries to database, don't call GetUserStatus() here.
-// If it is a critical (non-read) operation, there will be more rigorous validation in other functions.
-func detectIfUserIsAdmin(c *gin.Context) bool {
-	if admin, _ := c.Cookie("is_admin"); admin != "" {
-		return true
-	}
-	return false
+func DetectIfUserIsAdmin(c *gin.Context) bool {
+	status, _ := GetUserStatus(c)
+	return status >= IsAdmin
 }
 
 func isExpired(startTime time.Time, period int) bool {
@@ -95,10 +91,6 @@ func getParaArticleId(c *gin.Context, key string) int {
 
 func getParaTagValue(c *gin.Context, key string) string {
 	return c.Query(key)
-}
-
-func updateTagsStats(tag string) {
-	databases.UpdateTagsStats(tag)
 }
 
 func fetchData(types, query string, offset, limit int, isAdmin bool) (articleList []Article, err error) {
@@ -130,29 +122,14 @@ func fetchData(types, query string, offset, limit int, isAdmin bool) (articleLis
 	return
 }
 
-func parseMarkdownToHTML(s string, truncate bool) string {
+func parseMarkdownToHTML(s string) string {
 	/*
 		It is such a bad idea to self-implement markdown parser
-		images := regexp.MustCompile(`!\[([^\s]+)\]\(([^\s]+)\)`)
 		links := regexp.MustCompile(`\[([^\s]+)\]\(([^\s]+)\)`)
-		strikes := regexp.MustCompile(`~~(\w.*\w)~~`)
-		bold := regexp.MustCompile(`\*\*(\w.*\w)\*\*`)
-		italic := regexp.MustCompile(`\*(\w.*\w)\*`)
 		code := regexp.MustCompile("`([^\r|\n]*)`")
-		s = images.ReplaceAllString(s, `<figure class="image is-16by9"><img alt="$1" href="$2"></figure>`)
 		s = links.ReplaceAllString(s, `<a href="$2">$1</a>`)
-		s = strikes.ReplaceAllString(s, `<del>$1</del>`)
 		s = bold.ReplaceAllString(s, `<strong>$1</strong>`)
-		s = italic.ReplaceAllString(s, `<em>$1</em>`)
-		s = code.ReplaceAllString(s, `<code>$1</code>`)
 	*/
-	if truncate {
-		trunc := overviewContentLength
-		if len(s) < overviewContentLength {
-			trunc = len(s)
-		}
-		s = s[:trunc]
-	}
 	byteS := blackfriday.MarkdownCommon([]byte(s))
 	return string(byteS)
 }

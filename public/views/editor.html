@@ -79,8 +79,8 @@
         <div class="field">
           <label class="label">Outline</label>
           <div class="control">
-            <!-- If the input is pure Mandarin, then the best maxlength is 232 -->
-			<textarea class="textarea" name="outline" id="overview-text-area" maxlength="510" rows="3" placeholder="Recommend: 230 words (Mandarin) or 510 characters (English)"></textarea>
+            <!-- If the input is pure Mandarin, the best maxlength is 232 -->
+			<textarea class="textarea" name="outline" id="overview-text-area" maxlength="600" rows="3" placeholder="Recommend: 230 words (Mandarin) or 510 characters (English). Outline may be truncated to fit window size"></textarea>
             <span class='help'>If you want to break to a newline, type the <code>&lt;br&gt;</code> symbol</span>
           </div>
           <div class='file has-name is-warning is-small' style="padding-top: 10px;">
@@ -179,21 +179,45 @@
             </script>
         {{ end }}
         <div class="field">
-          <p class="help" style="text-align: left;">
-            Notice (for the content field):
-            <br>
-            &bull; The recommended aspect ratios are 16x9
-            <br>
-            &bull; Create a <strong>superscript</strong> (appears half a character above the normal line) by <code>&lt;sup&gt;This is superscript&lt;/sup&gt;</code>
-            <br>
-            &bull; Create a <strong>link</strong> that points to other place in the same article: First, create a link by <code>&lt;a name="mylink"&gt;&lt;/a&gt;</code>. Second. jump to it by <code>&lt;a href="#mylink"&gt;[Jump to link]&lt;/a&gt;</code>
-            <br>
-            &bull; Create a <strong>superscript that links to other content in the same article</strong>: First, create a link by <code>&lt;a name="mytitle"&gt;&lt;/a&gt;</code> (put it in front of the title). Second, create a superscript by <code>&lt;sup&gt;&lt;a href="#mytitle"&gt;[Jump to title]&lt;/a&gt;&lt;/sup&gt;</code>
-            <br>
-            &bull; Images will not be autosaved, and hence the link you get after uploading images will be invalid once you have left/reload this page. So make sure you <strong>re-upload images</strong> if continue editing.
-            <br>
-            &bull; To discard autosave values (not values on the webpage), click the "Clear Autosave" button and reload the page.
+          <p class="help">
+            Some tips for the content field:
           </p>
+          <ul class="help" style="list-style-type:disc; text-align: left; margin-left: 16.4px">
+            <li>
+              The recommended image aspect ratios are 16x9
+            </li>
+            <li>
+              Create a <strong>superscript</strong> (appears half a character above the normal line): <code>&lt;sup&gt;This is superscript&lt;/sup&gt;</code>
+            </li>
+            <li>
+              Create a <strong>link</strong> that points to other place in the same article:
+              <ol style="margin-left: 14.1px;">
+                <li>
+                  Create an anchor by <code>&lt;a name="mylink"&gt;&lt;/a&gt;</code>.
+                </li>
+                <li>
+                  Create a link by <code>&lt;a href="#mylink"&gt;[Jump to link]&lt;/a&gt;</code>
+                </li>
+              </ol>
+            </li>
+            <li>
+              Create a <strong>superscript that links to other content in the same article</strong>:
+              <ol style="margin-left: 14.1px;">
+                <li>
+                  Create an anchor by <code>&lt;a name="mytitle"&gt;&lt;/a&gt;</code> (put it in front of the title).
+                </li>
+                <li>
+                  Create a superscript link by <code>&lt;sup&gt;&lt;a href="#mytitle"&gt;[Jump to title]&lt;/a&gt;&lt;/sup&gt;</code>
+                </li>
+              </ol>
+            </li>
+            <li>
+              Images will not be autosaved, and hence the link you get after uploading images will be invalid once you have left/reload this page. So make sure you <strong>re-upload images</strong> if continue editing.
+            </li>
+            <li>
+              To discard autosave values (not values on the webpage), click the "Clear Autosave" button and reload the page.
+            </li>
+          </ul>
         </div>
     </div>
     {{ template "footer" . }}

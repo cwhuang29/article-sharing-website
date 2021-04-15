@@ -62,6 +62,11 @@ func (c *Config) check() *ConfigError {
 }
 
 func (c *Config) setDefaultValue() {
+	if c.App.Url == "" {
+		c.App.Url = "http://127.0.0.1"
+		logrus.Info("app.Url is not set in the config file. Set to default value http://127.0.0.1")
+	}
+
 	if c.App.HttpPort == "" && c.App.HttpsPort == "" {
 		c.App.HttpPort = "8080"
 		logrus.Info("Both app.httpPort and app.httpsPort are not set in the config file. Set app.HttpsPort to default value 8080")
@@ -86,17 +91,22 @@ func (c *Config) setDefaultValue() {
 
 func (c *Config) setOverwriteValue() {
 	envs = []env{
-		{"DB_HOST", "database.host", &config.Database.Host},
-		{"DB_PORT", "database.port", &config.Database.Port},
-		{"APP_HTTP_PORT", "app.httpPort", &config.App.HttpPort},
-		{"APP_HTTPS_PORT", "app.httpsPort", &config.App.HttpsPort},
+		{"WEB_DB_HOST", "database.host", &config.Database.Host},
+		{"WEB_DB_PORT", "database.port", &config.Database.Port},
+		{"WEB_APP_URL", "app.url", &config.App.Url},
+		{"WEB_APP_HTTP_PORT", "app.httpPort", &config.App.HttpPort},
+		{"WEB_APP_HTTPS_PORT", "app.httpsPort", &config.App.HttpsPort},
+		{"WEB_EMAIL_SENDER", "app.email.sender", &config.Email.Sender},
+		{"WEB_EMAIL_REGION", "app.email.region", &config.Email.Region},
+		{"WEB_EMAIL_NUM_PER_DAY", "app.email.numPerDay", &config.Email.NumPerDay},
+		{"WEB_EMAIL_NUM_PER_SEC", "app.email.numPerSec", &config.Email.NumPerSec},
 	}
 
 	for _, e := range envs {
 		value := os.Getenv(e.key)
 		if value != "" {
 			*e.target = value
-			logrus.Info(e.errMsg + " is overwrote by env " + e.key + ". Set to " + value + ".")
+			logrus.Info(e.msg + " is overwrote by env " + e.key + ". Set to " + value + ".")
 		}
 	}
 }

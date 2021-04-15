@@ -1,3 +1,4 @@
+const fetchArticlesEndpoint = "/articles/fetch";
 const fetchNewContentAnchor = 0.8;
 const limit = 10;
 let offset = 0;
@@ -124,7 +125,7 @@ const fetchContent = async (count) => {
     return;
   }
 
-  let path = location.pathname.split("/").pop();
+  const path = window.location.pathname.split("/").pop();
   if (path == "weekly-update") {
     type = "time";
     query = null;
@@ -136,16 +137,43 @@ const fetchContent = async (count) => {
     query = path; // Either "pharma" or "medication"
   }
 
-  let para = new URLSearchParams({ type: type, query: query, offset: offset, limit: limit });
-  let url = "fetch?" + para;
-  let res = await fetchData(url).then(checkStatus).then(fetchSucceed).catch(fetchFailed);
+  const baseURL = new URL(window.location.href);
+  const url = new URL(fetchArticlesEndpoint, baseURL);
+  const paras = { type: type, query: query, offset: offset, limit: limit };
 
+  for (const [key, val] of Object.entries(paras)) {
+    url.searchParams.set(key, val);
+  }
+
+  const res = await fetchData(url).then(checkStatus).then(fetchSucceed).catch(fetchFailed);
   if (!res) {
     if (count < 3) {
       fetchContent(++count); // Try again
     } else {
       showErrMsg("Failed to Fetch Content", "Please reload the page and try again.");
     }
+  }
+};
+
+const initialFetch = async () => {
+  await fetchContent(0);
+
+  if (offset == 0) {
+    let path = location.pathname.split("/").pop();
+    let errMsg = "There is no articles";
+
+    if (path == "weekly-update") {
+      errMsg = "No new articles in the past 7 days";
+    }
+    showNoticeMsg("Oops ... ", errMsg);
+  } else {
+    /*
+     * For an edge case: the initial articles' height is smaller than the window's height,
+     * so user may think that there is no more content and stop scrolling down.
+     * Since without scrolling, the fetch event will not be triggered, add one more fetch after the initial fetch.
+     * This may happen at weekly-update page or user is visiting website with a vertical screen.
+     */
+    setTimeout(() => fetchContent(0), 200);
   }
 };
 
@@ -163,20 +191,12 @@ const sessionStorageHandler = async () => {
     window.sessionStorage.removeItem("overviewContent");
   }
 
-  let overviewContent = window.sessionStorage.getItem("overviewContent");
+  const overviewContent = window.sessionStorage.getItem("overviewContent");
   if (overviewContent) {
     offset = Number(window.sessionStorage.getItem("offset"));
     document.querySelector("#articles-container").innerHTML = overviewContent;
   } else {
-    await fetchContent(0);
-    if (offset == 0) {
-      let path = location.pathname.split("/").pop();
-      let errMsg = "There is no articles";
-      if (path == "weekly-update") {
-        errMsg = "No new articles in the past 7 days";
-      }
-      showNoticeMsg("Oops ... ", errMsg);
-    }
+    initialFetch();
   }
 };
 
@@ -190,8 +210,8 @@ onDOMContentLoaded = (function () {
     window.location.href = "/articles/browse?articleId=" + e.target.closest("div.tile.is-child").children[0].dataset.articleid;
   });
 
+  const delay = 300;
   let lastFetch = 0;
-  let delay = 300;
   window.onscroll = () => {
     if (lastFetch < Date.now() - delay && window.innerHeight + window.pageYOffset >= document.body.offsetHeight * fetchNewContentAnchor) {
       lastFetch = Date.now();

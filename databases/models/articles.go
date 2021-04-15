@@ -17,8 +17,8 @@ type Article struct {
 	Tags        []Tag          `gorm:"many2many:articles_tags;"`
 	Outline     string         `gorm:"size:800" json:"outline" yaml:"outline"`
 	CoverPhoto  string         `gorm:"size:300" json:"cover_photo" yaml:"coverPhoto"`
-	Content     string         `gorm:"not null" json:"content" yaml:"content"` // Without size, the type will be longtext
-	AdminOnly   bool           `gorm:"default:false" json:"admin_only" yaml:"adminOnly"`
+	Content     string         `gorm:"not null" json:"content" yaml:"content"`           // Without size, the type will be longtext
+	AdminOnly   bool           `gorm:"default:false" json:"admin_only" yaml:"adminOnly"` // Database stored 0/1
 	CreatedAt   time.Time      `json:"-"`
 	UpdatedAt   time.Time      `json:"-"`
 	DeletedAt   gorm.DeletedAt `json:"-"`

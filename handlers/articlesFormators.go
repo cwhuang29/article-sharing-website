@@ -48,13 +48,6 @@ func articleFormatDBToOverview(article models.Article) (a Article) {
 		a.Outline = article.Outline
 	}
 
-	// Note: this is the old version, from now on there is a new field "outline"
-	// truncate := false
-	// if len(article.Content) > overviewContentLength {
-	//     truncate = true
-	// }
-	// a.Content = parseMarkdownToHTML(article.Content, truncate)
-
 	return
 }
 
@@ -74,7 +67,7 @@ func articleFormatDBToDetailed(article models.Article, parseMarkdown bool) (a Ar
 	}
 
 	if parseMarkdown {
-		a.Content = parseMarkdownToHTML(article.Content, false)
+		a.Content = parseMarkdownToHTML(article.Content)
 	} else {
 		a.Content = article.Content
 	}

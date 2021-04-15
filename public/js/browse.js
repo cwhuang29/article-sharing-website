@@ -36,7 +36,7 @@ const fetchSucceed = async (resp) => {
 };
 
 const fetchDeleteReq = async (url) => {
-  let csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+  const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
   const headers = new Headers({ "X-CSRF-TOKEN": csrfToken });
 
   return fetch(url, {
@@ -51,16 +51,20 @@ const fetchDeleteReq = async (url) => {
 };
 
 const modifyOrDelete = async () => {
-  baseURL = modalMode == "update" ? modifyEndpoint : modalMode == "delete" ? deleteEndpoint : "";
-  if (!baseURL) {
+  const endpoint = modalMode == "update" ? modifyEndpoint : modalMode == "delete" ? deleteEndpoint : "";
+  if (!endpoint) {
     return;
   }
 
-  let articleId = new URLSearchParams(window.location.search).get("articleId");
-  let para = "?" + new URLSearchParams({ articleId: articleId });
-  actionURL = baseURL + para; // e.g. /admin/update/article?articleId=8
+  const articleId = new URLSearchParams(window.location.search).get("articleId");
+  const baseURL = new URL(window.location.href);
+  const url = new URL(endpoint, baseURL);
+  const checkUrl = new URL(checkPermissionEndpoint, baseURL);
 
-  let res = await fetch(checkPermissionEndpoint + para, {
+  url.searchParams.set("articleId", articleId); // e.g. /admin/update/article?articleId=8
+  checkUrl.searchParams.set("articleId", articleId);
+
+  let res = await fetch(checkUrl, {
     method: "GET",
     mode: "cors",
     cache: "no-cache",
@@ -76,16 +80,15 @@ const modifyOrDelete = async () => {
     closeModalBody();
     return;
   }
-
   if (modalMode == "update") {
-    window.location = actionURL;
+    window.location = url;
   } else {
-    res = await fetchDeleteReq(actionURL);
+    res = await fetchDeleteReq(url);
     if (res == 1) {
       window.location = landingPage;
     }
+    closeModalBody();
   }
-  closeModalBody();
 };
 
 const modifyArticle = () => {

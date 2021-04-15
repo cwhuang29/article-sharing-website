@@ -2,7 +2,7 @@ const TITLE_BYTES_LIMIT = 255;
 const SUBTITLE_BYTES_LIMIT = 255;
 const TAGS_LIMIT = 5;
 const TAGS_BYTES_LIMIT = 20;
-const FILE_MAX_SIZE = 4 * 1000 * 1000; // 4MB
+const FILE_MAX_SIZE = 8 * 1000 * 1000; // 8MB
 const ACCEPT_FILE_TYPE = {
   image: ["image/png", "image/jpeg", "image/gif", "image/webp", "image/apng"],
 };
@@ -16,9 +16,10 @@ const errInputMsg = {
   tagsTooMany: `You can target up to ${TAGS_LIMIT} tags at a time.`,
   tagsTooLong: `Each tag can contain at most ${TAGS_BYTES_LIMIT} characters.`,
 };
-const editorPlaceholder = `Tip:\nUpload images in advance so that you can get the URL to embed them (4MB per image).\n\nShortcuts:\nCtrl-B   -   toggleBold\nCtrl-I    -   toggleItalic\nCtrl-K   -   drawLink\nCtrl-H   -   toggleHeadingSmaller\nShift-Ctrl-H  -  toggleHeadingBigger`;
+const editorPlaceholder = `Tip:\nUpload images in advance so that you can get the URL to embed them (8MB per image).\n\nShortcuts:\nCtrl-B   -   toggleBold\nCtrl-I    -   toggleItalic\nCtrl-K   -   drawLink\nCtrl-H   -   toggleHeadingSmaller\nShift-Ctrl-H  -  toggleHeadingBigger`;
 const createArticleEndpoint = "/admin/create/article";
 const updateArticleEndpoint = "/admin/update/article";
+const browseArticleEndpoint = "/articles/browse";
 let easyMDE;
 let INITIAL_INPUT_SIZE = 0; // Autosave only if user have typed something
 
@@ -134,7 +135,7 @@ const generateForm = (values) => {
     if (f.files[0] === undefined) {
       continue;
     } else if (f.files[0].size > FILE_MAX_SIZE) {
-      document.getElementById("err_msg_content").innerText = `File size of ${f.files[0].name} is too large!`;
+      document.getElementById("err_msg_content").innerText = `File size of ${f.files[0].name} is too large (max: 8MB per image)!`;
       return;
     } else if (ACCEPT_FILE_TYPE.image.indexOf(f.files[0].type) == -1) {
       document.getElementById("err_msg_content").innerText = `File type of ${f.files[0].name} is not permitted!`;
@@ -179,10 +180,12 @@ const submitPost = () => {
 };
 
 const savePost = () => {
-  let articleId = new URLSearchParams(window.location.search).get("articleId");
-  let para = "?" + new URLSearchParams({ articleId: articleId });
+  const articleId = new URLSearchParams(window.location.search).get("articleId");
+  const baseURL = new URL(window.location.href);
+  const url = new URL(updateArticleEndpoint, baseURL);
+  url.searchParams.set("articleId", articleId);
 
-  submitHandler("PUT", updateArticleEndpoint + para, saveBtn);
+  submitHandler("PUT", url, saveBtn);
 };
 
 const validateInput = (values) => {
@@ -288,9 +291,12 @@ onDOMContentLoaded = (function () {
   cancelBtn = document.getElementById("cancelButton"); // Displays in update articles page but not create articles page
   if (cancelBtn) {
     cancelBtn.addEventListener("click", () => {
-      let articleId = new URLSearchParams(window.location.search).get("articleId");
-      let para = "?" + new URLSearchParams({ articleId: articleId });
-      window.location.href = "/articles/browse" + para;
+      const articleId = new URLSearchParams(window.location.search).get("articleId");
+      const baseURL = new URL(window.location.href);
+      const url = new URL(browseArticleEndpoint, baseURL);
+      url.searchParams.set("articleId", articleId);
+
+      window.location.href = url;
     });
   }
 })();

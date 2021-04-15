@@ -10,9 +10,8 @@
         </div>
         <div class="field">
           <p class="control has-icons-left">
-            <input class="input" name="email" inputmode="email" type="email" placeholder="Email">
-            <span class="icon is-small is-left"><i class="far fa-envelope"></i></span>
-            <!-- <span class="icon is-small is-right"><i class="fas fa-check"/></i></span> -->
+            <input class="input" name="email" inputmode="email" type="email" placeholder="Email" autofocus>
+            <span class="icon is-small is-left"><i class="fas fa-envelope"></i></span>
             <p class="help is-danger" id="err_msg_email"></p>
           </p>
         </div>
@@ -23,11 +22,10 @@
             <p class="help is-danger" id="err_msg_password"></p>
           </p>
         </div>
-        <div class="field">
-          <p class="control">
-            <button class="button is-warning" id="submit_button">Submit</button>
-            <a href="/register" class="button is-link ml-3">Register</a>
-          </p>
+        <div class="field" style="display: flex; flex-wrap: wrap; align-items:flex-end;">
+            <button class="button is-warning" id="submit_button" style="margin-bottom: 7px; margin-right: 10px">Submit</button>
+            <a href="/register" class="button is-link" style="margin-bottom: 7px; margin-right: 10px">Register</a>
+            <a href="/password/reset" style="margin-bottom: 7px; color: #3d3d3d; font-size: small;">Forgot your password?</a>
         </div>
     </div>
     <div style="padding-top: 190px"></div>

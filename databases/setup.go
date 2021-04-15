@@ -49,6 +49,9 @@ func createTables() {
 	if !(db.Migrator().HasTable(&models.Login{})) {
 		db.Migrator().CreateTable(&models.Login{})
 	}
+	if !(db.Migrator().HasTable(&models.Password{})) {
+		db.Migrator().CreateTable(&models.Password{})
+	}
 	if !(db.Migrator().HasTable(&models.Admin{})) {
 		db.Migrator().CreateTable(&models.Admin{})
 	}
@@ -57,6 +60,9 @@ func createTables() {
 func createConstraints() {
 	if !db.Migrator().HasConstraint(&models.Login{}, "User") {
 		db.Migrator().CreateConstraint(&models.Login{}, "User")
+	}
+	if !db.Migrator().HasConstraint(&models.Password{}, "User") {
+		db.Migrator().CreateConstraint(&models.Password{}, "User")
 	}
 }
 

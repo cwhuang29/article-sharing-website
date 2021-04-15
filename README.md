@@ -1,7 +1,7 @@
 # article-sharing-website
 An article sharing website developed by Go.
 
-Here is a live demo: [inews](https://www.inewsforpharm.com/) (hosting on AWS EC2 with Load Balancer, Route 53, Certificate Manager.)
+Here is a live demo: [inews](https://www.inewsforpharm.com/) (hosting on AWS EC2 with Load Balancer, Route 53, SES, Certificate Manager.)
 
 ## Overview
 This project does not rely on any frontend framework, so it is a good entry point for backend engineers who want to build a whole website. With basic knowledge of JavaScript and CSS, You can start developing!
@@ -19,15 +19,17 @@ The admin users are created by the following mechanism:
 ## Setup
 The credentials are stored in `config.yml`. Some of them are not yet implemented, but the most important fields are `app.httpPort`, `app.httpsPort`, `database`, and `admin.email`.  If set `database.driver` to `sqlite`, then `database.host` and `database.port` can be ignored.
 
-There are three environment variables that can be overwritten, which are `APP_HTTP_PORT`, `APP_HTTPS_PORT`, `DB_PORT`, and `DB_HOST`.
+There are some environment variables that can be overwritten (inside `config/config.go`). Environment variables have a `WEB_` prefix. You might want to use some of them: `WEB_APP_HTTP_PORT`, `WEB_APP_HTTPS_PORT`, `WEB_DB_PORT`, and `WEB_DB_HOST`.
+
+To send reset password emails, see the **Others** section.
 
 #### Local
 ```bash
 # Set the env values if needed
-# export APP_HTTP_PORT=8080
-# export APP_HTTPS_PORT=8443
-# export DB_PORT=3306
-# export DB_HOST=127.0.0.1
+# export WEB_APP_HTTP_PORT=8080
+# export WEB_APP_HTTPS_PORT=8443
+# export WEB_DB_PORT=3306
+# export WEB_DB_HOST=127.0.0.1
 go run cmd/main.go
 ```
 
@@ -59,16 +61,31 @@ docker run -d \
 docker run -d \
     --name web \
     --link db:db \
-    -e APP_HTTP_PORT=80 \
-    -e APP_HTTPS_PORT=443 \
-    -e DB_PORT=3306 \
-    -e DB_HOST=db \
+    -e WEB_APP_HTTP_PORT=80 \
+    -e WEB_APP_HTTPS_PORT=443 \
+    -e WEB_DB_PORT=3306 \
+    -e WEB_DB_HOST=db \
+    -e WEB_APP_URL=https://example.com \
+    -e WEB_EMAIL_SENDER=<sender email address> \
+    -e WEB_EMAIL_REGION=us-east-1
     -p 80:80 \
     -p 443:443 \
     cwhuang29/article-sharing-website:prod
 ```
 
 ## Others
+#### Sending emails via AWS SES
+1. Fill in settings in the `email` section in `config.yml`. Sender email address and region can be overwritten by env `WEB_EMAIL_SENDER` and `WEB_EMAIL_REGION` respectively.
+2. `app.url` is mandatory cause the reset password link is based on this value (can be overwritten by`WEB_APP_URL`)
+3. `email.numPerDay` and `email.numPerSec` in `config.yml`, which represent maximum send quota/rate, is the restrictions imposed by AWS.
+4. AWS retrieves credentials under `~/.aws/credentials`.  Copy credentials from the AWS web console and create this file with the following content:
+```bash
+[default]
+aws_access_key_id=
+aws_secret_access_key=
+```
+5. Verify domains and (sender) email addresses on AWS console (see [here](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/verify-email-addresses.html)).
+6. Submit a request to AWS to increase sending limits and move your account out of the Amazon SES sandbox (see [here](https://docs.aws.amazon.com/ses/latest/DeveloperGuide/manage-sending-quotas.html)).
 
 #### Connect to database
 Instead of connecting to the database container (which name is `db` in my case) directly, we can run another MySQL container and query the database container.
@@ -119,7 +136,7 @@ sudo yum -y install mysql
 - [x]  Add an "only administrators can view" option
 - [x]  Outline and cover photo for the overview page
 - [ ]  Logger
-- [ ]  Reset password
+- [x]  Reset password
 - [ ]  Support Google login
 - [ ]  Login Throttling
 - [x]  Tag-based search
@@ -129,7 +146,7 @@ sudo yum -y install mysql
 - [ ]  Preview feature (before submitting the article)
 - [x]  Security issues about uploading files
 - [ ]  Support CLI
-- [ ]  Integrate AWS SES to send emails
+- [x]  Integrate AWS SES to send emails
 
 ## Demo
 ### Feature - article list

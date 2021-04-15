@@ -14,7 +14,7 @@ import (
 var (
 	fileDir          = "public/upload/images/" // Do not start with "./" otherwise the images URL in articles content will be incorrect
 	acceptedFileType = map[string][]string{"image": {"image/png", "image/jpeg", "image/gif", "image/webp", "image/apng"}}
-	fileMaxSize      = 4 * 1000 * 1000 // 4MB
+	fileMaxSize      = 8 * 1000 * 1000 // 8MB
 )
 
 func writeFileLog(fileName, fileSize, fileType string) {
@@ -62,18 +62,18 @@ func generateFileName(fileType string) string {
 }
 
 /*
- * Notice: Even though I have renamed the files (in the 3rd argument of JS formData.append API), Filenames can't be trust
+ * Notice: Even though I have renamed the files (in the 3rd argument of JS formData.append API), Filenames can't be trusted
  * fmt.Println("filename:", file.Filename, "size:", file.Size, "header:", file.Header)
  * filename: d5821d5a77.png size: 5387170 header: map[Content-Disposition:[form-data; name="uploadImages"; filename="d5821d5a77.png"] Content-Type:[image/png]]
  */
 func getFile(file *multipart.FileHeader) (fileName string, err error) {
-	if ok := checkFileSize(file.Size); ok != true {
-		err = fmt.Errorf("File size of %v is too large!", file.Filename)
+	if ok := checkFileSize(file.Size); !ok {
+		err = fmt.Errorf("File size of %v is too large (max: 8MB per image)!", file.Filename)
 		return
 	}
 
 	fileType := file.Header.Get("Content-Type")
-	if ok := checkFileType(fileType, "image"); ok != true {
+	if ok := checkFileType(fileType, "image"); !ok {
 		err = fmt.Errorf("File type of %v is not permitted!", file.Filename)
 		return
 	}
@@ -133,10 +133,9 @@ func getFilesFromForm(c *gin.Context, files map[string][]*multipart.FileHeader) 
 		return
 	}
 
-	if coverPhoto != nil {
+	if coverPhoto != nil { // User may not upload cover photo
 		_ = saveFile(c, coverPhoto, coverPhotoName)
 		coverPhotoURL = coverPhotoName[7:] // Get rid of "public/" prefix
-		fmt.Println("Cover photo:", coverPhotoName)
 	}
 
 	for i, name := range fileNames {

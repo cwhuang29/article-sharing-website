@@ -1,11 +1,10 @@
 package handlers
 
 import (
-	"net/http"
-	"strconv"
-
 	"github.com/cwhuang29/article-sharing-website/databases"
 	"github.com/gin-gonic/gin"
+	"net/http"
+	"strconv"
 )
 
 func About(c *gin.Context) {
@@ -62,7 +61,7 @@ func FetchData(c *gin.Context) {
 		return
 	}
 
-	isAdmin := detectIfUserIsAdmin(c)
+	isAdmin := DetectIfUserIsAdmin(c)
 	data, err := fetchData(types, query, offset, limit, isAdmin)
 	c.JSON(http.StatusOK, gin.H{"articleList": data, "size": len(data)}) // Notice: if the data is an empty array [], frontend will get `null` instead of an empty array
 }
@@ -91,7 +90,7 @@ func SearchTags(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/articles/weekly-update")
 	}
 
-	updateTagsStats(tag)
+	databases.UpdateTagsStats(tag)
 	c.HTML(http.StatusOK, "overview.html", gin.H{
 		"currPageCSS": "css/overview.css",
 		"title":       "Results for: " + tag,
@@ -116,7 +115,7 @@ func Browse(c *gin.Context) {
 		return
 	}
 
-	isAdmin := detectIfUserIsAdmin(c)
+	isAdmin := DetectIfUserIsAdmin(c)
 	dbFormatArticle := databases.GetArticle(id, isAdmin)
 	if dbFormatArticle.ID == 0 {
 		errHead := "Article Not Found"

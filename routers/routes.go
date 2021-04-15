@@ -18,6 +18,8 @@ var (
 		"public/views/register.html",
 		"public/views/overview.html",
 		"public/views/editor.html",
+		"public/views/auth/passwordResetRequest.html",
+		"public/views/auth/passwordResetForm.html",
 		"public/views/templates/header.tmpl",
 		"public/views/templates/navbar.tmpl",
 		"public/views/templates/footer.tmpl",
@@ -74,10 +76,16 @@ func injectRoutes() {
 	router.POST("/login", handlers.LoginJSON)
 	router.POST("/logout", handlers.Logout)
 
-	router.GET("/password/reset", handlers.PasswordResetRequest)
-	router.GET("/password/reset/:token", handlers.PasswordResetView)
-	router.POST("/password/email", handlers.PasswordResetEmail)
-	router.POST("/password/reset", handlers.PasswordReset)
+	password := router.Group("/password")
+	{
+		password.GET("/reset", handlers.PasswordResetRequest)
+		password.GET("/reset/:token", handlers.PasswordResetForm)
+		password.POST("/email", handlers.PasswordResetEmail)
+		password.Use(CSRFProtection())
+		{
+			password.PUT("/reset", handlers.PasswordUpdate)
+		}
+	}
 
 	router.GET("/about", handlers.About)
 	router.GET("/contact-us", handlers.ContactUs)
