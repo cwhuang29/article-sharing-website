@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/cwhuang29/article-sharing-website/databases/models"
 	"github.com/cwhuang29/article-sharing-website/utils"
+	"github.com/cwhuang29/article-sharing-website/utils/validator"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"mime/multipart"
@@ -55,7 +56,7 @@ func checkFileType(fileType, mainType string) bool {
 }
 
 func generateFileName(fileType string) string {
-	fileID := time.Now().UTC().Format("20060102150405") + getUUID()
+	fileID := time.Now().UTC().Format("20060102150405") + utils.GetUUID()
 	fileExt := fileType[strings.LastIndex(fileType, "/")+1:]
 	return utils.UploadImageDir + fileID + "." + fileExt // Do not start with "./" otherwise the images URL in articles content will be incorrect
 }
@@ -65,7 +66,7 @@ func generateFileName(fileType string) string {
  * fmt.Println("filename:", file.Filename, "size:", file.Size, "header:", file.Header)
  * filename: d5821d5a77.png size: 5387170 header: map[Content-Disposition:[form-data; name="uploadImages"; filename="d5821d5a77.png"] Content-Type:[image/png]]
  */
-func getFile(file *multipart.FileHeader) (fileName string, err error) {
+func checkFileAndRename(file *multipart.FileHeader) (fileName string, err error) {
 	if ok := checkFileSize(file.Size); !ok {
 		err = fmt.Errorf("File size of %v is too large (max: 8MB per image)!", file.Filename)
 		return
@@ -88,7 +89,7 @@ func getImagesInContent(files []*multipart.FileHeader) (fileNames []string, file
 	fileNamesMapping = make(map[string]string, len(files))
 
 	for i, file := range files {
-		if fileName, err = getFile(file); err != nil {
+		if fileName, err = checkFileAndRename(file); err != nil {
 			return
 		}
 
@@ -100,7 +101,7 @@ func getImagesInContent(files []*multipart.FileHeader) (fileNames []string, file
 }
 
 func getCoverPhoto(file *multipart.FileHeader) (coverPhotoName string, err error) {
-	if coverPhotoName, err = getFile(file); err != nil {
+	if coverPhotoName, err = checkFileAndRename(file); err != nil {
 		return
 	}
 
@@ -153,7 +154,7 @@ func getValuesFromForm(c *gin.Context, formVal map[string][]string) models.Artic
 
 	date, err := time.Parse("2006-01-02", formVal["date"][0])
 	if err != nil {
-		date = OldestDate
+		date = validator.OldestDate
 	}
 
 	auths := strings.Join(formVal["authors"], ",")
@@ -199,7 +200,7 @@ func handleForm(c *gin.Context) (newArticle models.Article, invalids map[string]
 		return
 	}
 
-	invalids = validateArticleValues(newArticle)
+	invalids = validator.ValidateArticleForm(newArticle)
 	if len(invalids) != 0 {
 		return
 	}

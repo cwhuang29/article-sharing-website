@@ -3,34 +3,11 @@ package handlers
 import (
 	"github.com/cwhuang29/article-sharing-website/config"
 	"github.com/cwhuang29/article-sharing-website/databases"
-	"github.com/cwhuang29/article-sharing-website/databases/models"
 	"github.com/cwhuang29/article-sharing-website/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
 )
-
-func clearUserExpiredPasswordTokens(id int) {
-	databases.DeleteExpiredPasswordTokens(id)
-}
-
-func doesUserHasEmailQuota(id int) bool {
-	count := databases.CountUserResetPasswordTokens(id)
-	return count < utils.ResetPasswordMaxRetry
-}
-
-func getPasswordResetToken(id, maxAge int) string {
-	token := getUUID()
-
-	if ok := databases.InsertResetPasswordToken(id, token, maxAge); !ok {
-		return getPasswordResetToken(id, maxAge) // Try again if we got duplicate tokens
-	}
-	return token
-}
-
-func getPasswordResetTokenInstance(token string) models.Password {
-	return databases.GetResetPasswordToken(token)
-}
 
 func PasswordResetRequest(c *gin.Context) {
 	c.HTML(http.StatusOK, "passwordResetRequest.html", gin.H{"title": "Reset Password"})
@@ -58,7 +35,7 @@ func PasswordResetEmail(c *gin.Context) {
 	 * There should be a mechanism to remove expired tokens in Password table
 	 * Currently I'll do it right here, and use go routine to clear expired tokens periodically in the future
 	 */
-	clearUserExpiredPasswordTokens(user.ID)
+	utils.ClearExpiredPasswordTokens(user.ID)
 
 	if yes := doesUserHasEmailQuota(user.ID); !yes {
 		errHead = "You are trying too often"
@@ -68,7 +45,7 @@ func PasswordResetEmail(c *gin.Context) {
 	}
 
 	baseURL := config.GetConfig().App.Url
-	token := getPasswordResetToken(user.ID, utils.ResetPasswordTokenMaxAge)
+	token := utils.StorePasswordResetToken(user.ID, utils.ResetPasswordTokenMaxAge)
 	link := baseURL + utils.ResetPasswordPath + token + "?email=" + user.Email
 	expireMins := utils.ResetPasswordTokenMaxAge / 60
 	name := user.FirstName + " " + user.LastName
@@ -95,7 +72,7 @@ func PasswordResetForm(c *gin.Context) {
 		return
 	}
 
-	uuid := getUUID()
+	uuid := utils.GetUUID()
 	c.SetCookie("csrf_token", uuid, utils.CsrfTokenAge, "/", "", true, true)
 	c.HTML(http.StatusOK, "passwordResetForm.html", gin.H{
 		"title":       "Reset Password",
@@ -134,7 +111,7 @@ func PasswordUpdate(c *gin.Context) {
 		return
 	}
 
-	if isExpired(tokenObj.CreatedAt, tokenObj.MaxAge) {
+	if utils.IsExpired(tokenObj.CreatedAt, tokenObj.MaxAge) {
 		databases.DeletePasswordToken(token)
 
 		errHead = "The link has expired"
@@ -143,7 +120,7 @@ func PasswordUpdate(c *gin.Context) {
 		return
 	}
 
-	hashedPwd, err := hashPassword(password)
+	hashedPwd, err := utils.HashPassword(password)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody})
 		return
@@ -154,7 +131,7 @@ func PasswordUpdate(c *gin.Context) {
 		return
 	}
 
-	databases.DeletePasswordToken(token)
+	utils.ClearPasswordResetToken(token)
 
 	msgHead := "Reset Password Succeed"
 	msgBody := "Now you can log in with the new password"

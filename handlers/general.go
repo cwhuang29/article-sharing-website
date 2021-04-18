@@ -12,6 +12,37 @@ func About(c *gin.Context) {
 	c.HTML(http.StatusOK, "about.html", gin.H{"currPageCSS": "css/about.css"}) // Call the HTML method of the Context to render a template
 }
 
+func Overview(c *gin.Context) {
+	// If frontend trigger this route via window.location.href="/articles/browse?articleId=1", then c.FullPath() is /articles/browse
+	title := ""
+	switch c.FullPath() {
+	case "/articles/weekly-update":
+		title = "Weekly News"
+	case "/articles/medication":
+		title = "Medication Related News"
+	case "/articles/pharma":
+		title = "Pharma News"
+	}
+
+	c.HTML(http.StatusOK, "overview.html", gin.H{
+		"currPageCSS": "css/overview.css",
+		"title":       title,
+	})
+}
+
+func SearchTags(c *gin.Context) {
+	tag := c.Query("query") // Request via "/articles/tags?query=<value>"
+	if tag == "" {
+		c.Redirect(http.StatusFound, "/articles/weekly-update")
+	}
+
+	databases.UpdateTagsStats(tag)
+	c.HTML(http.StatusOK, "overview.html", gin.H{
+		"currPageCSS": "css/overview.css",
+		"title":       "Results for: " + tag,
+	})
+}
+
 func CheckPermissionAndArticleExists(c *gin.Context) {
 	id := getParaArticleId(c, "articleId")
 	if id == 0 {
@@ -62,40 +93,9 @@ func FetchData(c *gin.Context) {
 		return
 	}
 
-	isAdmin := DetectIfUserIsAdmin(c)
+	isAdmin := isUserAdmin(c)
 	data, err := fetchData(types, query, offset, limit, isAdmin)
 	c.JSON(http.StatusOK, gin.H{"articleList": data, "size": len(data)}) // Notice: if the data is an empty array [], frontend will get `null` instead of an empty array
-}
-
-func Overview(c *gin.Context) {
-	// If frontend trigger this route via window.location.href="/articles/browse?articleId=1", then c.FullPath() is /articles/browse
-	title := ""
-	switch c.FullPath() {
-	case "/articles/weekly-update":
-		title = "Weekly News"
-	case "/articles/medication":
-		title = "Medication Related News"
-	case "/articles/pharma":
-		title = "Pharma News"
-	}
-
-	c.HTML(http.StatusOK, "overview.html", gin.H{
-		"currPageCSS": "css/overview.css",
-		"title":       title,
-	})
-}
-
-func SearchTags(c *gin.Context) {
-	tag := getParaTagValue(c, "query")
-	if tag == "" {
-		c.Redirect(http.StatusFound, "/articles/weekly-update")
-	}
-
-	databases.UpdateTagsStats(tag)
-	c.HTML(http.StatusOK, "overview.html", gin.H{
-		"currPageCSS": "css/overview.css",
-		"title":       "Results for: " + tag,
-	})
 }
 
 func Browse(c *gin.Context) {
@@ -116,7 +116,7 @@ func Browse(c *gin.Context) {
 		return
 	}
 
-	isAdmin := DetectIfUserIsAdmin(c)
+	isAdmin := isUserAdmin(c)
 	dbFormatArticle := databases.GetArticle(id, isAdmin)
 	if dbFormatArticle.ID == 0 {
 		errHead := "Article Not Found"
@@ -135,7 +135,7 @@ func Browse(c *gin.Context) {
 	cookieEmail, _ := c.Cookie("login_email")
 	adminEmail, _ := c.Cookie("is_admin")
 	if adminEmail != "" && cookieEmail == adminEmail && databases.IsAdminUser(adminEmail) {
-		uuid = getUUID()
+		uuid = utils.GetUUID()
 		c.SetCookie("csrf_token", uuid, utils.CsrfTokenAge, "/", "", true, true)
 	}
 

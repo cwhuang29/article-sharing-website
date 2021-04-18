@@ -4,33 +4,17 @@ import (
 	"github.com/cwhuang29/article-sharing-website/databases"
 	"github.com/cwhuang29/article-sharing-website/databases/models"
 	"github.com/cwhuang29/article-sharing-website/utils"
+	"github.com/cwhuang29/article-sharing-website/utils/validator"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
-func storeLoginToken(id, loginMaxAge int) string {
-	token := getUUID()
-
-	if ok := databases.InsertLoginToken(id, token, loginMaxAge); !ok {
-		return storeLoginToken(id, loginMaxAge) // Try again if we got duplicate tokens
-	}
-	return token
-}
-
-func clearLoginToken(email, token string) {
-	/*
-	 * Notice: Users may have multiple tokens based on different user agents they have logged in from, and those
-	 * tokens must be removed from DB when expired. For instance, the user has logged in from the cellphone and laptop.
-	 * When the user logged out on the laptop, we'll check whether the login token for the cellphone expired
-	 * It can be done at login, logout, or any other time. Currently, I'll do this task when the user logout
-	 */
-	user := databases.GetUser(email)
-	databases.DeleteLoginToken(token)
-	databases.DeleteExpiredLoginTokens(user.ID)
-}
-
 func RegisterView(c *gin.Context) {
-	c.HTML(http.StatusOK, "register.html", gin.H{"currPageCSS": "css/register.css", "title": "Signup"}) // Call the HTML method of the Context to render a template
+	c.HTML(http.StatusOK, "register.html", gin.H{"currPageCSS": "css/register.css", "title": "Signup"})
+}
+
+func LoginView(c *gin.Context) {
+	c.HTML(http.StatusOK, "login.html", gin.H{"currPageCSS": "css/login.css", "title": "Login"})
 }
 
 func Register(c *gin.Context) {
@@ -43,7 +27,7 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	invalids := validateUserFormat(newUser)
+	invalids := validator.ValidateRegisterForm(newUser)
 	if len(invalids) != 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"bindingError": false, "errTags": invalids})
 		return
@@ -60,7 +44,7 @@ func Register(c *gin.Context) {
 		newUser.Admin = true
 	}
 
-	hashedPwd, err := hashPassword(newUser.Password)
+	hashedPwd, err := utils.HashPassword(newUser.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "errHead": errHead, "errBody": errBody})
 		return
@@ -73,7 +57,7 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	token := storeLoginToken(id, utils.LoginMaxAge)
+	token := utils.StoreLoginToken(id, utils.LoginMaxAge)
 	c.Header("Location", utils.LandingPage)
 	c.SetCookie("login_token", token, utils.LoginMaxAge, "/", "", true, true)
 	c.SetCookie("login_email", newUser.Email, utils.LoginMaxAge, "/", "", true, false) // Frontend relies on this cookie
@@ -83,18 +67,18 @@ func Register(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{})
 }
 
-func LoginView(c *gin.Context) {
-	c.HTML(http.StatusOK, "login.html", gin.H{"currPageCSS": "css/login.css", "title": "Login"})
-}
+func Login(c *gin.Context) {
+	json := struct {
+		Email    string `form:"email" json:"email" binding:"required"`
+		Password string `form:"password" json:"password" binding:"required"`
+	}{}
 
-func LoginJSON(c *gin.Context) {
-	var json Login
 	if err := c.ShouldBindJSON(&json); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"inputFormatInvalid": true, "errHead": err.Error()})
 		return
 	}
 
-	invalids := validateLoginFormat(json.Email, json.Password)
+	invalids := validator.ValidateLoginForm(json.Email, json.Password)
 	if len(invalids) != 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"inputFormatInvalid": false, "errTags": invalids})
 		return
@@ -109,7 +93,7 @@ func LoginJSON(c *gin.Context) {
 		return
 	}
 
-	err := compareHashAndPassword([]byte(user.Password), []byte(json.Password))
+	err := utils.CompareHashAndPassword([]byte(user.Password), []byte(json.Password))
 	if err != nil {
 		errHead := "Password Incorrect"
 		errBody := "Please try again."
@@ -117,7 +101,7 @@ func LoginJSON(c *gin.Context) {
 		return
 	}
 
-	token := storeLoginToken(user.ID, utils.LoginMaxAge)
+	token := utils.StoreLoginToken(user.ID, utils.LoginMaxAge)
 	c.Header("Location", utils.LandingPage)
 	c.SetCookie("login_token", token, utils.LoginMaxAge, "/", "", true, true)
 	c.SetCookie("login_email", user.Email, utils.LoginMaxAge, "/", "", true, false) // Frontend relies on this cookie
@@ -138,7 +122,15 @@ func Logout(c *gin.Context) {
 		return
 	}
 
-	clearLoginToken(email, token)
+	/*
+	 * Notice: Users may have multiple tokens based on different user agents they have logged in from, and those
+	 * tokens must be removed from DB when expired. For instance, the user has logged in from the cellphone and laptop.
+	 * When the user logged out on the laptop, we'll check whether the login token for the cellphone expired
+	 * It can be done at login, logout, or any other time. Currently, I'll do this task when the user logout
+	 */
+	utils.ClearLoginToken(token)
+	user := databases.GetUser(email)
+	utils.ClearExpiredLoginTokens(user.ID)
 
 	c.SetCookie("login_token", "", 0, "/", "", true, true)
 	c.SetCookie("login_email", "", 0, "/", "", true, true)

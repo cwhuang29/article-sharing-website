@@ -73,7 +73,7 @@ func injectRoutes() {
 	router.GET("/register", handlers.RegisterView)
 	router.GET("/login", handlers.LoginView)
 	router.POST("/register", handlers.Register)
-	router.POST("/login", handlers.LoginJSON)
+	router.POST("/login", handlers.Login)
 	router.POST("/logout", handlers.Logout)
 
 	password := router.Group("/password")

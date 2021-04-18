@@ -10,7 +10,7 @@ import (
 )
 
 func CreateArticleView(c *gin.Context) {
-	uuid := getUUID()
+	uuid := utils.GetUUID()
 	c.SetCookie("csrf_token", uuid, utils.CsrfTokenAge, "/", "", true, true)
 	c.HTML(http.StatusOK, "editor.html", gin.H{
 		"currPageCSS": "css/editor.css",
@@ -46,7 +46,7 @@ func UpdateArticleView(c *gin.Context) {
 	}
 
 	article := articleFormatDBToDetailed(dbFormatArticle, false)
-	uuid := getUUID()
+	uuid := utils.GetUUID()
 
 	c.SetCookie("csrf_token", uuid, utils.CsrfTokenAge, "/", "", true, true)
 	c.HTML(http.StatusOK, "editor.html", gin.H{

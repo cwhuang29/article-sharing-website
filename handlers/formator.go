@@ -11,13 +11,13 @@ func articleFormatDBToOverview(article models.Article) (a Article) {
 
 	if len(article.Title) > utils.TitleSizeLimit {
 		// Chinese words are about 1.8 times wider than English alphabets in title and subtitle
-		a.Title = decodeRuneStringForFrontend(article.Title, utils.TitleSizeLimit, 1.78) + "&nbsp;..."
+		a.Title = utils.DecodeRuneStringForFrontend(article.Title, utils.TitleSizeLimit, 1.78) + "&nbsp;..."
 	} else {
 		a.Title = article.Title
 	}
 
 	if len(article.Subtitle) > utils.SubtitleSizeLimit {
-		a.Subtitle = decodeRuneStringForFrontend(article.Subtitle, utils.SubtitleSizeLimit, 1.78) + "&nbsp;..."
+		a.Subtitle = utils.DecodeRuneStringForFrontend(article.Subtitle, utils.SubtitleSizeLimit, 1.78) + "&nbsp;..."
 	} else {
 		a.Subtitle = article.Subtitle
 	}
@@ -34,9 +34,9 @@ func articleFormatDBToOverview(article models.Article) (a Article) {
 	}
 
 	if article.CoverPhoto != "" && len(article.Outline) > utils.OutlineSizeLimitWithCoverPhoto {
-		a.Outline = decodeRuneStringForFrontend(article.Outline, utils.OutlineSizeLimitWithCoverPhoto, 2.15)
+		a.Outline = utils.DecodeRuneStringForFrontend(article.Outline, utils.OutlineSizeLimitWithCoverPhoto, 2.15)
 	} else if len(article.Outline) > utils.OutlineSizeLimit {
-		a.Outline = decodeRuneStringForFrontend(article.Outline, utils.OutlineSizeLimit, 2.15)
+		a.Outline = utils.DecodeRuneStringForFrontend(article.Outline, utils.OutlineSizeLimit, 2.15)
 	} else {
 		a.Outline = article.Outline
 	}
@@ -60,7 +60,7 @@ func articleFormatDBToDetailed(article models.Article, parseMarkdown bool) (a Ar
 	}
 
 	if parseMarkdown {
-		a.Content = parseMarkdownToHTML(article.Content)
+		a.Content = utils.ParseMarkdownToHTML(article.Content)
 	} else {
 		a.Content = article.Content
 	}
