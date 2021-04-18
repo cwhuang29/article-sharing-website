@@ -48,16 +48,16 @@ const loadMarkdownEditor = () => {
 };
 
 const getInputValue = () => {
-  var adminOnly = document.querySelector("#adminOnly").checked;
-  var title = document.getElementsByName("title")[0].value.trim();
-  var subtitle = document.getElementsByName("subtitle")[0].value.trim();
-  var date = document.getElementsByName("date")[0].value;
-  var authors = [...document.getElementsByName("authors")].filter((author) => author.checked).map((author) => author.value);
+  const adminOnly = document.querySelector("#adminOnly").checked;
+  const title = document.getElementsByName("title")[0].value.trim();
+  const subtitle = document.getElementsByName("subtitle")[0].value.trim();
+  const date = document.getElementsByName("date")[0].value;
+  const authors = [...document.getElementsByName("authors")].filter((author) => author.checked).map((author) => author.value);
   // If toLowerCase() is omitted, sqlite can't find out records in function GetSameCategoryArticles() (but MySQL works fine)
-  var category = document.getElementsByName("category")[0].value.toLowerCase(); // From "Medication" to "medication"
-  var tags = [...document.getElementsByName("tags")].filter((tag) => tag.tagName.toLowerCase() == "span").map((tag) => tag.textContent.trim());
-  var outline = document.getElementsByName("outline")[0].value;
-  var content = easyMDE.value();
+  const category = document.getElementsByName("category")[0].value.toLowerCase(); // From "Medication" to "medication"
+  const tags = [...document.getElementsByName("tags")].filter((tag) => tag.tagName.toLowerCase() == "span").map((tag) => tag.textContent.trim());
+  const outline = document.getElementsByName("outline")[0].value;
+  const content = easyMDE.value();
 
   return { adminOnly: adminOnly, title: title, subtitle: subtitle, date: date, authors: authors, category: category, tags: tags, outline: outline, content: content };
 };
@@ -98,9 +98,11 @@ const fetchFailed = async (resp) => {
 };
 
 const submitArticle = async (method, url, formData) => {
-  let csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+  const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
   const headers = new Headers({ "X-CSRF-TOKEN": csrfToken });
 
+  // Can't use fetch.js cause it only sends body with JSON type,
+  // and backend will respond with an error: "request Content-Type isn't multipart/form-data"
   await fetch(url, {
     method: method,
     headers: headers,
@@ -153,7 +155,7 @@ const generateForm = (values) => {
      * This is necessary cause we'll renamed files on server side, and change the URL in the content. So the file name must be the same as fakeID
      * (URL = protocol + domain + fakeID)
      */
-    let fakeID = f.nextElementSibling.nextElementSibling.nextElementSibling.innerText.substr(-FILE_ID_LENGTH);
+    const fakeID = f.nextElementSibling.nextElementSibling.nextElementSibling.innerText.substr(-FILE_ID_LENGTH);
     formData.append("contentImages", f.files[0], fakeID);
   }
   return formData;
@@ -162,7 +164,7 @@ const generateForm = (values) => {
 const submitHandler = async (method, endpoint, button) => {
   button.classList.add("is-loading");
   const values = getInputValue();
-  let res = validateInput(values);
+  const res = validateInput(values);
 
   if (!res) {
     button.classList.remove("is-loading");
@@ -266,7 +268,7 @@ const validateInput = (values) => {
   return canSubmit;
 };
 
-onDOMContentLoaded = (function () {
+const editorHandler = () => {
   // Since the prompt message can't be customized, and the default message is "Changes you made may not be saved"
   // which is quite confusing (cause the changes have been saved). So I remove this feature.
   // window.addEventListener("beforeunload", (e) => {
@@ -299,4 +301,8 @@ onDOMContentLoaded = (function () {
       window.location.href = url;
     });
   }
+};
+
+onDOMContentLoaded = (function () {
+  editorHandler();
 })();

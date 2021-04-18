@@ -11,50 +11,70 @@ const setErrMsgBanner = (ele, msg) => {
 };
 
 const isValidEmail = (e) => {
-  var filter = /^\s*[\w\-\+_]+(\.[\w\-\+_]+)*\@[\w\-\+_]+\.[\w\-\+_]+(\.[\w\-\+_]+)*\s*$/;
+  const filter = /^\s*[\w\-\+_]+(\.[\w\-\+_]+)*\@[\w\-\+_]+\.[\w\-\+_]+(\.[\w\-\+_]+)*\s*$/;
   return String(e).search(filter) != -1;
 };
 
-const validateInput = (vals) => {
-  let isValid = true;
-  const [fn, ln, pwd, pwdCfm, eml, gdr, mjr] = vals;
+const getInputValue = () => {
+  let g = [...gender].filter((g) => g.checked).map((g) => g.value)[0];
+  if (g === undefined) {
+    // If user didn't click on any of them
+    g = "";
+  }
+  return {
+    firstName: firstName.value.trim(),
+    lastName: lastName.value.trim(),
+    password: password.value.trim(),
+    passwordConfirm: passwordConfirm.value.trim(),
+    email: email.value.trim(),
+    gender: g,
+    major: major.value,
+  };
+};
 
-  if (vals.some((v) => v.length == 0)) {
-    isValid = false;
+const validateInput = (values) => {
+  let isValid = true;
+  const { firstName, lastName, password, passwordConfirm, email, gender, major } = values;
+
+  for (const [key, val] of Object.entries(values)) {
+    if (val.length == 0) {
+      isValid = false;
+    }
   }
 
-  if (fn.length == 0) {
+  if (firstName.length == 0) {
     setErrMsgBanner(firstNameErr, errInputMsg.empty);
   } else {
     setErrMsgBanner(firstNameErr, "");
   }
 
-  if (ln.length == 0) {
+  if (lastName.length == 0) {
     setErrMsgBanner(lastNameErr, errInputMsg.empty);
   } else {
     setErrMsgBanner(lastNameErr, "");
   }
 
-  if (pwd.length == 0) {
+  if (password.length == 0) {
     setErrMsgBanner(passwordErr, errInputMsg.empty);
-  } else if (pwd.length < 8) {
+  } else if (password.length < 8) {
+    isValid = false;
     setErrMsgBanner(passwordErr, errInputMsg.passwordTooShort);
   } else {
     setErrMsgBanner(passwordErr, "");
   }
 
-  if (pwdCfm.length == 0) {
-    setErrMsgBanner(passwordConfirmErr, errInputMsg.empty);
-  } else if (pwd.length < 8) {
-    setErrMsgBanner(passwordConfirmErr, errInputMsg.passwordTooShort);
+  if (passwordConfirm.length == 0) {
+    setErrMsgBanner(passwordConfirm, errInputMsg.empty);
+  } else if (passwordConfirm.length < 8) {
+    isValid = false;
+    setErrMsgBanner(passwordConfirm, errInputMsg.passwordTooShort);
   } else {
-    setErrMsgBanner(passwordConfirmErr, "");
+    setErrMsgBanner(passwordConfirm, "");
   }
 
-  if (pwd.length > 7 && pwdCfm.length > 7) {
-    if (pwd != pwdCfm) {
+  if (password.length > 7 && passwordConfirm.length > 7) {
+    if (password != passwordConfirm) {
       isValid = false;
-      setErrMsgBanner(passwordErr, errInputMsg.passwordInconsistency);
       setErrMsgBanner(passwordConfirmErr, errInputMsg.passwordInconsistency);
     } else {
       setErrMsgBanner(passwordErr, "");
@@ -62,38 +82,28 @@ const validateInput = (vals) => {
     }
   }
 
-  if (eml.length == 0) {
+  if (email.length == 0) {
     setErrMsgBanner(emailErr, errInputMsg.empty);
-  } else if (!isValidEmail(eml)) {
+  } else if (!isValidEmail(email)) {
     isValid = false;
     setErrMsgBanner(emailErr, errInputMsg.emailFormatInvalid);
   } else {
     setErrMsgBanner(emailErr, "");
   }
 
-  if (gdr.length == 0) {
-    isValid = false;
+  if (gender.length == 0) {
     setErrMsgBanner(genderErr, errInputMsg.empty);
   } else {
     setErrMsgBanner(genderErr, "");
   }
 
-  if (mjr.length == 0) {
+  if (major.length == 0) {
     setErrMsgBanner(majorErr, errInputMsg.empty);
   } else {
     setErrMsgBanner(majorErr, "");
   }
 
   return isValid;
-};
-
-const retrieveInput = () => {
-  let g = [...gender].filter((g) => g.checked).map((g) => g.value)[0];
-  if (g === undefined) {
-    // If user didn't click on any of them
-    g = "";
-  }
-  return [firstName.value.trim(), lastName.value.trim(), password.value.trim(), passwordConfirm.value.trim(), email.value.trim(), g, major.value];
 };
 
 const checkStatus = async (resp) => {
@@ -121,7 +131,7 @@ const creationFailed = async (resp) => {
         showErrMsg("An Error Occurred !", "Please reload the page and try again.");
       } else {
         for (var key in data.errTags) {
-          document.getElementById(`err_msg_${key}`).innerText = data.err[key];
+          document.getElementById(`err_msg_${key}`).innerText = data.errTags[key];
         }
       }
     });
@@ -132,30 +142,29 @@ const creationFailed = async (resp) => {
   }
 };
 
-const postData = async (url = "", data = {}) => {
-  return fetch(url, {
-    method: "POST",
-    mode: "cors",
-    cache: "no-cache",
-    credentials: "same-origin",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    redirect: "follow",
-    referrerPolicy: "no-referrer",
-    body: JSON.stringify(data),
-  });
-};
+const submitNewPost = () => {
+  submitBtn.classList.add("is-loading");
 
-const submitArticle = async (vals) => {
-  const [fn, ln, pwd, pwdCfm, eml, gdr, mjr] = vals;
-  postData(registerEndpoint, {
-    first_name: fn,
-    last_name: ln,
-    password: pwd,
-    email: eml,
-    gender: gdr,
-    major: mjr,
+  let values = getInputValue();
+  let res = validateInput(values);
+
+  if (!res) {
+    submitBtn.classList.remove("is-loading");
+    return;
+  }
+
+  const transformedValues = {
+    first_name: values.firstName,
+    last_name: values.lastName,
+    password: values.password,
+    email: values.email,
+    gender: values.gender,
+    major: values.major,
+  };
+
+  fetchData(registerEndpoint, {
+    body: transformedValues,
+    redirect: "follow",
   })
     .then(checkStatus)
     .then(creationSucceed)
@@ -165,21 +174,7 @@ const submitArticle = async (vals) => {
     });
 };
 
-const submitNewPost = () => {
-  submitBtn.classList.add("is-loading");
-
-  let vals = retrieveInput();
-  let res = validateInput(vals);
-
-  if (!res) {
-    submitBtn.classList.remove("is-loading");
-  } else {
-    submitArticle(vals);
-  }
-};
-
-onDOMContentLoaded = (function () {
-  showNoticeMsg("Reset password feature is coming out soon. Sorry for the inconvenience.", "");
+const registerHandler = () => {
   firstName = document.getElementsByName("first_name")[0];
   lastName = document.getElementsByName("last_name")[0];
   password = document.getElementsByName("password")[0];
@@ -198,4 +193,8 @@ onDOMContentLoaded = (function () {
 
   submitBtn = document.querySelector("#submit_button");
   submitBtn.addEventListener("click", submitNewPost);
+};
+
+onDOMContentLoaded = (function () {
+  registerHandler();
 })();

@@ -37,13 +37,12 @@ const fetchSucceed = async (resp) => {
 
 const fetchDeleteReq = async (url) => {
   const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-  const headers = new Headers({ "X-CSRF-TOKEN": csrfToken });
+  const headers = { "X-CSRF-TOKEN": csrfToken };
 
-  return fetch(url, {
+  return fetchData(url, {
     method: "DELETE",
     headers: headers,
     cache: "no-cache",
-    referrerPolicy: "no-referrer",
   })
     .then(checkStatus)
     .then(fetchSucceed)
@@ -64,13 +63,8 @@ const modifyOrDelete = async () => {
   url.searchParams.set("articleId", articleId); // e.g. /admin/update/article?articleId=8
   checkUrl.searchParams.set("articleId", articleId);
 
-  let res = await fetch(checkUrl, {
-    method: "GET",
-    mode: "cors",
+  let res = await fetchData(checkUrl, {
     cache: "no-cache",
-    credentials: "same-origin",
-    redirect: "follow",
-    referrerPolicy: "no-referrer",
   })
     .then(checkStatus)
     .then(fetchSucceed)
@@ -103,7 +97,7 @@ const deleteArticle = () => {
   openModalBody(mode, title);
 };
 
-onDOMContentLoaded = (function () {
+const browseHandler = () => {
   if (getCookie("is_admin")) {
     adminSection = document.getElementById("adminSection");
     modifyBtn = document.getElementById("modifyBtn");
@@ -121,4 +115,8 @@ onDOMContentLoaded = (function () {
     modifyBtn.addEventListener("click", modifyArticle);
     deleteBtn.addEventListener("click", deleteArticle);
   }
+};
+
+onDOMContentLoaded = (function () {
+  browseHandler();
 })();

@@ -4,7 +4,12 @@ const limit = 10;
 let offset = 0;
 let stopFetching = false;
 
-const storeNewContentToSession = (content) => {
+const clearOverViewSession = () => {
+  window.sessionStorage.removeItem("offset");
+  window.sessionStorage.removeItem("overviewContent");
+};
+
+const storeOverviewToSession = (content) => {
   let sessionContent = window.sessionStorage.getItem("overviewContent") || "";
   window.sessionStorage.setItem("overviewContent", sessionContent + content);
   window.sessionStorage.setItem("offset", offset);
@@ -42,7 +47,7 @@ const encodeHTMLEntities = (val) => {
 const formatArticle = (article) => {
   let { id, adminOnly, title, subtitle, tags, category, outline, cover_photo } = article;
 
-  let titleTag = `<p class="title">${title}</p>`;
+  const titleTag = `<p class="title">${title}</p>`;
 
   let subtitleTag = ""; // Don't show subtitle on mobile devices
   if (!isMobile()) {
@@ -62,7 +67,7 @@ const formatArticle = (article) => {
   }
 
   let overviewContent;
-  let outlineTag = `<p>${outline}</p>`;
+  const outlineTag = `<p>${outline}</p>`;
   if (cover_photo) {
     let imgTag = `<div class="column is-4" style="text-align: right;"><img class="article-list-img-h" src="/${cover_photo}"></div>`;
     overviewContent = `<div class="column is-8">${subtitleTag}${outlineTag}</div>${imgTag}`;
@@ -108,7 +113,7 @@ const fetchSucceed = async (resp) => {
       newContent += formatArticle(a);
     });
     appendNewContent(newContent);
-    storeNewContentToSession(newContent);
+    storeOverviewToSession(newContent);
   });
   return Promise.resolve(true);
 };
@@ -187,8 +192,7 @@ const sessionStorageHandler = async () => {
   window.sessionStorage.setItem("para", para);
   if (performance.navigation.type == performance.navigation.TYPE_RELOAD || path != sessionPath || para != sessionPara) {
     // e.g. Reload page (either clicking the button or keyboard shortcuts), from "/pharma" to "/medication", or from "/tag?query=foo" to "/tag?query=bar"
-    window.sessionStorage.removeItem("offset");
-    window.sessionStorage.removeItem("overviewContent");
+    clearOverViewSession();
   }
 
   const overviewContent = window.sessionStorage.getItem("overviewContent");
@@ -200,7 +204,7 @@ const sessionStorageHandler = async () => {
   }
 };
 
-onDOMContentLoaded = (function () {
+const overviewHandler = () => {
   offset = 0; // offset == # means we'll skip # articles in next fetch
 
   sessionStorageHandler();
@@ -218,4 +222,8 @@ onDOMContentLoaded = (function () {
       fetchContent(0);
     }
   };
+};
+
+onDOMContentLoaded = (function () {
+  overviewHandler();
 })();

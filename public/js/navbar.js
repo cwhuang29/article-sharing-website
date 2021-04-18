@@ -18,17 +18,19 @@ const getCookie = (name) => {
 };
 
 const logout = () => {
-  fetch(logoutEndpoint, {
+  fetchData(logoutEndpoint, {
     method: "POST",
-    mode: "cors",
     cache: "no-cache",
     credentials: "same-origin",
     redirect: "follow",
-    referrerPolicy: "no-referrer",
   }).then((resp) => {
     if (resp.status >= 400) {
       showErrMsg("An Error Occurred", "Please reload the page and try again.");
     } else {
+      // Copy from overview.js
+      window.sessionStorage.removeItem("offset");
+      window.sessionStorage.removeItem("overviewContent");
+
       /*
        * Notice: To enhance security, server sets the httpOnly for login_token cookie and handles the cookies deletion (set their values to "")
        * document.cookie = "login_email=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"; // Set the expires parameter to a passed date to delete a cookie
@@ -57,11 +59,11 @@ const showLoginOrLogout = () => {
   }
 };
 
-document.addEventListener("DOMContentLoaded", () => {
-  const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll(".navbar-burger"), 0);
+const navbarHandler = () => {
+  const navbarBurgers = Array.prototype.slice.call(document.querySelectorAll(".navbar-burger"), 0);
 
-  if ($navbarBurgers.length > 0) {
-    $navbarBurgers.forEach((el) => {
+  if (navbarBurgers.length > 0) {
+    navbarBurgers.forEach((el) => {
       el.addEventListener("click", () => {
         const target = el.dataset.target;
         const $target = document.getElementById(target);
@@ -78,4 +80,8 @@ document.addEventListener("DOMContentLoaded", () => {
   showLoginOrLogout();
   showNewPostButton();
   logoutBtn.addEventListener("click", logout);
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  navbarHandler();
 });

@@ -5,7 +5,15 @@ const validateEmail = (email) => {
   return re.test(String(email).toLowerCase());
 };
 
-const getLoginFields = async (email, password) => {
+const getInputValue = () => {
+  return {
+    email: email_field.value.trim(),
+    password: password_field.value.trim(),
+  };
+};
+
+const validateInput = (values) => {
+  const { email, password } = values;
   let canSubmit = true;
 
   if (email.length == 0) {
@@ -25,10 +33,7 @@ const getLoginFields = async (email, password) => {
     err_msg_password.innerText = "";
   }
 
-  if (canSubmit) {
-    return Promise.resolve();
-  }
-  return Promise.reject();
+  return canSubmit;
 };
 
 const checkStatus = async (resp) => {
@@ -40,6 +45,9 @@ const checkStatus = async (resp) => {
 };
 
 const loginSucceed = async (resp) => {
+  // Copy from overview.js (to make sure admin user can see admin only articles once login cause data will not be fetched if there is data in session storage)
+  window.sessionStorage.removeItem("offset");
+  window.sessionStorage.removeItem("overviewContent");
   window.location.href = resp.headers.get("Location");
   return Promise.resolve();
 };
@@ -59,42 +67,18 @@ const loginFailed = async (resp) => {
   }
 };
 
-const postData = async (url = "", data = {}) => {
-  return fetch(url, {
-    method: "POST",
-    mode: "cors",
-    cache: "no-cache",
-    credentials: "same-origin",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    redirect: "follow",
-    referrerPolicy: "no-referrer",
-    body: JSON.stringify(data),
-  });
-};
-
 const login = async () => {
   submitBtn.classList.add("is-loading");
 
-  let email = email_field.value.trim();
-  let password = password_field.value.trim();
-  let res = await getLoginFields(email, password)
-    .then(() => {
-      return 1;
-    })
-    .catch(() => {
-      return 0;
-    });
+  const values = getInputValue();
+  const ok = validateInput(values);
 
-  if (!res) {
+  if (!ok) {
     submitBtn.classList.remove("is-loading");
     return;
   }
-  postData(loginEndpoint, {
-    email: email,
-    password: password,
-  })
+
+  fetchData(loginEndpoint, { body: values })
     .then(checkStatus)
     .then(loginSucceed)
     .catch(loginFailed)
@@ -103,11 +87,15 @@ const login = async () => {
     });
 };
 
-onDOMContentLoaded = (function () {
+const loginHandler = () => {
   err_msg_email = document.getElementById("err_msg_email");
   err_msg_password = document.getElementById("err_msg_password");
   email_field = document.getElementsByName("email")[0];
   password_field = document.getElementsByName("password")[0];
   submitBtn = document.querySelector("#submit_button");
   submitBtn.addEventListener("click", login);
+};
+
+onDOMContentLoaded = (function () {
+  loginHandler();
 })();
