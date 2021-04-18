@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"github.com/cwhuang29/article-sharing-website/databases/models"
+	"github.com/cwhuang29/article-sharing-website/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"mime/multipart"
@@ -12,9 +13,7 @@ import (
 )
 
 var (
-	fileDir          = "public/upload/images/" // Do not start with "./" otherwise the images URL in articles content will be incorrect
 	acceptedFileType = map[string][]string{"image": {"image/png", "image/jpeg", "image/gif", "image/webp", "image/apng"}}
-	fileMaxSize      = 8 * 1000 * 1000 // 8MB
 )
 
 func writeFileLog(fileName, fileSize, fileType string) {
@@ -43,7 +42,7 @@ func saveFile(c *gin.Context, file *multipart.FileHeader, fileName string) (err 
 }
 
 func checkFileSize(fileSize int64) bool {
-	return fileSize <= int64(fileMaxSize)
+	return fileSize <= int64(utils.FileMaxSize)
 }
 
 func checkFileType(fileType, mainType string) bool {
@@ -58,7 +57,7 @@ func checkFileType(fileType, mainType string) bool {
 func generateFileName(fileType string) string {
 	fileID := time.Now().UTC().Format("20060102150405") + getUUID()
 	fileExt := fileType[strings.LastIndex(fileType, "/")+1:]
-	return fileDir + fileID + "." + fileExt
+	return utils.UploadImageDir + fileID + "." + fileExt // Do not start with "./" otherwise the images URL in articles content will be incorrect
 }
 
 /*

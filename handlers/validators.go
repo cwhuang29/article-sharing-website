@@ -2,17 +2,13 @@ package handlers
 
 import (
 	"github.com/cwhuang29/article-sharing-website/databases/models"
+	"github.com/cwhuang29/article-sharing-website/utils"
 	"time"
 )
 
 var (
 	OldestDate, _ = time.Parse("2006-01-02", "1960-01-01")
-
-	titleBytesLimit    = 255
-	subtitleBytesLimit = 255
-	tagsBytesLimit     = 20 // Since the length of emojis and some Chinese words are 4 bytes long
-	tagsLimit          = 5
-	errInputMsg        = map[string]string{
+	errInputMsg   = map[string]string{
 		"empty":            "The field can't be empty.",
 		"long":             "This field can have no more than 255 bytes (1 alphabet - 1 byte/1 Chinese word - 3 bytes/1 Emoji - 4 bytes).",
 		"dateTooOld":       "The date chosen should be greater than 1960-01-01.",
@@ -77,11 +73,11 @@ func validateArticleValues(newArticle models.Article) (err map[string]string) {
 
 	if len(newArticle.Title) == 0 {
 		err["title"] = errInputMsg["short"]
-	} else if len(newArticle.Title) > titleBytesLimit {
+	} else if len(newArticle.Title) > utils.TitleBytesLimit {
 		err["title"] = errInputMsg["long"]
 	}
 
-	if len(newArticle.Subtitle) > subtitleBytesLimit { // Subtitle can be empty
+	if len(newArticle.Subtitle) > utils.SubtitleBytesLimit { // Subtitle can be empty
 		err["subtitle"] = errInputMsg["long"]
 	}
 
@@ -96,11 +92,11 @@ func validateArticleValues(newArticle models.Article) (err map[string]string) {
 		}
 	}
 
-	if len(newArticle.Tags) > tagsLimit {
+	if len(newArticle.Tags) > utils.TagsNumLimit {
 		err["tags"] = errInputMsg["tagsTooMany"]
 	} else {
 		for _, t := range newArticle.Tags {
-			if len(t.Value) > tagsBytesLimit {
+			if len(t.Value) > utils.TagsBytesLimit {
 				err["tags"] = errInputMsg["tagsTooLong"]
 				break
 			}

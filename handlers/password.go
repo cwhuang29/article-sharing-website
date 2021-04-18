@@ -4,15 +4,10 @@ import (
 	"github.com/cwhuang29/article-sharing-website/config"
 	"github.com/cwhuang29/article-sharing-website/databases"
 	"github.com/cwhuang29/article-sharing-website/databases/models"
+	"github.com/cwhuang29/article-sharing-website/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
-)
-
-const (
-	resetPasswordPath        = "/password/reset/"
-	resetPasswordTokenMaxAge = 60 * 60 // 1 hour
-	resetPasswordMaxRetry    = 5
 )
 
 func clearUserExpiredPasswordTokens(id int) {
@@ -21,7 +16,7 @@ func clearUserExpiredPasswordTokens(id int) {
 
 func doesUserHasEmailQuota(id int) bool {
 	count := databases.CountUserResetPasswordTokens(id)
-	return count < resetPasswordMaxRetry
+	return count < utils.ResetPasswordMaxRetry
 }
 
 func getPasswordResetToken(id, maxAge int) string {
@@ -73,9 +68,9 @@ func PasswordResetEmail(c *gin.Context) {
 	}
 
 	baseURL := config.GetConfig().App.Url
-	token := getPasswordResetToken(user.ID, resetPasswordTokenMaxAge)
-	link := baseURL + resetPasswordPath + token + "?email=" + user.Email
-	expireMins := resetPasswordTokenMaxAge / 60
+	token := getPasswordResetToken(user.ID, utils.ResetPasswordTokenMaxAge)
+	link := baseURL + utils.ResetPasswordPath + token + "?email=" + user.Email
+	expireMins := utils.ResetPasswordTokenMaxAge / 60
 	name := user.FirstName + " " + user.LastName
 
 	if ok := SendResetPasswordEmail(user.Email, name, link, expireMins); !ok {
@@ -101,7 +96,7 @@ func PasswordResetForm(c *gin.Context) {
 	}
 
 	uuid := getUUID()
-	c.SetCookie("csrf_token", uuid, csrfTokenAge, "/", "", true, true)
+	c.SetCookie("csrf_token", uuid, utils.CsrfTokenAge, "/", "", true, true)
 	c.HTML(http.StatusOK, "passwordResetForm.html", gin.H{
 		"title":       "Reset Password",
 		"csrfToken":   uuid,
@@ -163,6 +158,6 @@ func PasswordUpdate(c *gin.Context) {
 
 	msgHead := "Reset Password Succeed"
 	msgBody := "Now you can log in with the new password"
-	c.Header("Location", loginPage)
+	c.Header("Location", utils.LoginPage)
 	c.JSON(http.StatusCreated, gin.H{"msgHead": msgHead, "msgBody": msgBody})
 }

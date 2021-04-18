@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/cwhuang29/article-sharing-website/databases"
+	"github.com/cwhuang29/article-sharing-website/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -135,7 +136,7 @@ func Browse(c *gin.Context) {
 	adminEmail, _ := c.Cookie("is_admin")
 	if adminEmail != "" && cookieEmail == adminEmail && databases.IsAdminUser(adminEmail) {
 		uuid = getUUID()
-		c.SetCookie("csrf_token", uuid, csrfTokenAge, "/", "", true, true)
+		c.SetCookie("csrf_token", uuid, utils.CsrfTokenAge, "/", "", true, true)
 	}
 
 	c.HTML(http.StatusOK, "browse.html", gin.H{

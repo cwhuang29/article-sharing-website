@@ -3,14 +3,9 @@ package handlers
 import (
 	"github.com/cwhuang29/article-sharing-website/databases"
 	"github.com/cwhuang29/article-sharing-website/databases/models"
+	"github.com/cwhuang29/article-sharing-website/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
-)
-
-const (
-	landingPage = "/articles/weekly-update"
-	loginPage   = "/login"
-	loginMaxAge = 30 * 86400 // 1 month
 )
 
 func storeLoginToken(id, loginMaxAge int) string {
@@ -78,12 +73,12 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	token := storeLoginToken(id, loginMaxAge)
-	c.Header("Location", landingPage)
-	c.SetCookie("login_token", token, loginMaxAge, "/", "", true, true)
-	c.SetCookie("login_email", newUser.Email, loginMaxAge, "/", "", true, false) // Frontend relies on this cookie
+	token := storeLoginToken(id, utils.LoginMaxAge)
+	c.Header("Location", utils.LandingPage)
+	c.SetCookie("login_token", token, utils.LoginMaxAge, "/", "", true, true)
+	c.SetCookie("login_email", newUser.Email, utils.LoginMaxAge, "/", "", true, false) // Frontend relies on this cookie
 	if newUser.Admin {
-		c.SetCookie("is_admin", newUser.Email, loginMaxAge, "/", "", true, false) // Frontend relies on this cookie
+		c.SetCookie("is_admin", newUser.Email, utils.LoginMaxAge, "/", "", true, false) // Frontend relies on this cookie
 	}
 	c.JSON(http.StatusCreated, gin.H{})
 }
@@ -122,12 +117,12 @@ func LoginJSON(c *gin.Context) {
 		return
 	}
 
-	token := storeLoginToken(user.ID, loginMaxAge)
-	c.Header("Location", landingPage)
-	c.SetCookie("login_token", token, loginMaxAge, "/", "", true, true)
-	c.SetCookie("login_email", user.Email, loginMaxAge, "/", "", true, false) // Frontend relies on this cookie
+	token := storeLoginToken(user.ID, utils.LoginMaxAge)
+	c.Header("Location", utils.LandingPage)
+	c.SetCookie("login_token", token, utils.LoginMaxAge, "/", "", true, true)
+	c.SetCookie("login_email", user.Email, utils.LoginMaxAge, "/", "", true, false) // Frontend relies on this cookie
 	if user.Admin {
-		c.SetCookie("is_admin", user.Email, loginMaxAge, "/", "", true, false) // Frontend relies on this cookie
+		c.SetCookie("is_admin", user.Email, utils.LoginMaxAge, "/", "", true, false) // Frontend relies on this cookie
 	}
 	c.JSON(http.StatusOK, gin.H{})
 }
@@ -138,7 +133,7 @@ func Logout(c *gin.Context) {
 	if email == "" {
 		// We'll reach here if user logout in one tab and re-logout on the another tab subsequently
 		// So don't regard this case as an error
-		c.Header("Location", landingPage)
+		c.Header("Location", utils.LandingPage)
 		c.JSON(http.StatusOK, gin.H{})
 		return
 	}
@@ -149,6 +144,6 @@ func Logout(c *gin.Context) {
 	c.SetCookie("login_email", "", 0, "/", "", true, true)
 	c.SetCookie("is_admin", "", 0, "/", "", true, true)
 
-	c.Header("Location", landingPage)
+	c.Header("Location", utils.LandingPage)
 	c.JSON(http.StatusResetContent, gin.H{})
 }

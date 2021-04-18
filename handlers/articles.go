@@ -2,19 +2,16 @@ package handlers
 
 import (
 	"github.com/cwhuang29/article-sharing-website/databases"
+	"github.com/cwhuang29/article-sharing-website/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
 )
 
-var (
-	csrfTokenAge = 6 * 60 * 60 // 6 hours
-)
-
 func CreateArticleView(c *gin.Context) {
 	uuid := getUUID()
-	c.SetCookie("csrf_token", uuid, csrfTokenAge, "/", "", true, true)
+	c.SetCookie("csrf_token", uuid, utils.CsrfTokenAge, "/", "", true, true)
 	c.HTML(http.StatusOK, "editor.html", gin.H{
 		"currPageCSS": "css/editor.css",
 		"csrfToken":   uuid,
@@ -51,7 +48,7 @@ func UpdateArticleView(c *gin.Context) {
 	article := articleFormatDBToDetailed(dbFormatArticle, false)
 	uuid := getUUID()
 
-	c.SetCookie("csrf_token", uuid, csrfTokenAge, "/", "", true, true)
+	c.SetCookie("csrf_token", uuid, utils.CsrfTokenAge, "/", "", true, true)
 	c.HTML(http.StatusOK, "editor.html", gin.H{
 		"currPageCSS":  "css/editor.css",
 		"csrfToken":    uuid,

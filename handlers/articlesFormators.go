@@ -2,29 +2,22 @@ package handlers
 
 import (
 	"github.com/cwhuang29/article-sharing-website/databases/models"
+	"github.com/cwhuang29/article-sharing-website/utils"
 	"strings"
-)
-
-const (
-	// Give slightly more word counts since the CSS style (e.g. text-justify: inter-word) affects layout in varying degrees
-	titleSizeLimit                 = 35.
-	subtitleSizeLimit              = 54.
-	outlineSizeLimit               = 510.
-	outlineSizeLimitWithCoverPhoto = 340.
 )
 
 func articleFormatDBToOverview(article models.Article) (a Article) {
 	a.ID = article.ID
 
-	if len(article.Title) > titleSizeLimit {
+	if len(article.Title) > utils.TitleSizeLimit {
 		// Chinese words are about 1.8 times wider than English alphabets in title and subtitle
-		a.Title = decodeRuneStringForFrontend(article.Title, titleSizeLimit, 1.78) + "&nbsp;..."
+		a.Title = decodeRuneStringForFrontend(article.Title, utils.TitleSizeLimit, 1.78) + "&nbsp;..."
 	} else {
 		a.Title = article.Title
 	}
 
-	if len(article.Subtitle) > subtitleSizeLimit {
-		a.Subtitle = decodeRuneStringForFrontend(article.Subtitle, subtitleSizeLimit, 1.78) + "&nbsp;..."
+	if len(article.Subtitle) > utils.SubtitleSizeLimit {
+		a.Subtitle = decodeRuneStringForFrontend(article.Subtitle, utils.SubtitleSizeLimit, 1.78) + "&nbsp;..."
 	} else {
 		a.Subtitle = article.Subtitle
 	}
@@ -40,10 +33,10 @@ func articleFormatDBToOverview(article models.Article) (a Article) {
 		a.Tags = append(a.Tags, t.Value)
 	}
 
-	if article.CoverPhoto != "" && len(article.Outline) > outlineSizeLimitWithCoverPhoto {
-		a.Outline = decodeRuneStringForFrontend(article.Outline, outlineSizeLimitWithCoverPhoto, 2.15)
-	} else if len(article.Outline) > outlineSizeLimit {
-		a.Outline = decodeRuneStringForFrontend(article.Outline, outlineSizeLimit, 2.15)
+	if article.CoverPhoto != "" && len(article.Outline) > utils.OutlineSizeLimitWithCoverPhoto {
+		a.Outline = decodeRuneStringForFrontend(article.Outline, utils.OutlineSizeLimitWithCoverPhoto, 2.15)
+	} else if len(article.Outline) > utils.OutlineSizeLimit {
+		a.Outline = decodeRuneStringForFrontend(article.Outline, utils.OutlineSizeLimit, 2.15)
 	} else {
 		a.Outline = article.Outline
 	}

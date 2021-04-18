@@ -7,37 +7,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ses"
 	"github.com/cwhuang29/article-sharing-website/config"
+	"github.com/cwhuang29/article-sharing-website/utils"
 	"github.com/sirupsen/logrus"
-)
-
-const (
-	charSet  = "UTF-8"
-	subject  = "Reset Password Notification"
-	textBody = "Hello %s! " +
-		"You are receiving this email because we received a password reset request from your account. " +
-		"Copy and paste the following link into your browser to change your pawssword: %s. " +
-		"The password reset link will expire in %d minutes. If you didn't request a password reset, no further action is required. " +
-		"Please feel free to contact us if you have any further questions."
-	htmlBody = `
-<div style="width: 68%%; margin-left: auto; margin-right: auto; color: #3D3D3D">
-  <div style=" color: #FCD432; text-align: center; font-weight: 700; font-size: 2rem">
-    i.news
-  </div>
-  <p style="font-size: 1.2rem">Hello %s</p>
-  <p>You are receiving this email because we received a password reset request from your account. Please click the following button to change your password.</p>
-  <div style="display: flex; padding-top:15px; padding-bottom: 15px;">
-	<a href="%s" target="_blank" class="button" style="color: #FCFCFC; background-color: #FCD432; padding: 14px 9px; border-radius: 7px; margin: auto; font-weight: 700;">Reset Password</a>
-  </div>
-  <p>The password reset link will expire in %d minutes. If you didn't request a password reset, no further action is required.</p>
-  <p>Please feel free to contact us if you have any further questions.</p>
-  <p>Best regards,<br>i.news</p>
-  <hr>
-  <div style="text-align: center; color: #7E7E7E; font-size: 0.7rem">
-  <p>If you're having trouble clicking the "Reset Password" button, copy and paste the following link into your browser: %s</p>
-  <p>&copy;&nbsp;2021 i.news All rights reserved.</p>
-  </div>
-</div>
-`
 )
 
 func getAWSSVC() *ses.SES {
@@ -51,8 +22,8 @@ func getAWSSVC() *ses.SES {
 }
 
 func resetPasswordEmailBody(recipient, name, link string, expireTime int) *ses.SendEmailInput {
-	interpolatedHtmlBody := fmt.Sprintf(htmlBody, name, link, expireTime, link)
-	interpolatedTextBody := fmt.Sprintf(textBody, name, link, expireTime)
+	interpolatedHtmlBody := fmt.Sprintf(utils.HtmlBody, name, link, expireTime, link)
+	interpolatedTextBody := fmt.Sprintf(utils.TextBody, name, link, expireTime)
 	sender := config.GetConfig().Email.Sender
 
 	return &ses.SendEmailInput{
@@ -62,16 +33,16 @@ func resetPasswordEmailBody(recipient, name, link string, expireTime int) *ses.S
 		},
 		Message: &ses.Message{
 			Subject: &ses.Content{
-				Charset: aws.String(charSet),
-				Data:    aws.String(subject),
+				Charset: aws.String(utils.CharSet),
+				Data:    aws.String(utils.Subject),
 			},
 			Body: &ses.Body{
 				Html: &ses.Content{
-					Charset: aws.String(charSet),
+					Charset: aws.String(utils.CharSet),
 					Data:    aws.String(interpolatedHtmlBody),
 				},
 				Text: &ses.Content{ // The email body for recipients with non-HTML email clients.
-					Charset: aws.String(charSet),
+					Charset: aws.String(utils.CharSet),
 					Data:    aws.String(interpolatedTextBody),
 				},
 			},
