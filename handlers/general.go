@@ -12,6 +12,24 @@ func About(c *gin.Context) {
 	c.HTML(http.StatusOK, "about.html", gin.H{"currPageCSS": "css/about.css"}) // Call the HTML method of the Context to render a template
 }
 
+func Home(c *gin.Context) {
+	userStatus, user := GetUserStatus(c)
+	if userStatus < IsMember {
+		errHead := "Login to view home page"
+		errBody := ""
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errHead": errHead, "errBody": errBody})
+		return
+	}
+
+	ttlBookmarks := databases.CountUserBookmarks(user.ID)
+
+	c.HTML(http.StatusOK, "home.html", gin.H{
+		"currPageCSS":    "css/overview.css", // About 95% of code is copied from overview.html and overview.js
+		"title":          user.FirstName + " " + user.LastName,
+		"totalBookmarks": ttlBookmarks,
+	})
+}
+
 func Overview(c *gin.Context) {
 	// If frontend trigger this route via window.location.href="/articles/browse?articleId=1", then c.FullPath() is /articles/browse
 	title := ""
@@ -44,7 +62,7 @@ func SearchTags(c *gin.Context) {
 }
 
 func CheckPermissionAndArticleExists(c *gin.Context) {
-	id := getParaArticleId(c, "articleId")
+	id := getParaId(c, "articleId")
 	if id == 0 {
 		errHead := "Article ID is An Positive Integer"
 		errBody := "Please try again."

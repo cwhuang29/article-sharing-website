@@ -53,7 +53,8 @@ const showNewPostButton = () => {
 
 const showLoginOrLogout = () => {
   if (getCookie("login_email")) {
-    logoutBtn.style.display = "block";
+    logoutParent.style.display = "block";
+    homeBtn.style.display = "block";
   } else {
     loginBtn.style.display = "block";
   }
@@ -74,12 +75,14 @@ const navbarHandler = () => {
   }
 
   loginBtn = document.getElementById("loginBtn");
-  logoutBtn = document.getElementById("logoutBtn");
+  logoutParent = document.getElementById("logoutParent");
+  logoutSection = document.getElementById("logoutSection");
+  homeBtn = document.getElementById("homeBtn");
   newPostBtn = document.getElementById("newPostBtn");
 
   showLoginOrLogout();
   showNewPostButton();
-  logoutBtn.addEventListener("click", logout);
+  logoutSection.addEventListener("click", logout);
 };
 
 document.addEventListener("DOMContentLoaded", () => {

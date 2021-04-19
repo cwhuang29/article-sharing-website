@@ -1,7 +1,8 @@
+const landingPageEndpoint = "/articles/weekly-update";
 const checkPermissionEndpoint = "/admin/check-permisssion";
 const modifyEndpoint = "/admin/update/article";
 const deleteEndpoint = "/admin/delete/article";
-const landingPage = "/articles/weekly-update";
+const bookmarkEndpoint = "/articles/bookmark";
 let modalMode = "";
 let actionURL = "";
 
@@ -17,11 +18,8 @@ const closeModalBody = () => {
   confirmModalBody.classList.remove("is-active");
 };
 
-const checkStatus = async (resp) => {
-  if (resp.status >= 400) {
-    return Promise.reject(resp);
-  }
-  return Promise.resolve(resp);
+const fetchSucceed = async (resp) => {
+  return Promise.resolve(1);
 };
 
 const fetchFailed = async (resp) => {
@@ -31,8 +29,11 @@ const fetchFailed = async (resp) => {
   return Promise.resolve(0);
 };
 
-const fetchSucceed = async (resp) => {
-  return Promise.resolve(1);
+const checkStatus = async (resp) => {
+  if (resp.status >= 400) {
+    return Promise.reject(resp);
+  }
+  return Promise.resolve(resp);
 };
 
 const fetchDeleteReq = async (url) => {
@@ -79,7 +80,7 @@ const modifyOrDelete = async () => {
   } else {
     res = await fetchDeleteReq(url);
     if (res == 1) {
-      window.location = landingPage;
+      window.location = landingPageEndpoint;
     }
     closeModalBody();
   }
@@ -97,7 +98,62 @@ const deleteArticle = () => {
   openModalBody(mode, title);
 };
 
+const switchBookmarkIcon = (isBookmarked) => {
+  if (isBookmarked) {
+    bookmarkIconNo.style.display = "none";
+    bookmarkIconYes.style.display = "block";
+  } else {
+    bookmarkIconNo.style.display = "block";
+    bookmarkIconYes.style.display = "none";
+  }
+};
+
+const getBookmarkURL = () => {
+  const isBookmarked = parseInt(bookmarkParent.dataset.bookmarked) === 0 ? 1 : 0;
+  const articleId = new URLSearchParams(window.location.search).get("articleId");
+  const baseURL = new URL(window.location.href);
+  const url = new URL(bookmarkEndpoint + `/${articleId}`, baseURL);
+
+  url.searchParams.set("bookmarked", isBookmarked);
+  return url;
+};
+
+const bookmarkArticle = async () => {
+  url = getBookmarkURL();
+  await fetchData(url, { method: "PUT" })
+    .then(checkStatus)
+    .then((resp) => {
+      resp.json().then(function (data) {
+        switchBookmarkIcon(data.isBookmarked);
+        bookmarkParent.dataset.bookmarked = data.isBookmarked;
+      });
+    })
+    .catch(fetchFailed);
+};
+
+const initialBookmark = async () => {
+  // Don't show error in this feature
+  url = getBookmarkURL();
+  await fetchData(url)
+    .then(checkStatus)
+    .then((resp) => {
+      resp.json().then(function (data) {
+        switchBookmarkIcon(data.isBookmarked);
+        bookmarkParent.dataset.bookmarked = data.isBookmarked;
+      });
+    });
+  bookmarkParent.style.display = "block";
+};
+
 const browseHandler = () => {
+  if (getCookie("login_email")) {
+    initialBookmark();
+    bookmarkParent = document.getElementById("bookmarkParent");
+    bookmarkIconNo = document.getElementById("bookmarkIconNo");
+    bookmarkIconYes = document.getElementById("bookmarkIconYes");
+    bookmarkParent.addEventListener("click", bookmarkArticle);
+  }
+
   if (getCookie("is_admin")) {
     adminSection = document.getElementById("adminSection");
     modifyBtn = document.getElementById("modifyBtn");

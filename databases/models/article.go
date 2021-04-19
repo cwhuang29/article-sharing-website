@@ -19,6 +19,7 @@ type Article struct {
 	CoverPhoto  string         `gorm:"size:300" json:"cover_photo" yaml:"coverPhoto"`
 	Content     string         `gorm:"not null" json:"content" yaml:"content"`           // Without size, the type will be longtext
 	AdminOnly   bool           `gorm:"default:false" json:"admin_only" yaml:"adminOnly"` // Database stored 0/1
+	Users       []User         `gorm:"many2many:users_articles;"`
 	CreatedAt   time.Time      `json:"-"`
 	UpdatedAt   time.Time      `json:"-"`
 	DeletedAt   gorm.DeletedAt `json:"-"`

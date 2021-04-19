@@ -14,6 +14,7 @@ type User struct {
 	Major          string    `gorm:"default:other" json:"major" yaml:"major"`
 	SubscribeEmail bool      `gorm:"default:true" json:"subscribe_email" yaml:"subscribeEmail"`
 	Admin          bool      `gorm:"default:false" json:"admin" yaml:"admin"`
+	Articles       []Article `gorm:"many2many:users_articles;"`
 	CreatedAt      time.Time `gorm:"autoCreateTime" json:"-"`
 	UpdatedAt      time.Time `gorm:"autoUpdateTime" json:"-"`
 }

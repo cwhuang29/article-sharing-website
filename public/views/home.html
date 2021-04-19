@@ -1,0 +1,64 @@
+{{ template "header" . }}
+<body>
+    {{ template "navbar" . }}
+    {{ template "notice_message_notification" . }}
+    {{ template "error_message_notification" . }}
+    <div class="block"></div>
+    <div class="main-padding-container">
+        <div class="block" style="text-align: center">
+          <h2 class="title is-2 has-text-warning">{{ .title  }}</h2>
+        </div>
+        <hr style="margin-top: -14px; margin-bottom: 8px">
+        <div id="bookmarkParent" style="position: relative; cursor: default">
+          <div id="bookmarkCounter"><strong>{{ .totalBookmarks }}</strong> saved articles</div>
+          <span id="bookmarkNotification">Some articles might be insivible<br>due to permission changed</span>
+        </div>
+        <div style="padding-bottom: 30px;"></div>
+        <div id="articles-container">
+            <div></div> <!-- Placeholder for appending new articles -->
+        </div>
+    </div>
+    {{ template "footer" . }}
+     <!-- Note: about 95% of code is the same as overview.js, without the sessionStorage feature. As a result, this page reuses overview.css -->
+    <script src="/js/home.js"></script>
+    <style>
+      #bookmarkParent #bookmarkNotification {
+          visibility: hidden;
+          content: "";
+          width: 16em;
+          background-color: #555;
+          color: #fff;
+          text-align: center;
+          border-radius: 6px;
+          padding: 4px 0;
+          position: absolute;
+          z-index: 1000;
+          bottom: 5px;
+          right: 0;
+          margin-left: -60px;
+          opacity: 0;
+          transition: opacity 0.3s;
+          font-size: 85%;
+      }
+      #bookmarkParent #bookmarkNotification::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        border-width: 5.5px;
+        border-style: solid;
+        border-color: #555 transparent transparent transparent;
+      }
+      #bookmarkParent:hover #bookmarkNotification,
+      #bookmarkParent:active #bookmarkNotification {
+        visibility: visible;
+        opacity: 0.85;
+      }
+      #bookmarkCounter {
+        position: absolute;
+        right: 0px;
+        font-weight: 500;
+      }
+    </style>
+</body>
+

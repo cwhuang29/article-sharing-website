@@ -65,6 +65,15 @@
                     </div>
                   {{ end }}
                 </div>
+                <div class="field is-grouped is-grouped-multiline">
+                  <div class="control" id="bookmarkParent" data-bookmarked=0 style="display: none">
+                    <span class="icon-text" style="cursor: pointer;">
+                      <i class="far fa-bookmark has-text-link" id="bookmarkIconNo" style="font-size: 22px; padding-right: 6px; padding-top: 2.5px;display: block"></i>
+                      <i class="fas fa-bookmark has-text-link" id="bookmarkIconYes" style="font-size: 22px; padding-right: 6px; padding-top: 2.5px; display: none"></i>
+                      <span style="padding-top: 1px; font-weight: 500">Save</span>
+                    </span>
+                  </div>
+                </div>
             </div>
             <div class="block" style="text-align: center; padding-top: 15px;">
                 <p class="title is-2 mt-3">{{ .title }}</p>

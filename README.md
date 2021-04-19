@@ -4,7 +4,7 @@ An article sharing website developed by Go.
 Here is a live demo: [inews](https://www.inewsforpharm.com/) (hosting on AWS EC2 with Load Balancer, Route 53, SES, Certificate Manager.)
 
 ## Overview
-This project does not rely on any frontend framework, so it is a good entry point for backend engineers who want to build a whole website. With basic knowledge of JavaScript and CSS, You can start developing!
+This project does not rely on any frontend framework, so it is a good entry point for backend engineers who want to build a whole website. With basic knowledge of JavaScript, You can start developing!
 
 I choose [gin](https://github.com/gin-gonic/gin) as the backend web framework for its simplicity and high performance (it is also the most popular framework in Go, see [Top Go Web Frameworks](https://github.com/mingrammer/go-web-framework-stars)).
 
@@ -15,6 +15,8 @@ The admin users are created by the following mechanism:
 1. Write down their emails in `config.yml`
 2. Setup web server
 3. Register with these corresponding emails on the website
+
+If you are a novice to the database with no idea about the many-to-many relationship, the `databases/bookmark.go` is a good example. I utilize many-to-many relationship to implement features such as searching articles with tags and bookmarking articles.
 
 ## Setup
 The credentials are stored in `config.yml`. Some of them are not yet implemented, but the most important fields are `app.httpPort`, `app.httpsPort`, `database`, and `admin.email`.  If set `database.driver` to `sqlite`, then `database.host` and `database.port` can be ignored.
@@ -138,10 +140,11 @@ sudo yum -y install mysql
 - [ ]  Logger
 - [x]  Reset password
 - [ ]  Support Google login
-- [ ]  Login Throttling
+- [x]  Login Throttling
 - [x]  Tag-based search
 - [x]  Preserve fetched data while going to the previous page
-- [ ]  Like/Save buttons
+- [x]  Save (bookmark) button
+- [ ]  Like button
 - [ ]  Admin overview page (e.g. show statistics)
 - [ ]  Preview feature (before submitting the article)
 - [x]  Security issues about uploading files

@@ -21,7 +21,7 @@ func CreateArticleView(c *gin.Context) {
 }
 
 func UpdateArticleView(c *gin.Context) {
-	id := getParaArticleId(c, "articleId")
+	id := getParaId(c, "articleId")
 	if id == 0 {
 		errHead := "Article ID is An Positive Integer"
 		errBody := "Please try again."
@@ -93,7 +93,7 @@ func CreateArticle(c *gin.Context) {
 }
 
 func UpdateArticle(c *gin.Context) {
-	id := getParaArticleId(c, "articleId")
+	id := getParaId(c, "articleId")
 	if id == 0 {
 		errHead := "Article ID is An Positive Integer"
 		errBody := "Please try again."
@@ -137,7 +137,7 @@ func DeleteArticle(c *gin.Context) {
 	errHead := "Delete Article Failed"
 	errBody := "Please try again."
 
-	id := getParaArticleId(c, "articleId")
+	id := getParaId(c, "articleId")
 	if id == 0 {
 		errHead = "Article ID is An Positive Integer"
 		c.JSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody})

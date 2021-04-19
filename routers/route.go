@@ -13,6 +13,7 @@ var (
 		"public/views/medication.html",
 		"public/views/pharma.html",
 		"public/views/about.html",
+		"public/views/home.html",
 		"public/views/browse.html",
 		"public/views/login.html",
 		"public/views/register.html",
@@ -59,22 +60,17 @@ func injectRoutes() {
 
 	articles := router.Group("/articles")
 	{
-		articles.GET("/", func(c *gin.Context) {
-			c.Redirect(http.StatusFound, "/articles/weekly-update")
-		})
-		articles.GET("/browse", handlers.Browse)
+		articles.GET("/", func(c *gin.Context) { c.Redirect(http.StatusFound, "/articles/weekly-update") })
 		articles.GET("/weekly-update", handlers.Overview) // The main page
+		articles.GET("/browse", handlers.Browse)
 		articles.GET("/medication", handlers.Overview)
 		articles.GET("/pharma", handlers.Overview)
 		articles.GET("/fetch", handlers.FetchData)
 		articles.GET("/tags", handlers.SearchTags)
+		articles.GET("/bookmark", handlers.GetUserBookmarkArticles)
+		articles.GET("/bookmark/:articleId", handlers.Bookmark)
+		articles.PUT("/bookmark/:articleId", handlers.UpdateBookmark)
 	}
-
-	router.GET("/register", handlers.RegisterView)
-	router.GET("/login", handlers.LoginView)
-	router.POST("/register", handlers.Register)
-	router.POST("/login", handlers.Login)
-	router.POST("/logout", handlers.Logout)
 
 	password := router.Group("/password")
 	{
@@ -87,11 +83,16 @@ func injectRoutes() {
 		}
 	}
 
+	router.GET("/register", handlers.RegisterView)
+	router.GET("/login", handlers.LoginView)
+	router.POST("/register", handlers.Register)
+	router.POST("/login", handlers.Login)
+	router.POST("/logout", handlers.Logout)
+
+	router.GET("/home", handlers.Home)
 	router.GET("/about", handlers.About)
 	router.GET("/contact-us", handlers.ContactUs)
-	router.GET("/", func(c *gin.Context) {
-		c.Redirect(http.StatusFound, "/articles/weekly-update")
-	})
+	router.GET("/", func(c *gin.Context) { c.Redirect(http.StatusFound, "/articles/weekly-update") })
 }
 
 func serve() {

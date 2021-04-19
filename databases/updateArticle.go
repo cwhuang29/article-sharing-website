@@ -44,7 +44,7 @@ func getArticlesAndTagsAssociation(id int) []models.Tag {
 }
 
 func deleteArticlesAndTagsAssociation(article models.Article, tag models.Tag) bool {
-	if err := db.Model(&article).Association("Tags").Delete(tag); err != nil {
+	if err := db.Model(&article).Association("Tags").Delete(&tag); err != nil {
 		logrus.Error(err.Error())
 		return false
 	}
