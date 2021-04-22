@@ -144,7 +144,7 @@ const initialFetch = async () => {
   await fetchContent(0);
 
   if (offset == 0) {
-    showNoticeMsg("You haven't saved any articles", "Some articles might be insivible due to admin has changed the permission");
+    showNoticeMsg("You haven't saved any articles");
   } else {
     /*
      * For an edge case: the initial articles' height is smaller than the window's height,

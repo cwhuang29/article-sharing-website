@@ -9,22 +9,21 @@ import (
 
 /*
  * 0: User doesn't bookmark this article
- * 1: User has bookmarked thi article
+ * 1: User has bookmarked this article
  */
 
-func GetUserBookmarkArticles(c *gin.Context) {
+func GetUserBookmarkedArticles(c *gin.Context) {
 	errHead := "Invalid Parameter"
+	errBody := "Parameter articleId should be a positive integer."
 
 	offset, err := strconv.Atoi(c.Query("offset"))
 	if err != nil || offset < 0 {
-		errBody := "Parameter offset should be a non-negative integer."
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody, "size": 0})
 		return
 	}
 
 	limit, err := strconv.Atoi(c.Query("limit"))
 	if err != nil || limit <= 0 {
-		errBody := "Parameter limit should be a positive integer."
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody, "size": 0})
 		return
 	}
@@ -32,7 +31,7 @@ func GetUserBookmarkArticles(c *gin.Context) {
 	userStatus, user := GetUserStatus(c)
 	if userStatus < IsMember {
 		errHead = "Login to view home page"
-		errBody := ""
+		errBody = ""
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errHead": errHead, "errBody": errBody, "size": 0})
 		return
 	}
@@ -52,20 +51,18 @@ func GetUserBookmarkArticles(c *gin.Context) {
 }
 
 func Bookmark(c *gin.Context) {
-	errHead := "Oops, this is unexpected"
-	errBody := "Please reload the page and try again."
-
 	articleId, err := strconv.Atoi(c.Param("articleId"))
 	if err != nil || articleId <= 0 {
-		errBody := "Parameter limit should be a positive integer."
+		errHead := "Invalid Parameter"
+		errBody := "Parameter articleId should be a positive integer."
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody})
 		return
 	}
 
 	userStatus, user := GetUserStatus(c)
 	if userStatus < IsMember {
-		errHead = "Login to save articles"
-		errBody = ""
+		errHead := "Login to save articles"
+		errBody := ""
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errHead": errHead, "errBody": errBody})
 		return
 	}
@@ -80,7 +77,7 @@ func UpdateBookmark(c *gin.Context) {
 
 	articleId, err := strconv.Atoi(c.Param("articleId"))
 	if err != nil || articleId <= 0 {
-		errBody := "Parameter limit should be a positive integer."
+		errBody = "Parameter articleId should be a positive integer."
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody})
 		return
 	}
@@ -93,15 +90,13 @@ func UpdateBookmark(c *gin.Context) {
 
 	userStatus, user := GetUserStatus(c)
 	if userStatus < IsMember {
-		errHead = "Login to save articles"
+		errHead = "You need to login first"
 		errBody = ""
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errHead": errHead, "errBody": errBody})
 		return
 	}
 
 	if ok := databases.UpdateBookmarkStatus(user.ID, articleId, isBookmarked); !ok {
-		errHead = "Oops, this is unexpected"
-		errBody = "Please reload the page and try again."
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errHead": errHead, "errBody": errBody})
 		return
 	}

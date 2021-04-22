@@ -137,16 +137,14 @@ sudo yum -y install mysql
 - [x]  Support HTTPS
 - [x]  Add an "only administrators can view" option
 - [x]  Outline and cover photo for the overview page
-- [ ]  Logger
 - [x]  Reset password
-- [ ]  Support Google login
 - [x]  Login Throttling
 - [x]  Tag-based search
 - [x]  Preserve fetched data while going to the previous page
 - [x]  Save (bookmark) button
-- [ ]  Like button
+- [x]  Like button
+- [ ]  Logger
 - [ ]  Admin overview page (e.g. show statistics)
-- [ ]  Preview feature (before submitting the article)
 - [x]  Security issues about uploading files
 - [ ]  Support CLI
 - [x]  Integrate AWS SES to send emails

@@ -41,7 +41,7 @@ func connect(cfg config.Database) (err error) {
 
 func createTables() {
 	// See https://gorm.io/docs/migration.html
-	if !(db.Migrator().HasTable(&models.User{}) || db.Migrator().HasTable(&models.Article{}) || db.Migrator().HasTable(&models.Tag{})) {
+	if !(db.Migrator().HasTable(&models.User{}) && db.Migrator().HasTable(&models.Article{}) && db.Migrator().HasTable(&models.Tag{})) {
 		db.AutoMigrate(&models.User{}, &models.Article{}, &models.Tag{})
 	}
 	if !(db.Migrator().HasTable(&models.Login{})) {

@@ -66,7 +66,14 @@
                   {{ end }}
                 </div>
                 <div class="field is-grouped is-grouped-multiline">
-                  <div class="control" id="bookmarkParent" data-bookmarked=0 style="display: none">
+                  <div class="control" id="likeParent" data-liked=0 style="margin-right: 15px;">
+                    <span class="icon-text" style="cursor: pointer;">
+                      <img src="/assets/closed-eye.png" id="likeIconNo" style="height: 18.9px; padding-right: 6px; padding-top: 4px; margin-top: 4px; display: block">
+                      <i class="fas fa-eye has-text-link" id="likeIconYes" style="font-size: 22px; padding-right: 6px; padding-top: 2.5px; display: none"></i>
+                      <span style="padding-top: 1px; font-weight: 500">Eyes opened</span>
+                    </span>
+                  </div>
+                  <div class="control" id="bookmarkParent" data-bookmarked=0 style="margin-right: 15px;">
                     <span class="icon-text" style="cursor: pointer;">
                       <i class="far fa-bookmark has-text-link" id="bookmarkIconNo" style="font-size: 22px; padding-right: 6px; padding-top: 2.5px;display: block"></i>
                       <i class="fas fa-bookmark has-text-link" id="bookmarkIconYes" style="font-size: 22px; padding-right: 6px; padding-top: 2.5px; display: none"></i>

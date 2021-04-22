@@ -3,6 +3,7 @@ const checkPermissionEndpoint = "/admin/check-permisssion";
 const modifyEndpoint = "/admin/update/article";
 const deleteEndpoint = "/admin/delete/article";
 const bookmarkEndpoint = "/articles/bookmark";
+const likeEndpoint = "/articles/like";
 let modalMode = "";
 let actionURL = "";
 
@@ -98,60 +99,85 @@ const deleteArticle = () => {
   openModalBody(mode, title);
 };
 
-const switchBookmarkIcon = (isBookmarked) => {
-  if (isBookmarked) {
-    bookmarkIconNo.style.display = "none";
-    bookmarkIconYes.style.display = "block";
+const switchIconStatus = (yes, yesIcon, noIcon) => {
+  if (yes) {
+    yesIcon.style.display = "block";
+    noIcon.style.display = "none";
   } else {
-    bookmarkIconNo.style.display = "block";
-    bookmarkIconYes.style.display = "none";
+    noIcon.style.display = "block";
+    yesIcon.style.display = "none";
   }
 };
 
-const getBookmarkURL = () => {
-  const isBookmarked = parseInt(bookmarkParent.dataset.bookmarked) === 0 ? 1 : 0;
+const generateURL = (endpoint, paraKey, paraValue) => {
   const articleId = new URLSearchParams(window.location.search).get("articleId");
   const baseURL = new URL(window.location.href);
-  const url = new URL(bookmarkEndpoint + `/${articleId}`, baseURL);
+  const url = new URL(endpoint + `/${articleId}`, baseURL);
 
-  url.searchParams.set("bookmarked", isBookmarked);
+  url.searchParams.set(paraKey, paraValue);
   return url;
 };
 
-const bookmarkArticle = async () => {
-  url = getBookmarkURL();
-  await fetchData(url, { method: "PUT" })
-    .then(checkStatus)
-    .then((resp) => {
-      resp.json().then(function (data) {
-        switchBookmarkIcon(data.isBookmarked);
-        bookmarkParent.dataset.bookmarked = data.isBookmarked;
-      });
-    })
-    .catch(fetchFailed);
+const bookmarkSuccess = async (resp) => {
+  resp.json().then(function (data) {
+    switchIconStatus(data.isBookmarked, bookmarkIconYes, bookmarkIconNo);
+    bookmarkParent.dataset.bookmarked = data.isBookmarked;
+  });
 };
 
-const initialBookmark = async () => {
-  // Don't show error in this feature
-  url = getBookmarkURL();
-  await fetchData(url)
-    .then(checkStatus)
-    .then((resp) => {
-      resp.json().then(function (data) {
-        switchBookmarkIcon(data.isBookmarked);
-        bookmarkParent.dataset.bookmarked = data.isBookmarked;
-      });
-    });
-  bookmarkParent.style.display = "block";
+const likeSuccess = async (resp) => {
+  resp.json().then(function (data) {
+    switchIconStatus(data.isLiked, likeIconYes, likeIconNo);
+    likeParent.dataset.liked = data.isLiked;
+  });
+};
+
+const updateArticleStatus = async (url, method, updateSuccessFunc) => {
+  await fetchData(url, { method: method }).then(checkStatus).then(updateSuccessFunc).catch(fetchFailed);
+};
+
+const updateBookmarkStatus = () => {
+  const paraKey = "bookmarked";
+  const paraValue = parseInt(bookmarkParent.dataset.bookmarked) === 0 ? 1 : 0;
+  const url = generateURL(bookmarkEndpoint, paraKey, paraValue);
+  updateArticleStatus(url, "PUT", bookmarkSuccess);
+};
+
+const updateLikeStatus = () => {
+  const paraKey = "liked";
+  const paraValue = parseInt(likeParent.dataset.liked) === 0 ? 1 : 0;
+  const url = generateURL(likeEndpoint, paraKey, paraValue);
+  updateArticleStatus(url, "PUT", likeSuccess);
+};
+
+const initialBookmark = () => {
+  const paraKey = "bookmarked";
+  const paraValue = parseInt(bookmarkParent.dataset.bookmarked) === 0 ? 0 : 1;
+  const url = generateURL(bookmarkEndpoint, paraKey, paraValue);
+  updateArticleStatus(url, "GET", bookmarkSuccess);
+};
+
+const initialLike = () => {
+  const paraKey = "liked";
+  const paraValue = parseInt(likeParent.dataset.liked) === 0 ? 0 : 1;
+  const url = generateURL(likeEndpoint, paraKey, paraValue);
+  updateArticleStatus(url, "GET", likeSuccess);
 };
 
 const browseHandler = () => {
   if (getCookie("login_email")) {
-    initialBookmark();
     bookmarkParent = document.getElementById("bookmarkParent");
     bookmarkIconNo = document.getElementById("bookmarkIconNo");
     bookmarkIconYes = document.getElementById("bookmarkIconYes");
-    bookmarkParent.addEventListener("click", bookmarkArticle);
+    bookmarkParent.addEventListener("click", updateBookmarkStatus);
+
+    likeParent = document.getElementById("likeParent");
+    likeIconNo = document.getElementById("likeIconNo");
+    likeIconYes = document.getElementById("likeIconYes");
+    likeParent.addEventListener("click", updateLikeStatus);
+
+    initialBookmark();
+    initialLike();
   }
 
   if (getCookie("is_admin")) {

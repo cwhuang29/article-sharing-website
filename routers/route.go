@@ -38,7 +38,7 @@ func loadAssets() {
 	router.Static("/css", "public/css") // Static serves files from the given file system root. Internally a http.FileServer is used
 	router.Static("/assets", "public/assets")
 	router.StaticFile("/favicon.ico", "public/assets/favicon-64.ico") // StaticFile registers a single route in order to serve a single file of the local filesystem
-	router.LoadHTMLFiles(htmlFiles...)
+	router.LoadHTMLFiles(htmlFiles...)                                // router.LoadHTMLGlob("public/*")
 }
 
 func injectRoutes() {
@@ -67,9 +67,13 @@ func injectRoutes() {
 		articles.GET("/pharma", handlers.Overview)
 		articles.GET("/fetch", handlers.FetchData)
 		articles.GET("/tags", handlers.SearchTags)
-		articles.GET("/bookmark", handlers.GetUserBookmarkArticles)
+
+		articles.GET("/bookmark", handlers.GetUserBookmarkedArticles)
 		articles.GET("/bookmark/:articleId", handlers.Bookmark)
 		articles.PUT("/bookmark/:articleId", handlers.UpdateBookmark)
+
+		articles.GET("/like/:articleId", handlers.Like)
+		articles.PUT("/like/:articleId", handlers.UpdateLike)
 	}
 
 	password := router.Group("/password")
