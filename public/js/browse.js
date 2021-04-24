@@ -119,14 +119,14 @@ const generateURL = (endpoint, paraKey, paraValue) => {
 };
 
 const bookmarkSuccess = async (resp) => {
-  resp.json().then(function (data) {
+  await resp.json().then(function (data) {
     switchIconStatus(data.isBookmarked, bookmarkIconYes, bookmarkIconNo);
     bookmarkParent.dataset.bookmarked = data.isBookmarked;
   });
 };
 
 const likeSuccess = async (resp) => {
-  resp.json().then(function (data) {
+  await resp.json().then(function (data) {
     switchIconStatus(data.isLiked, likeIconYes, likeIconNo);
     likeParent.dataset.liked = data.isLiked;
   });
@@ -150,18 +150,20 @@ const updateLikeStatus = () => {
   updateArticleStatus(url, "PUT", likeSuccess);
 };
 
-const initialBookmark = () => {
+const initialBookmark = async () => {
   const paraKey = "bookmarked";
   const paraValue = parseInt(bookmarkParent.dataset.bookmarked) === 0 ? 0 : 1;
   const url = generateURL(bookmarkEndpoint, paraKey, paraValue);
-  updateArticleStatus(url, "GET", bookmarkSuccess);
+  await updateArticleStatus(url, "GET", bookmarkSuccess);
+  bookmarkParent.style.display = "block";
 };
 
-const initialLike = () => {
+const initialLike = async () => {
   const paraKey = "liked";
   const paraValue = parseInt(likeParent.dataset.liked) === 0 ? 0 : 1;
   const url = generateURL(likeEndpoint, paraKey, paraValue);
-  updateArticleStatus(url, "GET", likeSuccess);
+  await updateArticleStatus(url, "GET", likeSuccess);
+  likeParent.style.display = "block";
 };
 
 const browseHandler = () => {
