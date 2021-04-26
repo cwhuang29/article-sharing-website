@@ -151,7 +151,7 @@ sudo yum -y install mysql
 
 ## Demo
 ### Feature - article list
-![Articles List](demo/articles-list.png)
+![Articles List](demo/overview.png)
 ### Feature - browse
 ![Browse](demo/browse.png)
 ### Feature - edit
