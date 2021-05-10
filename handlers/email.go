@@ -13,7 +13,7 @@ import (
 )
 
 func getAWSSVC() *ses.SES {
-	region := config.GetConfig().Email.Region
+	region := config.GetCopy().Email.Region
 	if sess, err := session.NewSession(&aws.Config{Region: aws.String(region)}); err != nil {
 		logrus.Errorln(err.Error())
 		return nil
@@ -25,7 +25,7 @@ func getAWSSVC() *ses.SES {
 func resetPasswordEmailBody(recipient, name, link string, expireTime int) *ses.SendEmailInput {
 	interpolatedHtmlBody := fmt.Sprintf(utils.HtmlBody, name, link, expireTime, link)
 	interpolatedTextBody := fmt.Sprintf(utils.TextBody, name, link, expireTime)
-	sender := config.GetConfig().Email.Sender
+	sender := config.GetCopy().Email.Sender
 
 	return &ses.SendEmailInput{
 		Destination: &ses.Destination{

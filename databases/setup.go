@@ -73,7 +73,7 @@ func registerAdminEmail(emails []string) {
 }
 
 func Initial() (err error) {
-	cfg := config.GetConfig()
+	cfg := config.GetCopy()
 
 	if err = connect(cfg.Database); err != nil {
 		return

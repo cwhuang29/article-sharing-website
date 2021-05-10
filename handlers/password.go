@@ -45,7 +45,7 @@ func PasswordResetEmail(c *gin.Context) {
 		return
 	}
 
-	baseURL := config.GetConfig().App.Url
+	baseURL := config.GetCopy().App.Url
 	token := utils.StorePasswordResetToken(user.ID, utils.ResetPasswordTokenMaxAge)
 	link := baseURL + utils.ResetPasswordPath + token + "?email=" + user.Email
 	expireMins := utils.ResetPasswordTokenMaxAge / 60

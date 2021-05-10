@@ -5,12 +5,12 @@ import (
 	"strings"
 )
 
-type ConfigError struct {
+type configError struct {
 	errType string
 	err     string
 }
 
-func (e *ConfigError) Error() string {
+func (e *configError) Error() string {
 	return fmt.Sprintf("%v %v can't be empty", strings.Title(strings.ToLower(e.errType)), strings.Title(strings.ToLower(e.err)))
 }
 
@@ -20,7 +20,7 @@ type env struct {
 	target *string
 }
 
-type Config struct {
+type config struct {
 	App      `yaml:"app,omitempty"`
 	Database `yaml:"database,omitempty"`
 	Admin    `yaml:"admin,omitempty"`

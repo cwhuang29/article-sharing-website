@@ -101,7 +101,7 @@ func injectRoutes() {
 }
 
 func serve() {
-	cfg := config.GetConfig()
+	cfg := config.GetCopy()
 
 	http := cfg.App.HttpPort
 	https := cfg.App.HttpsPort

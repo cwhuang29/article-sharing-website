@@ -9,23 +9,23 @@ import (
 )
 
 var (
-	config *Config
-	envs   []env
+	cfg  *config
+	envs []env
 )
 
 // Return a copy of config
-func GetConfig() Config {
-	tmp := *config
+func GetCopy() config {
+	tmp := *cfg
 
-	adminEmails := make([]string, len(config.Admin.Email))
-	for i, a := range config.Admin.Email {
+	adminEmails := make([]string, len(cfg.Admin.Email))
+	for i, a := range cfg.Admin.Email {
 		adminEmails[i] = a
 	}
 	tmp.Admin.Email = adminEmails
 	return tmp
 }
 
-func (c *Config) load(configFilePath string) error {
+func (c *config) load(configFilePath string) error {
 	file, err := os.Open(configFilePath)
 	if err != nil {
 		return err
@@ -42,27 +42,27 @@ func (c *Config) load(configFilePath string) error {
 	return nil
 }
 
-func (c *Config) check() *ConfigError {
+func (c *config) check() *configError {
 	if c.Database.Driver == "" {
-		return &ConfigError{errType: "database", err: "driver"}
+		return &configError{errType: "database", err: "driver"}
 	}
 
 	if c.Database.Username == "" {
-		return &ConfigError{errType: "database", err: "username"}
+		return &configError{errType: "database", err: "username"}
 	}
 
 	if c.Database.Password == "" {
-		return &ConfigError{errType: "database", err: "password"}
+		return &configError{errType: "database", err: "password"}
 	}
 
 	if len(c.Admin.Email) == 0 {
-		return &ConfigError{errType: "admin", err: "email"}
+		return &configError{errType: "admin", err: "email"}
 	}
 
 	return nil
 }
 
-func (c *Config) setDefaultValue() {
+func (c *config) setDefaultValue() {
 	if c.App.Url == "" {
 		c.App.Url = "http://127.0.0.1"
 		logrus.Info("app.Url is not set in the config file. Set to default value http://127.0.0.1")
@@ -90,17 +90,17 @@ func (c *Config) setDefaultValue() {
 	}
 }
 
-func (c *Config) setOverwriteValue() {
+func (c *config) setOverwriteValue() {
 	envs = []env{
-		{"WEB_DB_HOST", "database.host", &config.Database.Host},
-		{"WEB_DB_PORT", "database.port", &config.Database.Port},
-		{"WEB_APP_URL", "app.url", &config.App.Url},
-		{"WEB_APP_HTTP_PORT", "app.httpPort", &config.App.HttpPort},
-		{"WEB_APP_HTTPS_PORT", "app.httpsPort", &config.App.HttpsPort},
-		{"WEB_EMAIL_SENDER", "app.email.sender", &config.Email.Sender},
-		{"WEB_EMAIL_REGION", "app.email.region", &config.Email.Region},
-		{"WEB_EMAIL_NUM_PER_DAY", "app.email.numPerDay", &config.Email.NumPerDay},
-		{"WEB_EMAIL_NUM_PER_SEC", "app.email.numPerSec", &config.Email.NumPerSec},
+		{"WEB_DB_HOST", "database.host", &cfg.Database.Host},
+		{"WEB_DB_PORT", "database.port", &cfg.Database.Port},
+		{"WEB_APP_URL", "app.url", &cfg.App.Url},
+		{"WEB_APP_HTTP_PORT", "app.httpPort", &cfg.App.HttpPort},
+		{"WEB_APP_HTTPS_PORT", "app.httpsPort", &cfg.App.HttpsPort},
+		{"WEB_EMAIL_SENDER", "app.email.sender", &cfg.Email.Sender},
+		{"WEB_EMAIL_REGION", "app.email.region", &cfg.Email.Region},
+		{"WEB_EMAIL_NUM_PER_DAY", "app.email.numPerDay", &cfg.Email.NumPerDay},
+		{"WEB_EMAIL_NUM_PER_SEC", "app.email.numPerSec", &cfg.Email.NumPerSec},
 	}
 
 	for _, e := range envs {
@@ -113,17 +113,17 @@ func (c *Config) setOverwriteValue() {
 }
 
 func Initial(configFilePath string) error {
-	config = &Config{}
+	cfg = &config{}
 
-	if err := config.load(configFilePath); err != nil {
+	if err := cfg.load(configFilePath); err != nil {
 		return err
 	}
 
-	if err := config.check(); err != nil {
+	if err := cfg.check(); err != nil {
 		return err
 	}
 
-	config.setOverwriteValue()
-	config.setDefaultValue()
+	cfg.setOverwriteValue()
+	cfg.setDefaultValue()
 	return nil
 }
