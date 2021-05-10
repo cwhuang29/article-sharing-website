@@ -1,9 +1,10 @@
 package handlers
 
 import (
+	"strings"
+
 	"github.com/cwhuang29/article-sharing-website/databases/models"
 	"github.com/cwhuang29/article-sharing-website/utils"
-	"strings"
 )
 
 func articleFormatDBToOverview(article models.Article) (a Article) {

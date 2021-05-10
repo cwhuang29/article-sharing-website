@@ -1,8 +1,9 @@
 package databases
 
 import (
-	"github.com/cwhuang29/article-sharing-website/databases/models"
 	"time"
+
+	"github.com/cwhuang29/article-sharing-website/databases/models"
 )
 
 func IsArticleExists(id int, isAdmin bool) (succeed bool) {

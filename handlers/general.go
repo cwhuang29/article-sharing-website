@@ -1,11 +1,12 @@
 package handlers
 
 import (
+	"net/http"
+	"strconv"
+
 	"github.com/cwhuang29/article-sharing-website/databases"
 	"github.com/cwhuang29/article-sharing-website/utils"
 	"github.com/gin-gonic/gin"
-	"net/http"
-	"strconv"
 )
 
 func About(c *gin.Context) {

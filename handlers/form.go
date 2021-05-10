@@ -2,15 +2,16 @@ package handlers
 
 import (
 	"fmt"
+	"mime/multipart"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/cwhuang29/article-sharing-website/databases/models"
 	"github.com/cwhuang29/article-sharing-website/utils"
 	"github.com/cwhuang29/article-sharing-website/utils/validator"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"mime/multipart"
-	"strconv"
-	"strings"
-	"time"
 )
 
 var (

@@ -1,9 +1,10 @@
 package utils
 
 import (
+	"unicode/utf8"
+
 	"github.com/google/uuid"
 	"github.com/russross/blackfriday"
-	"unicode/utf8"
 )
 
 // Each mandarin symbol takes 3 - 4 bytes.

@@ -1,12 +1,13 @@
 package handlers
 
 import (
+	"net/http"
+	"strconv"
+
 	"github.com/cwhuang29/article-sharing-website/databases"
 	"github.com/cwhuang29/article-sharing-website/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"net/http"
-	"strconv"
 )
 
 func CreateArticleView(c *gin.Context) {

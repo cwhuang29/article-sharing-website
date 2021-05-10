@@ -1,12 +1,13 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/cwhuang29/article-sharing-website/config"
 	"github.com/cwhuang29/article-sharing-website/databases"
 	"github.com/cwhuang29/article-sharing-website/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"net/http"
 )
 
 func PasswordResetRequest(c *gin.Context) {

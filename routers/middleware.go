@@ -1,11 +1,12 @@
 package routers
 
 import (
+	"net/http"
+	"time"
+
 	"github.com/cwhuang29/article-sharing-website/handlers"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"net/http"
-	"time"
 )
 
 func CSRFProtection() gin.HandlerFunc {

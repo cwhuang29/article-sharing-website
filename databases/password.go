@@ -1,9 +1,10 @@
 package databases
 
 import (
+	"strconv"
+
 	"github.com/cwhuang29/article-sharing-website/databases/models"
 	"github.com/sirupsen/logrus"
-	"strconv"
 )
 
 func GetResetPasswordToken(token string) (passwordToken models.Password) {

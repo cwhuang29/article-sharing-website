@@ -1,9 +1,10 @@
 package utils
 
 import (
-	"golang.org/x/crypto/bcrypt"
 	"reflect"
 	"regexp"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (

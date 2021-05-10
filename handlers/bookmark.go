@@ -1,10 +1,11 @@
 package handlers
 
 import (
-	"github.com/cwhuang29/article-sharing-website/databases"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+
+	"github.com/cwhuang29/article-sharing-website/databases"
+	"github.com/gin-gonic/gin"
 )
 
 /*

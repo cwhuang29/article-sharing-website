@@ -1,12 +1,13 @@
 package handlers
 
 import (
+	"strconv"
+	"time"
+
 	"github.com/cwhuang29/article-sharing-website/databases"
 	"github.com/cwhuang29/article-sharing-website/databases/models"
 	"github.com/cwhuang29/article-sharing-website/utils"
 	"github.com/gin-gonic/gin"
-	"strconv"
-	"time"
 )
 
 func GetUserStatus(c *gin.Context) (status UserStatus, user models.User) {
