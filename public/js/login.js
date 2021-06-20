@@ -1,4 +1,4 @@
-const loginEndpoint = "/login";
+const loginEndpoint = '/login';
 
 const validateEmail = (email) => {
   const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -12,8 +12,7 @@ const getInputValue = () => {
   };
 };
 
-const validateInput = (values) => {
-  const { email, password } = values;
+const validateInput = ({ email, password } = values) => {
   let canSubmit = true;
 
   if (email.length == 0) {
@@ -21,16 +20,16 @@ const validateInput = (values) => {
     err_msg_email.innerText = "The email can't be empty.";
   } else if (!validateEmail(email)) {
     canSubmit = false;
-    err_msg_email.innerText = "Please fill in the correct email.";
+    err_msg_email.innerText = 'Please fill in the correct email.';
   } else {
-    err_msg_email.innerText = "";
+    err_msg_email.innerText = '';
   }
 
   if (password.length == 0) {
     canSubmit = false;
     err_msg_password.innerText = "The password can't be empty.";
   } else {
-    err_msg_password.innerText = "";
+    err_msg_password.innerText = '';
   }
 
   return canSubmit;
@@ -45,10 +44,10 @@ const checkStatus = async (resp) => {
 };
 
 const loginSucceed = async (resp) => {
-  // Copy from overview.js (to make sure admin user can see admin only articles once login cause data will not be fetched if there is data in session storage)
-  window.sessionStorage.removeItem("offset");
-  window.sessionStorage.removeItem("overviewContent");
-  window.location.href = resp.headers.get("Location");
+  // Copy from overview.js (to make sure admin users can see admin only articles once login since data will not be fetched if session storage is not empty)
+  window.sessionStorage.removeItem('offset');
+  window.sessionStorage.removeItem('overviewContent');
+  window.location.href = resp.headers.get('Location');
   return Promise.resolve();
 };
 
@@ -68,13 +67,13 @@ const loginFailed = async (resp) => {
 };
 
 const login = async () => {
-  submitBtn.classList.add("is-loading");
+  submitBtn.classList.add('is-loading');
 
   const values = getInputValue();
   const ok = validateInput(values);
 
   if (!ok) {
-    submitBtn.classList.remove("is-loading");
+    submitBtn.classList.remove('is-loading');
     return;
   }
 
@@ -82,18 +81,16 @@ const login = async () => {
     .then(checkStatus)
     .then(loginSucceed)
     .catch(loginFailed)
-    .finally((_) => {
-      submitBtn.classList.remove("is-loading");
-    });
+    .finally((_) => submitBtn.classList.remove('is-loading'));
 };
 
 const loginHandler = () => {
-  err_msg_email = document.getElementById("err_msg_email");
-  err_msg_password = document.getElementById("err_msg_password");
-  email_field = document.getElementsByName("email")[0];
-  password_field = document.getElementsByName("password")[0];
-  submitBtn = document.querySelector("#submit_button");
-  submitBtn.addEventListener("click", login);
+  err_msg_email = document.getElementById('err_msg_email');
+  err_msg_password = document.getElementById('err_msg_password');
+  email_field = document.getElementsByName('email')[0];
+  password_field = document.getElementsByName('password')[0];
+  submitBtn = document.querySelector('#submit_button');
+  submitBtn.addEventListener('click', login);
 };
 
 onDOMContentLoaded = (function () {

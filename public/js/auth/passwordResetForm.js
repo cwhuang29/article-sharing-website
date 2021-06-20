@@ -1,7 +1,7 @@
-const sendResetPasswordEndpoint = "/password/reset";
+const sendResetPasswordEndpoint = '/password/reset';
 const errMsg = {
   empty: "This field can't be empty.",
-  short: "Password must be at least 8 characters long.",
+  short: 'Password must be at least 8 characters long.',
   notMatch: "The password confirm and password didn't match.",
 };
 
@@ -12,8 +12,7 @@ const getInputValue = () => {
   };
 };
 
-const validateInput = (values) => {
-  const { password, passwordConfirm } = values;
+const validateInput = ({ password, passwordConfirm } = values) => {
   let canSubmit = true;
 
   if (password.length == 0) {
@@ -23,7 +22,7 @@ const validateInput = (values) => {
     canSubmit = false;
     err_msg_password.innerText = errMsg.short;
   } else {
-    err_msg_password.innerText = "";
+    err_msg_password.innerText = '';
   }
 
   if (passwordConfirm.length == 0) {
@@ -36,15 +35,15 @@ const validateInput = (values) => {
     canSubmit = false;
     err_msg_passwordConfirm.innerText = errMsg.notMatch;
   } else {
-    err_msg_passwordConfirm.innerText = "";
+    err_msg_passwordConfirm.innerText = '';
   }
 
   return canSubmit;
 };
 
 const clearInputBox = () => {
-  inputPassword.value = "";
-  inputPasswordConfirm.value = "";
+  inputPassword.value = '';
+  inputPasswordConfirm.value = '';
 };
 
 const sendResetPasswordEmailSucceed = async (resp) => {
@@ -52,7 +51,7 @@ const sendResetPasswordEmailSucceed = async (resp) => {
     showNoticeMsg(data.msgHead, data.msgBody);
   });
   clearInputBox();
-  setTimeout(() => (window.location.href = resp.headers.get("Location")), 2500);
+  setTimeout(() => (window.location.href = resp.headers.get('Location')), 2000);
   return Promise.resolve();
 };
 
@@ -71,23 +70,23 @@ const checkStatus = async (resp) => {
 };
 
 const sendResetPasswordForm = () => {
-  submitBtn.classList.add("is-loading");
+  submitBtn.classList.add('is-loading');
 
   const values = getInputValue();
   const ok = validateInput(values);
 
   if (!ok) {
-    submitBtn.classList.remove("is-loading");
+    submitBtn.classList.remove('is-loading');
     return;
   }
 
   /*
-   * In Laravel's design, they extract these two values from the HTML from
+   * In some frameworks' design, they extract these two values from the HTML from
    * The email handling is the same as I did, and the token is stored in a hidden input <input type="hidden" name="token" value="{{ $token }}">
    * Since I send requests by fetching instead of submitting form, I'll just take their values from the URL
    */
-  const token = window.location.href.split("/").pop().split("?")[0]; // The structure of URL is "/reset/password/<token>?email=<email>"
-  const email = new URLSearchParams(window.location.search).get("email");
+  const token = window.location.href.split('/').pop().split('?')[0]; // The structure of URL is "/reset/password/<token>?email=<email>"
+  const email = new URLSearchParams(window.location.search).get('email');
   const allValues = {
     email: email,
     password: values.password,
@@ -95,25 +94,25 @@ const sendResetPasswordForm = () => {
   };
 
   const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-  const headers = { "X-CSRF-TOKEN": csrfToken };
+  const headers = { 'X-CSRF-TOKEN': csrfToken };
 
-  fetchData(sendResetPasswordEndpoint, { body: allValues, method: "PUT", headers: headers })
+  fetchData(sendResetPasswordEndpoint, { body: allValues, method: 'PUT', headers: headers })
     .then(checkStatus)
     .then(sendResetPasswordEmailSucceed)
     .catch(sendResetPasswordEmailFailed)
     .finally((_) => {
-      submitBtn.classList.remove("is-loading");
+      submitBtn.classList.remove('is-loading');
     });
 };
 
 const passwordResetFormHandler = () => {
-  err_msg_password = document.getElementById("err_msg_password");
-  err_msg_passwordConfirm = document.getElementById("err_msg_password_confirm");
-  inputPassword = document.getElementsByName("password")[0];
-  inputPasswordConfirm = document.getElementsByName("password_confirm")[0];
-  submitBtn = document.querySelector("#submitButton");
+  err_msg_password = document.getElementById('err_msg_password');
+  err_msg_passwordConfirm = document.getElementById('err_msg_password_confirm');
+  inputPassword = document.getElementsByName('password')[0];
+  inputPasswordConfirm = document.getElementsByName('password_confirm')[0];
+  submitBtn = document.querySelector('#submitButton');
 
-  submitBtn.addEventListener("click", sendResetPasswordForm);
+  submitBtn.addEventListener('click', sendResetPasswordForm);
 };
 
 onDOMContentLoaded = (function () {

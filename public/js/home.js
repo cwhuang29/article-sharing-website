@@ -2,14 +2,14 @@
  * Note: about 95% of code is the same as overview.js, without the sessionStorage feature
  */
 
-const bookmarkEndpoint = "/articles/bookmark";
+const bookmarkEndpoint = '/articles/bookmark';
 const fetchNewContentAnchor = 0.8;
 const limit = 10;
 let offset = 0;
 let stopFetching = false;
 
 const appendNewContent = (content) => {
-  ele = document.createElement("div");
+  ele = document.createElement('div');
   ele.innerHTML = content;
 
   let anchor = articlesContainer.lastElementChild;
@@ -21,10 +21,10 @@ const isMobile = () => {
 };
 
 const toTitleCase = (s) => {
-  if (typeof s == "string" && s.length > 0) {
+  if (typeof s == 'string' && s.length > 0) {
     return s[0].toUpperCase() + s.substr(1);
   }
-  return "";
+  return '';
 };
 
 const encodeHTMLEntities = (val) => {
@@ -32,7 +32,7 @@ const encodeHTMLEntities = (val) => {
    * Input: <scrpit>console.log(1)</script>
    * Output: &lt;script&gt;console.log(1)&lt;/script&gt;
    */
-  let e = document.createElement("textarea");
+  let e = document.createElement('textarea');
   e.innerHTML = val;
   return e.innerHTML;
 };
@@ -42,19 +42,19 @@ const formatArticle = (article) => {
 
   const titleTag = `<p class="title">${title}</p>`;
 
-  let subtitleTag = ""; // Don't show subtitle on mobile devices
+  let subtitleTag = ''; // Don't show subtitle on mobile devices
   if (!isMobile()) {
     subtitleTag = `<p style="font-size: 110%; font-weight: 600; margin-bottom: 4.5px">${subtitle}</p>`;
   }
 
-  let tagHTML = "";
+  let tagHTML = '';
   tags.forEach((t) => {
     tagHTML += `<a href="/articles/tags?query=${encodeURIComponent(t)}"><span class="tag is-warning">${encodeHTMLEntities(t)}</span></a>`;
   });
 
   categoryTag = `<a href="/articles/${category}"><span class="tag is-primary">${toTitleCase(category)}</span></a>`;
 
-  adminTag = "";
+  adminTag = '';
   if (adminOnly) {
     adminTag = `<span class="tag is-danger">Admin Only</span>`;
   }
@@ -81,9 +81,9 @@ const formatArticle = (article) => {
 };
 
 const checkStatus = async (resp) => {
-  const contentType = resp.headers.get("content-type");
+  const contentType = resp.headers.get('content-type');
 
-  if (contentType && contentType.indexOf("application/json") !== -1 && resp.status < 400) {
+  if (contentType && contentType.indexOf('application/json') !== -1 && resp.status < 400) {
     return Promise.resolve(resp);
   }
   return Promise.reject(resp);
@@ -101,7 +101,7 @@ const fetchSucceed = async (resp) => {
       return;
     }
 
-    let newContent = "";
+    let newContent = '';
     data.articleList.forEach((a) => {
       newContent += formatArticle(a);
     });
@@ -112,7 +112,7 @@ const fetchSucceed = async (resp) => {
 
 const fetchFailed = async (resp) => {
   await resp.json().then((data) => {
-    c("Error: ", data.errHead, data.errBody);
+    c('Error: ', data.errHead, data.errBody);
   });
   return Promise.resolve(false);
 };
@@ -135,7 +135,7 @@ const fetchContent = async (count) => {
     if (count < 3) {
       fetchContent(++count); // Try again
     } else {
-      showErrMsg("Failed to Fetch Content", "Please reload the page and try again.");
+      showErrMsg('Failed to Fetch Content', 'Please reload the page and try again.');
     }
   }
 };
@@ -161,9 +161,9 @@ const bookmarkHandler = () => {
 
   initialFetch();
 
-  articlesContainer = document.querySelector("#articles-container");
-  articlesContainer.addEventListener("click", (e) => {
-    window.location.href = "/articles/browse?articleId=" + e.target.closest("div.tile.is-child").children[0].dataset.articleid;
+  articlesContainer = document.querySelector('#articles-container');
+  articlesContainer.addEventListener('click', (e) => {
+    window.location.href = '/articles/browse?articleId=' + e.target.closest('div.tile.is-child').children[0].dataset.articleid;
   });
 
   const delay = 300;

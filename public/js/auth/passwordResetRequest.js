@@ -1,7 +1,7 @@
-const sendResetPasswordEmailEndpoint = "/password/email";
+const sendResetPasswordEmailEndpoint = '/password/email';
 const errMsg = {
   empty: "The email can't be empty.",
-  invalid: "Please fill in the correct email.",
+  invalid: 'Please fill in the correct email.',
 };
 
 const validateEmailRegex = (email) => {
@@ -13,8 +13,7 @@ const getInputValue = () => {
   return { email: inputEmail.value.trim() };
 };
 
-const validateInput = (values) => {
-  const { email } = values;
+const validateInput = ({ email } = values) => {
   let canSubmit = false;
 
   if (email.length == 0) {
@@ -23,14 +22,14 @@ const validateInput = (values) => {
     err_msg_email.innerText = errMsg.invalid;
   } else {
     canSubmit = true;
-    err_msg_email.innerText = "";
+    err_msg_email.innerText = '';
   }
 
   return canSubmit;
 };
 
 const clearInputBox = () => {
-  inputEmail.value = "";
+  inputEmail.value = '';
 };
 
 const sendResetPasswordEmailSucceed = async (resp) => {
@@ -56,13 +55,13 @@ const checkStatus = async (resp) => {
 };
 
 const sendResetPasswordRequest = () => {
-  submitBtn.classList.add("is-loading");
+  submitBtn.classList.add('is-loading');
 
   const values = getInputValue();
   const ok = validateInput(values);
 
   if (!ok) {
-    submitBtn.classList.remove("is-loading");
+    submitBtn.classList.remove('is-loading');
     return;
   }
 
@@ -71,16 +70,16 @@ const sendResetPasswordRequest = () => {
     .then(sendResetPasswordEmailSucceed)
     .catch(sendResetPasswordEmailFailed)
     .finally((_) => {
-      submitBtn.classList.remove("is-loading");
+      submitBtn.classList.remove('is-loading');
     });
 };
 
 const passwordResetRequestHandler = () => {
-  err_msg_email = document.getElementById("err_msg_email");
-  inputEmail = document.getElementsByName("email")[0];
-  submitBtn = document.querySelector("#submitButton");
+  err_msg_email = document.getElementById('err_msg_email');
+  inputEmail = document.getElementsByName('email')[0];
+  submitBtn = document.querySelector('#submitButton');
 
-  submitBtn.addEventListener("click", sendResetPasswordRequest);
+  submitBtn.addEventListener('click', sendResetPasswordRequest);
 };
 
 onDOMContentLoaded = (function () {

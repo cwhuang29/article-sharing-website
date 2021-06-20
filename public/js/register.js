@@ -1,10 +1,10 @@
 const errInputMsg = {
   empty: "This field can't be empty.",
-  passwordInconsistency: "Password and confirm password does not match.",
-  passwordTooShort: "Passwords must be at least 8 characters long.",
-  emailFormatInvalid: "The email format is not correct.",
+  passwordInconsistency: 'Password and confirm password does not match.',
+  passwordTooShort: 'Passwords must be at least 8 characters long.',
+  emailFormatInvalid: 'The email format is not correct.',
 };
-const registerEndpoint = "/register";
+const registerEndpoint = '/register';
 
 const setErrMsgBanner = (ele, msg) => {
   ele.innerText = msg;
@@ -16,11 +16,7 @@ const isValidEmail = (e) => {
 };
 
 const getInputValue = () => {
-  let g = [...gender].filter((g) => g.checked).map((g) => g.value)[0];
-  if (g === undefined) {
-    // If user didn't click on any of them
-    g = "";
-  }
+  let g = [...gender].filter((g) => g.checked).map((g) => g.value)[0] || '';
   return {
     firstName: firstName.value.trim(),
     lastName: lastName.value.trim(),
@@ -34,24 +30,25 @@ const getInputValue = () => {
 
 const validateInput = (values) => {
   let isValid = true;
-  const { firstName, lastName, password, passwordConfirm, email, gender, major } = values;
 
-  for (const [key, val] of Object.entries(values)) {
+  for (const [_, val] of Object.entries(values)) {
     if (val.length == 0) {
       isValid = false;
     }
   }
 
+  const { firstName, lastName, password, passwordConfirm, email, gender, major } = values;
+
   if (firstName.length == 0) {
     setErrMsgBanner(firstNameErr, errInputMsg.empty);
   } else {
-    setErrMsgBanner(firstNameErr, "");
+    setErrMsgBanner(firstNameErr, '');
   }
 
   if (lastName.length == 0) {
     setErrMsgBanner(lastNameErr, errInputMsg.empty);
   } else {
-    setErrMsgBanner(lastNameErr, "");
+    setErrMsgBanner(lastNameErr, '');
   }
 
   if (password.length == 0) {
@@ -60,7 +57,7 @@ const validateInput = (values) => {
     isValid = false;
     setErrMsgBanner(passwordErr, errInputMsg.passwordTooShort);
   } else {
-    setErrMsgBanner(passwordErr, "");
+    setErrMsgBanner(passwordErr, '');
   }
 
   if (passwordConfirm.length == 0) {
@@ -69,7 +66,7 @@ const validateInput = (values) => {
     isValid = false;
     setErrMsgBanner(passwordConfirm, errInputMsg.passwordTooShort);
   } else {
-    setErrMsgBanner(passwordConfirm, "");
+    setErrMsgBanner(passwordConfirm, '');
   }
 
   if (password.length > 7 && passwordConfirm.length > 7) {
@@ -77,8 +74,8 @@ const validateInput = (values) => {
       isValid = false;
       setErrMsgBanner(passwordConfirmErr, errInputMsg.passwordInconsistency);
     } else {
-      setErrMsgBanner(passwordErr, "");
-      setErrMsgBanner(passwordConfirmErr, "");
+      setErrMsgBanner(passwordErr, '');
+      setErrMsgBanner(passwordConfirmErr, '');
     }
   }
 
@@ -88,19 +85,19 @@ const validateInput = (values) => {
     isValid = false;
     setErrMsgBanner(emailErr, errInputMsg.emailFormatInvalid);
   } else {
-    setErrMsgBanner(emailErr, "");
+    setErrMsgBanner(emailErr, '');
   }
 
   if (gender.length == 0) {
     setErrMsgBanner(genderErr, errInputMsg.empty);
   } else {
-    setErrMsgBanner(genderErr, "");
+    setErrMsgBanner(genderErr, '');
   }
 
   if (major.length == 0) {
     setErrMsgBanner(majorErr, errInputMsg.empty);
   } else {
-    setErrMsgBanner(majorErr, "");
+    setErrMsgBanner(majorErr, '');
   }
 
   return isValid;
@@ -115,7 +112,7 @@ const checkStatus = async (resp) => {
 };
 
 const creationSucceed = async (resp) => {
-  window.location.href = resp.headers.get("Location");
+  window.location.href = resp.headers.get('Location');
   return Promise.resolve();
 };
 
@@ -128,7 +125,7 @@ const creationFailed = async (resp) => {
     resp.json().then(function (data) {
       if (data.bindingError) {
         c(data.errHead);
-        showErrMsg("An Error Occurred !", "Please reload the page and try again.");
+        showErrMsg('An Error Occurred !', 'Please reload the page and try again.');
       } else {
         for (var key in data.errTags) {
           document.getElementById(`err_msg_${key}`).innerText = data.errTags[key];
@@ -138,18 +135,18 @@ const creationFailed = async (resp) => {
   } else if (resp.status == 409) {
     resp.json().then((data) => showErrMsg(data.errHead, data.errBody));
   } else {
-    showErrMsg("An Error Occurred !", "Please reload the page and try again.");
+    showErrMsg('An Error Occurred !', 'Please reload the page and try again.');
   }
 };
 
 const submitNewPost = () => {
-  submitBtn.classList.add("is-loading");
+  submitBtn.classList.add('is-loading');
 
   let values = getInputValue();
   let res = validateInput(values);
 
   if (!res) {
-    submitBtn.classList.remove("is-loading");
+    submitBtn.classList.remove('is-loading');
     return;
   }
 
@@ -164,35 +161,35 @@ const submitNewPost = () => {
 
   fetchData(registerEndpoint, {
     body: transformedValues,
-    redirect: "follow",
+    redirect: 'follow',
   })
     .then(checkStatus)
     .then(creationSucceed)
     .catch(creationFailed)
     .finally((_) => {
-      submitBtn.classList.remove("is-loading");
+      submitBtn.classList.remove('is-loading');
     });
 };
 
 const registerHandler = () => {
-  firstName = document.getElementsByName("first_name")[0];
-  lastName = document.getElementsByName("last_name")[0];
-  password = document.getElementsByName("password")[0];
-  passwordConfirm = document.getElementsByName("password_confirm")[0];
-  email = document.getElementsByName("email")[0];
-  gender = document.getElementsByName("gender"); // Array
-  major = document.getElementsByName("major")[0];
+  firstName = document.getElementsByName('first_name')[0];
+  lastName = document.getElementsByName('last_name')[0];
+  password = document.getElementsByName('password')[0];
+  passwordConfirm = document.getElementsByName('password_confirm')[0];
+  email = document.getElementsByName('email')[0];
+  gender = document.getElementsByName('gender'); // Array
+  major = document.getElementsByName('major')[0];
 
-  firstNameErr = document.getElementById("err_msg_first_name");
-  lastNameErr = document.getElementById("err_msg_last_name");
-  passwordErr = document.getElementById("err_msg_password");
-  passwordConfirmErr = document.getElementById("err_msg_password_confirm");
-  emailErr = document.getElementById("err_msg_email");
-  genderErr = document.getElementById("err_msg_gender");
-  majorErr = document.getElementById("err_msg_major");
+  firstNameErr = document.getElementById('err_msg_first_name');
+  lastNameErr = document.getElementById('err_msg_last_name');
+  passwordErr = document.getElementById('err_msg_password');
+  passwordConfirmErr = document.getElementById('err_msg_password_confirm');
+  emailErr = document.getElementById('err_msg_email');
+  genderErr = document.getElementById('err_msg_gender');
+  majorErr = document.getElementById('err_msg_major');
 
-  submitBtn = document.querySelector("#submit_button");
-  submitBtn.addEventListener("click", submitNewPost);
+  submitBtn = document.querySelector('#submit_button');
+  submitBtn.addEventListener('click', submitNewPost);
 };
 
 onDOMContentLoaded = (function () {

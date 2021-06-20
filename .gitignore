@@ -17,4 +17,4 @@
 public/upload/*/*
 certs/*
 .DS_Store
-tmp.db # The name of sqlite database by default
+tmp.db

@@ -1,22 +1,22 @@
-const fetchArticlesEndpoint = "/articles/fetch";
+const fetchArticlesEndpoint = '/articles/fetch';
 const fetchNewContentAnchor = 0.8;
 const limit = 10;
 let offset = 0;
 let stopFetching = false;
 
 const clearOverViewSession = () => {
-  window.sessionStorage.removeItem("offset");
-  window.sessionStorage.removeItem("overviewContent");
+  window.sessionStorage.removeItem('offset');
+  window.sessionStorage.removeItem('overviewContent');
 };
 
 const storeOverviewToSession = (content) => {
-  let sessionContent = window.sessionStorage.getItem("overviewContent") || "";
-  window.sessionStorage.setItem("overviewContent", sessionContent + content);
-  window.sessionStorage.setItem("offset", offset);
+  let sessionContent = window.sessionStorage.getItem('overviewContent') || '';
+  window.sessionStorage.setItem('overviewContent', sessionContent + content);
+  window.sessionStorage.setItem('offset', offset);
 };
 
 const appendNewContent = (content) => {
-  ele = document.createElement("div");
+  ele = document.createElement('div');
   ele.innerHTML = content;
 
   let anchor = articlesContainer.lastElementChild;
@@ -28,10 +28,10 @@ const isMobile = () => {
 };
 
 const toTitleCase = (s) => {
-  if (typeof s == "string" && s.length > 0) {
+  if (typeof s == 'string' && s.length) {
     return s[0].toUpperCase() + s.substr(1);
   }
-  return "";
+  return '';
 };
 
 const encodeHTMLEntities = (val) => {
@@ -39,7 +39,7 @@ const encodeHTMLEntities = (val) => {
    * Input: <scrpit>console.log(1)</script>
    * Output: &lt;script&gt;console.log(1)&lt;/script&gt;
    */
-  let e = document.createElement("textarea");
+  let e = document.createElement('textarea');
   e.innerHTML = val;
   return e.innerHTML;
 };
@@ -49,19 +49,19 @@ const formatArticle = (article) => {
 
   const titleTag = `<p class="title">${title}</p>`;
 
-  let subtitleTag = ""; // Don't show subtitle on mobile devices
+  let subtitleTag = ''; // Don't show subtitle on mobile devices
   if (!isMobile()) {
     subtitleTag = `<p style="font-size: 110%; font-weight: 600; margin-bottom: 4.5px">${subtitle}</p>`;
   }
 
-  let tagHTML = "";
+  let tagHTML = '';
   tags.forEach((t) => {
     tagHTML += `<a href="/articles/tags?query=${encodeURIComponent(t)}"><span class="tag is-warning">${encodeHTMLEntities(t)}</span></a>`;
   });
 
   categoryTag = `<a href="/articles/${category}"><span class="tag is-primary">${toTitleCase(category)}</span></a>`;
 
-  adminTag = "";
+  adminTag = '';
   if (adminOnly) {
     adminTag = `<span class="tag is-danger">Admin Only</span>`;
   }
@@ -88,9 +88,9 @@ const formatArticle = (article) => {
 };
 
 const checkStatus = async (resp) => {
-  const contentType = resp.headers.get("content-type");
+  const contentType = resp.headers.get('content-type');
 
-  if (contentType && contentType.indexOf("application/json") !== -1 && resp.status < 400) {
+  if (contentType && contentType.indexOf('application/json') !== -1 && resp.status < 400) {
     return Promise.resolve(resp);
   }
   return Promise.reject(resp);
@@ -108,7 +108,7 @@ const fetchSucceed = async (resp) => {
       return;
     }
 
-    let newContent = "";
+    let newContent = '';
     data.articleList.forEach((a) => {
       newContent += formatArticle(a);
     });
@@ -120,7 +120,7 @@ const fetchSucceed = async (resp) => {
 
 const fetchFailed = async (resp) => {
   await resp.json().then((data) => {
-    c("Error: ", data.errHead, data.errBody);
+    c('Error: ', data.errHead, data.errBody);
   });
   return Promise.resolve(false);
 };
@@ -130,15 +130,15 @@ const fetchContent = async (count) => {
     return;
   }
 
-  const path = window.location.pathname.split("/").pop();
-  if (path == "weekly-update") {
-    type = "time";
+  const path = window.location.pathname.split('/').pop();
+  if (path == 'weekly-update') {
+    type = 'time';
     query = null;
-  } else if (path == "tags") {
-    type = "tag";
-    query = new URLSearchParams(window.location.search).get("query");
+  } else if (path == 'tags') {
+    type = 'tag';
+    query = new URLSearchParams(window.location.search).get('query');
   } else {
-    type = "category";
+    type = 'category';
     query = path; // Either "pharma" or "medication"
   }
 
@@ -153,9 +153,9 @@ const fetchContent = async (count) => {
   const res = await fetchData(url).then(checkStatus).then(fetchSucceed).catch(fetchFailed);
   if (!res) {
     if (count < 3) {
-      fetchContent(++count); // Try again
+      fetchContent(++count);
     } else {
-      showErrMsg("Failed to Fetch Content", "Please reload the page and try again.");
+      showErrMsg('Failed to Fetch Content', 'Please reload the page and try again.');
     }
   }
 };
@@ -164,13 +164,13 @@ const initialFetch = async () => {
   await fetchContent(0);
 
   if (offset == 0) {
-    let path = location.pathname.split("/").pop();
-    let errMsg = "There is no articles";
+    let path = location.pathname.split('/').pop();
+    let errMsg = 'There is no articles';
 
-    if (path == "weekly-update") {
-      errMsg = "No new articles in the past 7 days";
+    if (path == 'weekly-update') {
+      errMsg = 'No new articles in the past 7 days';
     }
-    showNoticeMsg("Oops ... ", errMsg);
+    showNoticeMsg('Oops ... ', errMsg);
   } else {
     /*
      * For an edge case: the initial articles' height is smaller than the window's height,
@@ -183,36 +183,34 @@ const initialFetch = async () => {
 };
 
 const sessionStorageHandler = async () => {
-  let path = location.pathname.split("/").pop();
-  let para = new URLSearchParams(window.location.search).get("query") || "";
-  let sessionPath = window.sessionStorage.getItem("path");
-  let sessionPara = window.sessionStorage.getItem("para");
+  let path = location.pathname.split('/').pop();
+  let para = new URLSearchParams(window.location.search).get('query') || '';
+  let sessionPath = window.sessionStorage.getItem('path');
+  let sessionPara = window.sessionStorage.getItem('para');
 
-  window.sessionStorage.setItem("path", path); // If 2nd argument is null, the stored value will be a string "null"
-  window.sessionStorage.setItem("para", para);
+  window.sessionStorage.setItem('path', path); // If 2nd argument is null, the stored value will be a string 'null'
+  window.sessionStorage.setItem('para', para);
   if (performance.navigation.type == performance.navigation.TYPE_RELOAD || path != sessionPath || para != sessionPara) {
     // e.g. Reload page (either clicking the button or keyboard shortcuts), from "/pharma" to "/medication", or from "/tag?query=foo" to "/tag?query=bar"
     clearOverViewSession();
   }
 
-  const overviewContent = window.sessionStorage.getItem("overviewContent");
+  const overviewContent = window.sessionStorage.getItem('overviewContent');
   if (overviewContent) {
-    offset = Number(window.sessionStorage.getItem("offset"));
-    document.querySelector("#articles-container").innerHTML = overviewContent;
+    offset = Number(window.sessionStorage.getItem('offset'));
+    document.querySelector('#articles-container').innerHTML = overviewContent;
   } else {
     initialFetch();
   }
 };
 
 const overviewHandler = () => {
-  offset = 0; // offset == # means we'll skip # articles in next fetch
+  offset = 0; // offset means we'll skip # articles in next fetch
 
   sessionStorageHandler();
 
-  articlesContainer = document.querySelector("#articles-container");
-  articlesContainer.addEventListener("click", (e) => {
-    window.location.href = "/articles/browse?articleId=" + e.target.closest("div.tile.is-child").children[0].dataset.articleid;
-  });
+  articlesContainer = document.querySelector('#articles-container');
+  articlesContainer.addEventListener('click', (e) => (window.location.href = '/articles/browse?articleId=' + e.target.closest('div.tile.is-child').children[0].dataset.articleid));
 
   const delay = 300;
   let lastFetch = 0;

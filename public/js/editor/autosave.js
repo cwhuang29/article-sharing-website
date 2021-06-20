@@ -1,7 +1,7 @@
 const getLocalStorageKey = () => {
-  let key = "article-create";
-  if (window.location.pathname.indexOf("create") == -1) {
-    key = "article-update-" + new URLSearchParams(window.location.search).get("articleId");
+  let key = 'article-create';
+  if (window.location.pathname.indexOf('create') == -1) {
+    key = 'article-update-' + new URLSearchParams(window.location.search).get('articleId');
   }
   return key;
 };
@@ -30,7 +30,7 @@ const encodeHTMLEntities = (val) => {
    * Input: <scrpit>console.log(1)</script>
    * Output: &lt;script&gt;console.log(1)&lt;/script&gt;
    */
-  let e = document.createElement("textarea");
+  let e = document.createElement('textarea');
   e.innerHTML = val;
   return e.innerHTML;
 };
@@ -38,41 +38,41 @@ const encodeHTMLEntities = (val) => {
 const writeLocalStorageValue = (values) => {
   const { adminOnly, title, subtitle, date, authors, category, tags, outline, content } = JSON.parse(values);
 
-  document.querySelector("#adminOnly").checked = adminOnly;
-  document.getElementsByName("title")[0].value = title;
-  document.getElementsByName("subtitle")[0].value = subtitle;
-  document.getElementsByName("date")[0].value = date;
-  document.getElementsByName("outline")[0].value = outline;
+  document.querySelector('#adminOnly').checked = adminOnly;
+  document.getElementsByName('title')[0].value = title;
+  document.getElementsByName('subtitle')[0].value = subtitle;
+  document.getElementsByName('date')[0].value = date;
+  document.getElementsByName('outline')[0].value = outline;
   easyMDE.value(content);
 
-  [...document.getElementsByName("category")[0]].forEach((ele, idx) => {
+  [...document.getElementsByName('category')[0]].forEach((ele, idx) => {
     if (ele.value.toLowerCase() == category) {
-      document.getElementsByName("category")[0].selectedIndex = idx;
+      document.getElementsByName('category')[0].selectedIndex = idx;
     }
   });
 
-  [...document.getElementsByName("authors")].forEach((ele, idx) => {
+  [...document.getElementsByName('authors')].forEach((ele, idx) => {
     if (authors.includes(ele.value)) {
-      document.getElementsByName("authors")[idx].checked = true;
+      document.getElementsByName('authors')[idx].checked = true;
     }
   });
 
   var tagsHTMLHead = '<span class="tag is-warning is-medium" name="tags" style="margin-right: 8px; margin-bottom: 5px">';
   var tagsHTMLTail = '<button class="delete is-small"></button></span>';
-  var tagsBody = "";
+  var tagsBody = '';
   tags.forEach((ele) => {
     tagsBody += `${tagsHTMLHead}${encodeHTMLEntities(ele)}${tagsHTMLTail}`;
   });
-  document.getElementById("tags-list").innerHTML = tagsBody;
+  document.getElementById('tags-list').innerHTML = tagsBody;
 };
 
 const setupLocalStorage = () => {
   const key = getLocalStorageKey();
   const values = window.localStorage.getItem(key);
   if (!values) {
-    showNoticeMsg("Article will be automatically saved", "Enjoy your journey : )");
+    showNoticeMsg('Article will be automatically saved', 'Enjoy your journey : )');
   } else {
-    showNoticeMsg("You can now continue editing", "Enjoy your journey : )");
+    showNoticeMsg('You can now continue editing', 'Enjoy your journey : )');
     writeLocalStorageValue(values);
   }
 };
@@ -84,8 +84,8 @@ const autosaveHandler = () => {
   INITIAL_INPUT_SIZE = calculateObjectValueSize(iniValues);
 
   window.setInterval(() => saveInputToLocalStorage(), 5000);
-  document.getElementById("clearAutosaveButton").addEventListener("click", () => clearInputLocalStorage());
-  document.getElementById("saveNowButton").addEventListener("click", () => saveInputToLocalStorage());
+  document.getElementById('clearAutosaveButton').addEventListener('click', () => clearInputLocalStorage());
+  document.getElementById('saveNowButton').addEventListener('click', () => saveInputToLocalStorage());
 };
 
 onDOMContentLoaded = (function () {
