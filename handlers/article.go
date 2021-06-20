@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/cwhuang29/article-sharing-website/constants"
 	"github.com/cwhuang29/article-sharing-website/databases"
 	"github.com/cwhuang29/article-sharing-website/utils"
 	"github.com/gin-gonic/gin"
@@ -12,7 +13,7 @@ import (
 
 func CreateArticleView(c *gin.Context) {
 	uuid := utils.GetUUID()
-	c.SetCookie("csrf_token", uuid, utils.CsrfTokenAge, "/", "", true, true)
+	c.SetCookie("csrf_token", uuid, constants.CsrfTokenAge, "/", "", true, true)
 	c.HTML(http.StatusOK, "editor.html", gin.H{
 		"currPageCSS": "css/editor.css",
 		"csrfToken":   uuid,
@@ -24,24 +25,20 @@ func CreateArticleView(c *gin.Context) {
 func UpdateArticleView(c *gin.Context) {
 	id := getParaId(c, "articleId")
 	if id == 0 {
-		errHead := "Article ID is An Positive Integer"
-		errBody := "Please try again."
 		c.HTML(http.StatusBadRequest, "browse.html", gin.H{
 			"currPageCSS": "css/browse.css",
-			"errHead":     errHead,
-			"errBody":     errBody,
+			"errHead":     constants.ParameterArticleIDErr,
+			"errBody":     constants.TryAgain,
 		})
 		return
 	}
 
 	dbFormatArticle := databases.GetArticle(id, true)
 	if dbFormatArticle.ID == 0 {
-		errHead := "Article Not Found"
-		errBody := "Please try again."
 		c.HTML(http.StatusNotFound, "browse.html", gin.H{
 			"currPageCSS": "css/browse.css",
-			"errHead":     errHead,
-			"errBody":     errBody,
+			"errHead":     constants.ArticleNotFound,
+			"errBody":     constants.TryAgain,
 		})
 		return
 	}
@@ -49,7 +46,7 @@ func UpdateArticleView(c *gin.Context) {
 	article := articleFormatDBToDetailed(dbFormatArticle, false)
 	uuid := utils.GetUUID()
 
-	c.SetCookie("csrf_token", uuid, utils.CsrfTokenAge, "/", "", true, true)
+	c.SetCookie("csrf_token", uuid, constants.CsrfTokenAge, "/", "", true, true)
 	c.HTML(http.StatusOK, "editor.html", gin.H{
 		"currPageCSS":  "css/editor.css",
 		"csrfToken":    uuid,
@@ -69,23 +66,18 @@ func UpdateArticleView(c *gin.Context) {
 }
 
 func CreateArticle(c *gin.Context) {
-	errHead := "Create Article Failed"
-	errBody := "Please try again."
-
 	newArticle, invalids, err := handleForm(c)
 	if len(invalids) != 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody, "errTags": invalids})
+		c.JSON(http.StatusBadRequest, gin.H{"errHead": constants.ArticleCreateErr, "errBody": constants.TryAgain, "errTags": invalids})
 		return
 	} else if err != nil {
-		errBody = err.Error()
-		c.JSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody})
+		c.JSON(http.StatusBadRequest, gin.H{"errHead": constants.ArticleCreateErr, "errBody": err.Error()})
 		return
 	}
 
 	id, res := databases.SubmitArticle(newArticle, "create")
 	if !res {
-		errBody = "An error occurred while writing to DB."
-		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "errHead": errHead, "errBody": errBody})
+		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "errHead": constants.ArticleCreateErr, "errBody": constants.DatabaseErr})
 		return
 	}
 	logrus.Infof("Create article with id %v", id)
@@ -96,37 +88,28 @@ func CreateArticle(c *gin.Context) {
 func UpdateArticle(c *gin.Context) {
 	id := getParaId(c, "articleId")
 	if id == 0 {
-		errHead := "Article ID is An Positive Integer"
-		errBody := "Please try again."
-		c.JSON(http.StatusBadRequest, gin.H{"bindingError": false, "errHead": errHead, "errBody": errBody})
+		c.JSON(http.StatusBadRequest, gin.H{"bindingError": false, "errHead": constants.ParameterArticleIDErr, "errBody": constants.TryAgain})
 		return
 	}
 
 	if succeed := databases.IsArticleExists(id, true); succeed != true {
-		errHead := "Article Not Found"
-		errBody := "Please try again."
-		c.JSON(http.StatusNotFound, gin.H{"bindingError": false, "errHead": errHead, "errBody": errBody})
+		c.JSON(http.StatusNotFound, gin.H{"bindingError": false, "errHead": constants.ArticleNotFound, "errBody": constants.TryAgain})
 		return
 	}
 
-	errHead := "Update Article Failed"
-	errBody := "Please try again."
-
 	newArticle, invalids, err := handleForm(c)
 	if len(invalids) != 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody, "errTags": invalids})
+		c.JSON(http.StatusBadRequest, gin.H{"errHead": constants.ArticleUpdateErr, "errBody": constants.TryAgain, "errTags": invalids})
 		return
 	} else if err != nil {
-		errBody = err.Error()
-		c.JSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody})
+		c.JSON(http.StatusBadRequest, gin.H{"errHead": constants.ArticleUpdateErr, "errBody": err.Error()})
 		return
 	}
 	newArticle.ID = id
 
 	id, res := databases.SubmitArticle(newArticle, "update")
 	if !res {
-		errBody = "An error occurred while writing to DB."
-		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "errHead": errHead, "errBody": errBody})
+		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "errHead": constants.ArticleUpdateErr, "errBody": constants.DatabaseErr})
 		return
 	}
 	logrus.Infof("Update article with id %v", id)
@@ -135,18 +118,14 @@ func UpdateArticle(c *gin.Context) {
 }
 
 func DeleteArticle(c *gin.Context) {
-	errHead := "Delete Article Failed"
-	errBody := "Please try again."
-
 	id := getParaId(c, "articleId")
 	if id == 0 {
-		errHead = "Article ID is An Positive Integer"
-		c.JSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody})
+		c.JSON(http.StatusBadRequest, gin.H{"errHead": constants.ParameterArticleIDErr, "errBody": constants.TryAgain})
 		return
 	}
 
 	if res := databases.DeleteArticle(id, true); !res {
-		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "errHead": errHead, "errBody": errBody})
+		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "errHead": constants.ArticleDeleteErr, "errBody": constants.TryAgain})
 		return
 	}
 	logrus.Infof("Delete article with id %v", id)

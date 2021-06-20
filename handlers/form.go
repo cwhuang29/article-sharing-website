@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cwhuang29/article-sharing-website/constants"
 	"github.com/cwhuang29/article-sharing-website/databases/models"
 	"github.com/cwhuang29/article-sharing-website/utils"
 	"github.com/cwhuang29/article-sharing-website/utils/validator"
@@ -44,7 +45,7 @@ func saveFile(c *gin.Context, file *multipart.FileHeader, fileName string) (err 
 }
 
 func checkFileSize(fileSize int64) bool {
-	return fileSize <= int64(utils.FileMaxSize)
+	return fileSize <= int64(constants.FileMaxSize)
 }
 
 func checkFileType(fileType, mainType string) bool {
@@ -59,7 +60,7 @@ func checkFileType(fileType, mainType string) bool {
 func generateFileName(fileType string) string {
 	fileID := time.Now().UTC().Format("20060102150405") + utils.GetUUID()
 	fileExt := fileType[strings.LastIndex(fileType, "/")+1:]
-	return utils.UploadImageDir + fileID + "." + fileExt // Do not start with "./" otherwise the images URL in articles content will be incorrect
+	return constants.UploadImageDir + fileID + "." + fileExt // Do not start with "./" otherwise the images URL in articles content will be incorrect
 }
 
 /*

@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
+	"github.com/cwhuang29/article-sharing-website/constants"
 	"github.com/cwhuang29/article-sharing-website/databases"
 	"github.com/cwhuang29/article-sharing-website/utils"
 	"github.com/gin-gonic/gin"
@@ -16,9 +18,7 @@ func About(c *gin.Context) {
 func Home(c *gin.Context) {
 	userStatus, user := GetUserStatus(c)
 	if userStatus < IsMember {
-		errHead := "Login to view home page"
-		errBody := ""
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errHead": errHead, "errBody": errBody})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errHead": fmt.Sprintf(constants.LoginTo, "view home page"), "errBody": ""})
 		return
 	}
 
@@ -65,16 +65,12 @@ func SearchTags(c *gin.Context) {
 func CheckPermissionAndArticleExists(c *gin.Context) {
 	id := getParaId(c, "articleId")
 	if id == 0 {
-		errHead := "Article ID is An Positive Integer"
-		errBody := "Please try again."
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.ParameterArticleIDErr, "errBody": constants.TryAgain})
 		return
 	}
 
 	if succeed := databases.IsArticleExists(id, true); succeed != true {
-		errHead := "Article ID Not Found"
-		errBody := "Please try again."
-		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errHead": errHead, "errBody": errBody})
+		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errHead": constants.ArticleNotFound, "errBody": constants.TryAgain})
 		return
 	}
 
@@ -82,33 +78,27 @@ func CheckPermissionAndArticleExists(c *gin.Context) {
 }
 
 func FetchData(c *gin.Context) {
-	errHead := "Invalid Parameter"
-
 	types := c.DefaultQuery("type", "")
 	if types == "" {
-		errBody := "Parameter type can not be empty."
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody, "size": 0})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.ParameterErr, "errBody": fmt.Sprintf(constants.ParameterEmptyErr, "type"), "size": 0})
 		return
 	}
 
 	query := c.DefaultQuery("query", "")
 	if query == "" {
-		errBody := "Parameter query can not be empty."
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody, "size": 0})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.ParameterErr, "errBody": fmt.Sprintf(constants.ParameterEmptyErr, "query"), "size": 0})
 		return
 	}
 
 	offset, err := strconv.Atoi(c.Query("offset"))
 	if err != nil || offset < 0 {
-		errBody := "Parameter offset should be a non-negative integer."
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody, "size": 0})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.ParameterErr, "errBody": "Parameter offset should be a non-negative integer", "size": 0})
 		return
 	}
 
 	limit, err := strconv.Atoi(c.Query("limit"))
 	if err != nil || limit <= 0 {
-		errBody := "Parameter limit should be a positive integer."
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody, "size": 0})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.ParameterErr, "errBody": "Parameter limit should be a positive integer", "size": 0})
 		return
 	}
 
@@ -125,12 +115,10 @@ func Browse(c *gin.Context) {
 
 	id, err := strconv.Atoi(c.Query("articleId"))
 	if err != nil || id <= 0 {
-		errHead := "Article ID is An Integer"
-		errBody := "Go back to previous page and try again."
 		c.HTML(http.StatusBadRequest, "browse.html", gin.H{
 			"currPageCSS": "css/browse.css",
-			"errHead":     errHead,
-			"errBody":     errBody,
+			"errHead":     constants.ParameterArticleIDErr,
+			"errBody":     constants.GobackAndRetry,
 		})
 		return
 	}
@@ -138,12 +126,10 @@ func Browse(c *gin.Context) {
 	isAdmin := isUserAdmin(c)
 	dbFormatArticle := databases.GetArticle(id, isAdmin)
 	if dbFormatArticle.ID == 0 {
-		errHead := "Article Not Found"
-		errBody := "Go back to previous page and try again."
 		c.HTML(http.StatusNotFound, "browse.html", gin.H{
 			"currPageCSS": "css/browse.css",
-			"errHead":     errHead,
-			"errBody":     errBody,
+			"errHead":     constants.ArticleNotFound,
+			"errBody":     constants.GobackAndRetry,
 		})
 		return
 	}
@@ -155,7 +141,7 @@ func Browse(c *gin.Context) {
 	adminEmail, _ := c.Cookie("is_admin")
 	if adminEmail != "" && cookieEmail == adminEmail && databases.IsAdminUser(adminEmail) {
 		uuid = utils.GetUUID()
-		c.SetCookie("csrf_token", uuid, utils.CsrfTokenAge, "/", "", true, true)
+		c.SetCookie("csrf_token", uuid, constants.CsrfTokenAge, "/", "", true, true)
 	}
 
 	c.HTML(http.StatusOK, "browse.html", gin.H{

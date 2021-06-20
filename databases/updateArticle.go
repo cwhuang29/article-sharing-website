@@ -114,6 +114,12 @@ func SubmitArticle(article models.Article, action string) (newArticleID int, suc
 	var currTags, prevTags []models.Tag
 
 	tx := db.Begin() // Use 'tx' from this point, not 'db'
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
 	if tx.Error != nil {
 		return
 	}

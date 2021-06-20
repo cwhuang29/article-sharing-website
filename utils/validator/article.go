@@ -1,9 +1,10 @@
 package validator
 
 import (
-	"github.com/cwhuang29/article-sharing-website/databases/models"
-	"github.com/cwhuang29/article-sharing-website/utils"
 	"time"
+
+	"github.com/cwhuang29/article-sharing-website/constants"
+	"github.com/cwhuang29/article-sharing-website/databases/models"
 )
 
 var (
@@ -15,11 +16,11 @@ func ValidateArticleForm(newArticle models.Article) (err map[string]string) {
 
 	if len(newArticle.Title) == 0 {
 		err["title"] = errInputMsg["short"]
-	} else if len(newArticle.Title) > utils.TitleBytesLimit {
+	} else if len(newArticle.Title) > constants.TitleBytesLimit {
 		err["title"] = errInputMsg["long"]
 	}
 
-	if len(newArticle.Subtitle) > utils.SubtitleBytesLimit { // Subtitle can be empty
+	if len(newArticle.Subtitle) > constants.SubtitleBytesLimit { // Subtitle can be empty
 		err["subtitle"] = errInputMsg["long"]
 	}
 
@@ -34,11 +35,11 @@ func ValidateArticleForm(newArticle models.Article) (err map[string]string) {
 		}
 	}
 
-	if len(newArticle.Tags) > utils.TagsNumLimit {
+	if len(newArticle.Tags) > constants.TagsNumLimit {
 		err["tags"] = errInputMsg["tagsTooMany"]
 	} else {
 		for _, t := range newArticle.Tags {
-			if len(t.Value) > utils.TagsBytesLimit {
+			if len(t.Value) > constants.TagsBytesLimit {
 				err["tags"] = errInputMsg["tagsTooLong"]
 				break
 			}

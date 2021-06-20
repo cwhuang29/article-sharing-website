@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/cwhuang29/article-sharing-website/config"
+	"github.com/cwhuang29/article-sharing-website/constants"
 	"github.com/cwhuang29/article-sharing-website/databases"
 	"github.com/cwhuang29/article-sharing-website/utils"
 	"github.com/gin-gonic/gin"
@@ -16,19 +17,15 @@ func PasswordResetRequest(c *gin.Context) {
 
 func PasswordResetEmail(c *gin.Context) {
 	var json = struct{ Email string }{} // Uppercase is required
-	errHead := "Oops, this is unexpected"
-	errBody := "Please reload the page and try again!"
 
 	if err := c.ShouldBindJSON(&json); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody})
+		c.JSON(http.StatusBadRequest, gin.H{"errHead": constants.UnexpectedErr, "errBody": constants.ReloadAndRetry})
 		return
 	}
 
 	user := databases.GetUser(json.Email)
 	if user.ID == 0 {
-		errHead = "Email Not Found"
-		errBody = "Did you fill in the correct email address?"
-		c.JSON(http.StatusUnauthorized, gin.H{"errHead": errHead, "errBody": errBody})
+		c.JSON(http.StatusUnauthorized, gin.H{"errHead": constants.EmailNotFound, "errBody": constants.EmailIsAddressCorrect})
 		return
 	}
 
@@ -39,21 +36,19 @@ func PasswordResetEmail(c *gin.Context) {
 	utils.ClearExpiredPasswordTokens(user.ID)
 
 	if yes := doesUserHasEmailQuota(user.ID); !yes {
-		errHead = "You are trying too often"
-		errBody = "Please try again in one hour"
-		c.JSON(http.StatusTooManyRequests, gin.H{"errHead": errHead, "errBody": errBody})
+		c.JSON(http.StatusTooManyRequests, gin.H{"errHead": constants.TryTooOften, "errBody": constants.EmailTryLater})
 		return
 	}
 
 	baseURL := config.GetCopy().App.Url
-	token := utils.StorePasswordResetToken(user.ID, utils.ResetPasswordTokenMaxAge)
-	link := baseURL + utils.ResetPasswordPath + token + "?email=" + user.Email
-	expireMins := utils.ResetPasswordTokenMaxAge / 60
+	token := utils.StorePasswordResetToken(user.ID, constants.ResetPasswordTokenMaxAge)
+	link := baseURL + constants.ResetPasswordPath + token + "?email=" + user.Email
+	expireMins := constants.ResetPasswordTokenMaxAge / 60
 	name := user.FirstName + " " + user.LastName
 
 	if ok := SendResetPasswordEmail(user.Email, name, link, expireMins); !ok {
 		logrus.Error("[Failed] Password reset email. Sent to ", user.Email)
-		c.JSON(http.StatusInternalServerError, gin.H{"errHead": errHead, "errBody": errBody})
+		c.JSON(http.StatusInternalServerError, gin.H{"errHead": constants.UnexpectedErr, "errBody": constants.ReloadAndRetry})
 		return
 	}
 
@@ -64,17 +59,14 @@ func PasswordResetEmail(c *gin.Context) {
 }
 
 func PasswordResetForm(c *gin.Context) {
-	errHead := "Oops, something went wrong"
-	errBody := "You may want to request a new reset password email."
-
 	email := c.Query("email")
 	if email == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody})
+		c.JSON(http.StatusBadRequest, gin.H{"errHead": constants.UnexpectedErr, "errBody": constants.EmailRequestAgain})
 		return
 	}
 
 	uuid := utils.GetUUID()
-	c.SetCookie("csrf_token", uuid, utils.CsrfTokenAge, "/", "", true, true)
+	c.SetCookie("csrf_token", uuid, constants.CsrfTokenAge, "/", "", true, true)
 	c.HTML(http.StatusOK, "passwordResetForm.html", gin.H{
 		"title":       "Reset Password",
 		"csrfToken":   uuid,
@@ -84,51 +76,43 @@ func PasswordResetForm(c *gin.Context) {
 }
 
 func PasswordUpdate(c *gin.Context) {
-	errHead := "Oops, something went wrong"
-	errBody := "Please reopen the link from email."
-
 	var json = struct {
 		Email    string
 		Password string
 		Token    string
-	}{} // Uppercase is required
+	}{}
 
 	if err := c.ShouldBindJSON(&json); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody})
+		c.JSON(http.StatusBadRequest, gin.H{"errHead": constants.UnexpectedErr, "errBody": constants.EmailOpenAgain})
 		return
 	}
 
 	email, password, token := json.Email, json.Password, json.Token
 	if email == "" || password == "" || token == "" {
-		errHead = "Some values are missing"
-		c.JSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody})
+		c.JSON(http.StatusBadRequest, gin.H{"errHead": constants.ParameterMissingErr, "errBody": constants.EmailOpenAgain})
 		return
 	}
 
 	tokenObj := getPasswordResetTokenInstance(token)
 	if email != tokenObj.User.Email {
-		errBody = "Perhaps you didn't open the latest email."
-		c.JSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody})
+		c.JSON(http.StatusBadRequest, gin.H{"errHead": constants.UnexpectedErr, "errBody": constants.EmailOutdated})
 		return
 	}
 
 	if utils.IsExpired(tokenObj.CreatedAt, tokenObj.MaxAge) {
 		databases.DeletePasswordToken(token)
-
-		errHead = "The link has expired"
-		errBody = "Please request a reset password email again."
-		c.JSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody})
+		c.JSON(http.StatusBadRequest, gin.H{"errHead": constants.EmailLinkExpired, "errBody": constants.EmailRequestAgain})
 		return
 	}
 
 	hashedPwd, err := utils.HashPassword(password)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody})
+		c.JSON(http.StatusBadRequest, gin.H{"errHead": constants.UnexpectedErr, "errBody": constants.ReloadAndRetry})
 		return
 	}
 
 	if ok := databases.UpdatePassword(tokenObj.User, string(hashedPwd), token); !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody})
+		c.JSON(http.StatusBadRequest, gin.H{"errHead": constants.UnexpectedErr, "errBody": constants.ReloadAndRetry})
 		return
 	}
 
@@ -136,6 +120,6 @@ func PasswordUpdate(c *gin.Context) {
 
 	msgHead := "Reset Password Succeed"
 	msgBody := "Now you can log in with the new password"
-	c.Header("Location", utils.LoginPage)
+	c.Header("Location", constants.LoginPage)
 	c.JSON(http.StatusCreated, gin.H{"msgHead": msgHead, "msgBody": msgBody})
 }

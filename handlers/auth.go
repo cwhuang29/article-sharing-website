@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/cwhuang29/article-sharing-website/constants"
 	"github.com/cwhuang29/article-sharing-website/databases"
 	"github.com/cwhuang29/article-sharing-website/databases/models"
 	"github.com/cwhuang29/article-sharing-website/utils"
@@ -20,11 +21,9 @@ func LoginView(c *gin.Context) {
 
 func Register(c *gin.Context) {
 	var newUser models.User
-	errHead := "An Error Occurred"
-	errBody := "Please reload the page and try again."
 
 	if err := c.ShouldBindJSON(&newUser); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"bindingError": true, "errHead": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"bindingError": true, "errHead": err.Error(), "errBody": constants.TryAgain})
 		return
 	}
 
@@ -35,9 +34,7 @@ func Register(c *gin.Context) {
 	}
 
 	if tmp := databases.GetUser(newUser.Email); tmp.ID != 0 {
-		errHead = "This email is already registered"
-		errBody = "Please use another email."
-		c.JSON(http.StatusConflict, gin.H{"bindingError": false, "errHead": errHead, "errBody": errBody})
+		c.JSON(http.StatusConflict, gin.H{"bindingError": false, "errHead": constants.EmailOccupied, "errBody": constants.EmailOccupied})
 		return
 	}
 
@@ -47,23 +44,23 @@ func Register(c *gin.Context) {
 
 	hashedPwd, err := utils.HashPassword(newUser.Password)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "errHead": errHead, "errBody": errBody})
+		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "errHead": constants.UnexpectedErr, "errBody": constants.ReloadAndRetry})
 		return
 	}
 
 	newUser.Password = string(hashedPwd)
 	id, res := databases.InsertUser(newUser)
 	if !res {
-		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "errHead": errHead, "errBody": errBody})
+		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "errHead": constants.UnexpectedErr, "errBody": constants.ReloadAndRetry})
 		return
 	}
 
-	token := utils.StoreLoginToken(id, utils.LoginMaxAge)
-	c.Header("Location", utils.LandingPage)
-	c.SetCookie("login_token", token, utils.LoginMaxAge, "/", "", true, true)
-	c.SetCookie("login_email", newUser.Email, utils.LoginMaxAge, "/", "", true, false) // Frontend relies on this cookie
+	token := utils.StoreLoginToken(id, constants.LoginMaxAge)
+	c.Header("Location", constants.LandingPage)
+	c.SetCookie("login_token", token, constants.LoginMaxAge, "/", "", true, true)
+	c.SetCookie("login_email", newUser.Email, constants.LoginMaxAge, "/", "", true, false) // Frontend relies on this cookie
 	if newUser.Admin {
-		c.SetCookie("is_admin", newUser.Email, utils.LoginMaxAge, "/", "", true, false) // Frontend relies on this cookie
+		c.SetCookie("is_admin", newUser.Email, constants.LoginMaxAge, "/", "", true, false) // Frontend relies on this cookie
 	}
 	c.JSON(http.StatusCreated, gin.H{})
 }
@@ -75,7 +72,7 @@ func Login(c *gin.Context) {
 	}{}
 
 	if err := c.ShouldBindJSON(&json); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"inputFormatInvalid": true, "errHead": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"inputFormatInvalid": true, "errHead": err.Error(), "errBody": constants.TryAgain})
 		return
 	}
 
@@ -88,26 +85,22 @@ func Login(c *gin.Context) {
 	var user models.User
 	user = databases.GetUser(json.Email)
 	if user.ID == 0 {
-		errHead := "User not Found"
-		errBody := "Please try again."
-		c.JSON(http.StatusForbidden, gin.H{"inputFormatInvalid": false, "errHead": errHead, "errBody": errBody})
+		c.JSON(http.StatusForbidden, gin.H{"inputFormatInvalid": false, "errHead": constants.UserNotFound, "errBody": constants.TryAgain})
 		return
 	}
 
 	err := utils.CompareHashAndPassword([]byte(user.Password), []byte(json.Password))
 	if err != nil {
-		errHead := "Password Incorrect"
-		errBody := "Please try again."
-		c.JSON(http.StatusForbidden, gin.H{"inputFormatInvalid": false, "errHead": errHead, "errBody": errBody})
+		c.JSON(http.StatusForbidden, gin.H{"inputFormatInvalid": false, "errHead": constants.PasswordIncorrect, "errBody": constants.TryAgain})
 		return
 	}
 
-	token := utils.StoreLoginToken(user.ID, utils.LoginMaxAge)
-	c.Header("Location", utils.LandingPage)
-	c.SetCookie("login_token", token, utils.LoginMaxAge, "/", "", true, true)
-	c.SetCookie("login_email", user.Email, utils.LoginMaxAge, "/", "", true, false) // Frontend relies on this cookie
+	token := utils.StoreLoginToken(user.ID, constants.LoginMaxAge)
+	c.Header("Location", constants.LandingPage)
+	c.SetCookie("login_token", token, constants.LoginMaxAge, "/", "", true, true)
+	c.SetCookie("login_email", user.Email, constants.LoginMaxAge, "/", "", true, false) // Frontend relies on this cookie
 	if user.Admin {
-		c.SetCookie("is_admin", user.Email, utils.LoginMaxAge, "/", "", true, false) // Frontend relies on this cookie
+		c.SetCookie("is_admin", user.Email, constants.LoginMaxAge, "/", "", true, false) // Frontend relies on this cookie
 	}
 	c.JSON(http.StatusOK, gin.H{})
 }
@@ -118,7 +111,7 @@ func Logout(c *gin.Context) {
 	if email == "" {
 		// We'll reach here if user logout in one tab and re-logout on the another tab subsequently
 		// So don't regard this case as an error
-		c.Header("Location", utils.LandingPage)
+		c.Header("Location", constants.LandingPage)
 		c.JSON(http.StatusOK, gin.H{})
 		return
 	}
@@ -137,6 +130,6 @@ func Logout(c *gin.Context) {
 	c.SetCookie("login_email", "", 0, "/", "", true, true)
 	c.SetCookie("is_admin", "", 0, "/", "", true, true)
 
-	c.Header("Location", utils.LandingPage)
+	c.Header("Location", constants.LandingPage)
 	c.JSON(http.StatusResetContent, gin.H{})
 }

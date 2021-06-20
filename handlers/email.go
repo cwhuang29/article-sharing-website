@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ses"
 	"github.com/cwhuang29/article-sharing-website/config"
-	"github.com/cwhuang29/article-sharing-website/utils"
+	"github.com/cwhuang29/article-sharing-website/constants"
 	"github.com/sirupsen/logrus"
 )
 
@@ -23,8 +23,8 @@ func getAWSSVC() *ses.SES {
 }
 
 func resetPasswordEmailBody(recipient, name, link string, expireTime int) *ses.SendEmailInput {
-	interpolatedHtmlBody := fmt.Sprintf(utils.HtmlBody, name, link, expireTime, link)
-	interpolatedTextBody := fmt.Sprintf(utils.TextBody, name, link, expireTime)
+	interpolatedHtmlBody := fmt.Sprintf(constants.HtmlBody, name, link, expireTime, link)
+	interpolatedTextBody := fmt.Sprintf(constants.TextBody, name, link, expireTime)
 	sender := config.GetCopy().Email.Sender
 
 	return &ses.SendEmailInput{
@@ -34,16 +34,16 @@ func resetPasswordEmailBody(recipient, name, link string, expireTime int) *ses.S
 		},
 		Message: &ses.Message{
 			Subject: &ses.Content{
-				Charset: aws.String(utils.CharSet),
-				Data:    aws.String(utils.Subject),
+				Charset: aws.String(constants.CharSet),
+				Data:    aws.String(constants.Subject),
 			},
 			Body: &ses.Body{
 				Html: &ses.Content{
-					Charset: aws.String(utils.CharSet),
+					Charset: aws.String(constants.CharSet),
 					Data:    aws.String(interpolatedHtmlBody),
 				},
 				Text: &ses.Content{ // The email body for recipients with non-HTML email clients.
-					Charset: aws.String(utils.CharSet),
+					Charset: aws.String(constants.CharSet),
 					Data:    aws.String(interpolatedTextBody),
 				},
 			},

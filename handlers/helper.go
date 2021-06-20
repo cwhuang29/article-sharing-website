@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cwhuang29/article-sharing-website/constants"
 	"github.com/cwhuang29/article-sharing-website/databases"
 	"github.com/cwhuang29/article-sharing-website/databases/models"
 	"github.com/cwhuang29/article-sharing-website/utils"
@@ -88,5 +89,5 @@ func getPasswordResetTokenInstance(token string) models.Password {
 
 func doesUserHasEmailQuota(id int) bool {
 	count := databases.CountUserResetPasswordTokens(id)
-	return count < utils.ResetPasswordMaxRetry
+	return count < constants.ResetPasswordMaxRetry
 }

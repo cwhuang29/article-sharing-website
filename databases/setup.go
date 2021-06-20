@@ -17,10 +17,9 @@ func GetDB() *gorm.DB {
 	return db
 }
 
-func getMysqlDSN(cfg config.Database) (dsn string) {
+func getMysqlDSN(cfg config.Database) string {
 	// Example: "user:pwd@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
-	dsn = cfg.Username + ":" + cfg.Password + "@tcp(" + cfg.Host + ":" + cfg.Port + ")/" + cfg.Database + "?charset=utf8mb4&parseTime=True"
-	return
+	return cfg.Username + ":" + cfg.Password + "@tcp(" + cfg.Host + ":" + cfg.Port + ")/" + cfg.Database + "?charset=utf8mb4&parseTime=True"
 }
 
 func connect(cfg config.Database) (err error) {

@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
+	"github.com/cwhuang29/article-sharing-website/constants"
 	"github.com/cwhuang29/article-sharing-website/databases"
 	"github.com/gin-gonic/gin"
 )
@@ -14,26 +16,21 @@ import (
  */
 
 func GetUserBookmarkedArticles(c *gin.Context) {
-	errHead := "Invalid Parameter"
-	errBody := "Parameter articleId should be a positive integer."
-
 	offset, err := strconv.Atoi(c.Query("offset"))
 	if err != nil || offset < 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody, "size": 0})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.ParameterErr, "errBody": constants.ParameterArticleIDErr, "size": 0})
 		return
 	}
 
 	limit, err := strconv.Atoi(c.Query("limit"))
 	if err != nil || limit <= 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody, "size": 0})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.ParameterErr, "errBody": constants.ParameterArticleIDErr, "size": 0})
 		return
 	}
 
 	userStatus, user := GetUserStatus(c)
 	if userStatus < IsMember {
-		errHead = "Login to view home page"
-		errBody = ""
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errHead": errHead, "errBody": errBody, "size": 0})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errHead": fmt.Sprintf(constants.LoginTo, "view home page"), "errBody": "", "size": 0})
 		return
 	}
 
@@ -54,17 +51,13 @@ func GetUserBookmarkedArticles(c *gin.Context) {
 func Bookmark(c *gin.Context) {
 	articleId, err := strconv.Atoi(c.Param("articleId"))
 	if err != nil || articleId <= 0 {
-		errHead := "Invalid Parameter"
-		errBody := "Parameter articleId should be a positive integer."
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.ParameterErr, "errBody": constants.ParameterArticleIDErr})
 		return
 	}
 
 	userStatus, user := GetUserStatus(c)
 	if userStatus < IsMember {
-		errHead := "Login to save articles"
-		errBody := ""
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errHead": errHead, "errBody": errBody})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errHead": fmt.Sprintf(constants.LoginTo, "save articles"), "errBody": ""})
 		return
 	}
 
@@ -73,32 +66,26 @@ func Bookmark(c *gin.Context) {
 }
 
 func UpdateBookmark(c *gin.Context) {
-	errHead := "Oops, this is unexpected"
-	errBody := "Please reload the page and try again."
-
 	articleId, err := strconv.Atoi(c.Param("articleId"))
 	if err != nil || articleId <= 0 {
-		errBody = "Parameter articleId should be a positive integer."
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.UnexpectedErr, "errBody": constants.ParameterArticleIDErr})
 		return
 	}
 
 	isBookmarked, err := strconv.Atoi(c.Query("bookmarked"))
 	if err != nil || isBookmarked != 0 && isBookmarked != 1 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": errHead, "errBody": errBody})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.UnexpectedErr, "errBody": constants.ReloadAndRetry})
 		return
 	}
 
 	userStatus, user := GetUserStatus(c)
 	if userStatus < IsMember {
-		errHead = "You need to login first"
-		errBody = ""
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errHead": errHead, "errBody": errBody})
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"errHead": constants.LoginFirst, "errBody": ""})
 		return
 	}
 
 	if ok := databases.UpdateBookmarkStatus(user.ID, articleId, isBookmarked); !ok {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errHead": errHead, "errBody": errBody})
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errHead": constants.UnexpectedErr, "errBody": constants.ReloadAndRetry})
 		return
 	}
 
