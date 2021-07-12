@@ -31,13 +31,10 @@ const logout = () => {
       window.sessionStorage.removeItem('offset');
       window.sessionStorage.removeItem('overviewContent');
 
-      /*
-       * Notice: To enhance security, server sets the httpOnly for login_token cookie and handles the cookies deletion (set their values to "")
-       * document.cookie = "login_email=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"; // Set the expires parameter to a passed date to delete a cookie
-       * document.cookie = "login_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-       * document.cookie = "is_admin=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-       * [...resp.headers.entries()].forEach((header) => console.log(header[0], header[1]));
-       */
+      // It is okay to leave `login_token` and `csrf_token` untouched (they've been set httpOnly)
+      document.cookie = "login_email=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"; // Set the expires parameter to a passed date to delete a cookie
+      document.cookie = "is_admin=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
       window.location.href = resp.headers.get('Location');
     }
   });

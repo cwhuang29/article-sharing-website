@@ -56,7 +56,7 @@ const formatArticle = (article) => {
 
   let tagHTML = '';
   tags.forEach((t) => {
-    tagHTML += `<a href="/articles/tags?query=${encodeURIComponent(t)}"><span class="tag is-warning">${encodeHTMLEntities(t)}</span></a>`;
+    tagHTML += `<a href="/articles/tags?q=${encodeURIComponent(t)}"><span class="tag is-warning">${encodeHTMLEntities(t)}</span></a>`;
   });
 
   categoryTag = `<a href="/articles/${category}"><span class="tag is-primary">${toTitleCase(category)}</span></a>`;

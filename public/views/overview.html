@@ -23,7 +23,7 @@ Note: HTML Template Usage (Those fields should be exacte the same as Go's struct
         <div class="tile is-child box article-list-container">
             <div class="article-list-tag">
                 {{ range $t := .Tags }}
-                    <a href="/articles/tags?query={{ $t }}">
+                    <a href="/articles/tags?q={{ $t }}">
                         <span class="tag is-warning">{{ $t }}</span>
                     </a>
                 {{ end }}
