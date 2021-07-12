@@ -3,6 +3,7 @@ package databases
 import (
 	"strconv"
 
+	"github.com/cwhuang29/article-sharing-website/config"
 	"github.com/cwhuang29/article-sharing-website/databases/models"
 	"github.com/sirupsen/logrus"
 )
@@ -42,5 +43,13 @@ func DeletePasswordToken(token string) {
 }
 
 func DeleteExpiredPasswordTokens(id int) {
-	db.Exec("DELETE FROM passwords WHERE user_id = \"" + strconv.Itoa(id) + "\" AND created_at + max_age - now() < 0")
+	driver := config.GetCopy().Driver
+	switch driver {
+	case "mysql":
+		db.Exec("DELETE FROM passwords WHERE user_id = \"" + strconv.Itoa(id) + "\" AND created_at + max_age - now() < 0")
+	case "sqlite":
+		db.Exec("DELETE FROM passwords WHERE user_id = \"" + strconv.Itoa(id) + "\" AND created_at + max_age - strftime('%s', 'now') < 0")
+	default:
+		panic("DB driver is incorrect!")
+	}
 }

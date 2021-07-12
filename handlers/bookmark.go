@@ -3,7 +3,6 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/cwhuang29/article-sharing-website/constants"
 	"github.com/cwhuang29/article-sharing-website/databases"
@@ -16,15 +15,15 @@ import (
  */
 
 func GetUserBookmarkedArticles(c *gin.Context) {
-	offset, err := strconv.Atoi(c.Query("offset"))
-	if err != nil || offset < 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.ParameterErr, "errBody": constants.ParameterArticleIDErr, "size": 0})
+	offset, err := getQueryOffset(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.QueryErr, "errBody": constants.QueryOffsetErr, "size": 0})
 		return
 	}
 
-	limit, err := strconv.Atoi(c.Query("limit"))
-	if err != nil || limit <= 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.ParameterErr, "errBody": constants.ParameterArticleIDErr, "size": 0})
+	limit, err := getQueryLimit(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.QueryErr, "errBody": constants.QueryLimitErr, "size": 0})
 		return
 	}
 
@@ -49,9 +48,9 @@ func GetUserBookmarkedArticles(c *gin.Context) {
 }
 
 func Bookmark(c *gin.Context) {
-	articleId, err := strconv.Atoi(c.Param("articleId"))
-	if err != nil || articleId <= 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.ParameterErr, "errBody": constants.ParameterArticleIDErr})
+	id, err := getParamArticleID(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.QueryErr, "errBody": constants.QueryArticleIDErr})
 		return
 	}
 
@@ -61,19 +60,19 @@ func Bookmark(c *gin.Context) {
 		return
 	}
 
-	isBookmarked := databases.GetBookmarkStatus(user.ID, articleId)
+	isBookmarked := databases.GetBookmarkStatus(user.ID, id)
 	c.JSON(http.StatusOK, gin.H{"isBookmarked": isBookmarked})
 }
 
 func UpdateBookmark(c *gin.Context) {
-	articleId, err := strconv.Atoi(c.Param("articleId"))
-	if err != nil || articleId <= 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.UnexpectedErr, "errBody": constants.ParameterArticleIDErr})
+	id, err := getParamArticleID(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.UnexpectedErr, "errBody": constants.QueryArticleIDErr})
 		return
 	}
 
-	isBookmarked, err := strconv.Atoi(c.Query("bookmarked"))
-	if err != nil || isBookmarked != 0 && isBookmarked != 1 {
+	isBookmarked, err := getQueryBookmarked(c)
+	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.UnexpectedErr, "errBody": constants.ReloadAndRetry})
 		return
 	}
@@ -84,7 +83,7 @@ func UpdateBookmark(c *gin.Context) {
 		return
 	}
 
-	if ok := databases.UpdateBookmarkStatus(user.ID, articleId, isBookmarked); !ok {
+	if ok := databases.UpdateBookmarkStatus(user.ID, id, isBookmarked); !ok {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errHead": constants.UnexpectedErr, "errBody": constants.ReloadAndRetry})
 		return
 	}

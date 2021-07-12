@@ -26,7 +26,6 @@ func IsEmailValid(e string) bool {
 	return emailRegex.MatchString(e)
 }
 
-// In the beginning, I relied on this function to remove duplicate tags. Now, database function takes over this issue
 func RemoveDuplicateTags(t []string) []string {
 	tmp := removeDuplicateValuesInSlice(t)
 	tags := make([]string, len(tmp))

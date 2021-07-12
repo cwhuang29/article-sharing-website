@@ -2,7 +2,12 @@ package utils
 
 import (
 	"github.com/cwhuang29/article-sharing-website/databases"
+	"github.com/cwhuang29/article-sharing-website/databases/models"
 )
+
+func GetPasswordResetTokenInstance(token string) models.Password {
+	return databases.GetResetPasswordToken(token)
+}
 
 func StoreLoginToken(id, loginMaxAge int) string {
 	token := GetUUID()

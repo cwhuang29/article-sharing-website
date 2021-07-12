@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/cwhuang29/article-sharing-website/constants"
 	"github.com/cwhuang29/article-sharing-website/databases"
@@ -15,9 +14,9 @@ import (
  */
 
 func Like(c *gin.Context) {
-	articleId, err := strconv.Atoi(c.Param("articleId"))
-	if err != nil || articleId <= 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.ParameterErr, "errBody": constants.ParameterArticleIDErr})
+	id, err := getParamArticleID(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.QueryErr, "errBody": constants.QueryArticleIDErr})
 		return
 	}
 
@@ -27,19 +26,19 @@ func Like(c *gin.Context) {
 		return
 	}
 
-	isLiked := databases.GetLikeStatus(user.ID, articleId)
+	isLiked := databases.GetLikeStatus(user.ID, id)
 	c.JSON(http.StatusOK, gin.H{"isLiked": isLiked})
 }
 
 func UpdateLike(c *gin.Context) {
-	articleId, err := strconv.Atoi(c.Param("articleId"))
-	if err != nil || articleId <= 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.ParameterErr, "errBody": constants.ParameterArticleIDErr})
+	id, err := getParamArticleID(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.QueryErr, "errBody": constants.QueryArticleIDErr})
 		return
 	}
 
-	isLiked, err := strconv.Atoi(c.Query("liked"))
-	if err != nil || isLiked != 0 && isLiked != 1 {
+	isLiked, err := getQueryLiked(c)
+	if err != nil {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.UnexpectedErr, "errBody": constants.ReloadAndRetry})
 		return
 	}
@@ -50,7 +49,7 @@ func UpdateLike(c *gin.Context) {
 		return
 	}
 
-	if ok := databases.UpdateLikeStatus(user.ID, articleId, isLiked); !ok {
+	if ok := databases.UpdateLikeStatus(user.ID, id, isLiked); !ok {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"errHead": constants.UnexpectedErr, "errBody": constants.ReloadAndRetry})
 		return
 	}

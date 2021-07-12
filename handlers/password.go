@@ -35,14 +35,14 @@ func PasswordResetEmail(c *gin.Context) {
 	 */
 	utils.ClearExpiredPasswordTokens(user.ID)
 
-	if yes := doesUserHasEmailQuota(user.ID); !yes {
+	if yes := utils.DoesUserHasEmailQuota(user.ID); !yes {
 		c.JSON(http.StatusTooManyRequests, gin.H{"errHead": constants.TryTooOften, "errBody": constants.EmailTryLater})
 		return
 	}
 
 	baseURL := config.GetCopy().App.Url
 	token := utils.StorePasswordResetToken(user.ID, constants.ResetPasswordTokenMaxAge)
-	link := baseURL + constants.ResetPasswordPath + token + "?email=" + user.Email
+	link := baseURL + constants.URLResetPassword + token + "?email=" + user.Email
 	expireMins := constants.ResetPasswordTokenMaxAge / 60
 	name := user.FirstName + " " + user.LastName
 
@@ -59,14 +59,14 @@ func PasswordResetEmail(c *gin.Context) {
 }
 
 func PasswordResetForm(c *gin.Context) {
-	email := c.Query("email")
+	email := getQueryPara(c, constants.QueryEmail)
 	if email == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"errHead": constants.UnexpectedErr, "errBody": constants.EmailRequestAgain})
 		return
 	}
 
 	uuid := utils.GetUUID()
-	c.SetCookie("csrf_token", uuid, constants.CsrfTokenAge, "/", "", true, true)
+	c.SetCookie(constants.CookieCSRFToken, uuid, constants.CsrfTokenAge, "/", "", true, true)
 	c.HTML(http.StatusOK, "passwordResetForm.html", gin.H{
 		"title":       "Reset Password",
 		"csrfToken":   uuid,
@@ -89,11 +89,11 @@ func PasswordUpdate(c *gin.Context) {
 
 	email, password, token := json.Email, json.Password, json.Token
 	if email == "" || password == "" || token == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"errHead": constants.ParameterMissingErr, "errBody": constants.EmailOpenAgain})
+		c.JSON(http.StatusBadRequest, gin.H{"errHead": constants.QueryMissingErr, "errBody": constants.EmailOpenAgain})
 		return
 	}
 
-	tokenObj := getPasswordResetTokenInstance(token)
+	tokenObj := utils.GetPasswordResetTokenInstance(token)
 	if email != tokenObj.User.Email {
 		c.JSON(http.StatusBadRequest, gin.H{"errHead": constants.UnexpectedErr, "errBody": constants.EmailOutdated})
 		return
@@ -120,6 +120,6 @@ func PasswordUpdate(c *gin.Context) {
 
 	msgHead := "Reset Password Succeed"
 	msgBody := "Now you can log in with the new password"
-	c.Header("Location", constants.LoginPage)
+	c.Header("Location", constants.URLLoginPage)
 	c.JSON(http.StatusCreated, gin.H{"msgHead": msgHead, "msgBody": msgBody})
 }

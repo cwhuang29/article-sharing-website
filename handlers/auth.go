@@ -56,11 +56,11 @@ func Register(c *gin.Context) {
 	}
 
 	token := utils.StoreLoginToken(id, constants.LoginMaxAge)
-	c.Header("Location", constants.LandingPage)
-	c.SetCookie("login_token", token, constants.LoginMaxAge, "/", "", true, true)
-	c.SetCookie("login_email", newUser.Email, constants.LoginMaxAge, "/", "", true, false) // Frontend relies on this cookie
+	c.Header("Location", constants.URLLandingPage)
+	c.SetCookie(constants.CookieLoginToken, token, constants.LoginMaxAge, "/", "", true, true)
+	c.SetCookie(constants.CookieLoginEmail, newUser.Email, constants.LoginMaxAge, "/", "", true, false) // Frontend relies on this cookie
 	if newUser.Admin {
-		c.SetCookie("is_admin", newUser.Email, constants.LoginMaxAge, "/", "", true, false) // Frontend relies on this cookie
+		c.SetCookie(constants.CookieIsAdmin, newUser.Email, constants.LoginMaxAge, "/", "", true, false) // Frontend relies on this cookie
 	}
 	c.JSON(http.StatusCreated, gin.H{})
 }
@@ -96,40 +96,38 @@ func Login(c *gin.Context) {
 	}
 
 	token := utils.StoreLoginToken(user.ID, constants.LoginMaxAge)
-	c.Header("Location", constants.LandingPage)
-	c.SetCookie("login_token", token, constants.LoginMaxAge, "/", "", true, true)
-	c.SetCookie("login_email", user.Email, constants.LoginMaxAge, "/", "", true, false) // Frontend relies on this cookie
+	c.Header("Location", constants.URLLandingPage)
+	c.SetCookie(constants.CookieLoginToken, token, constants.LoginMaxAge, "/", "", true, true)
+	c.SetCookie(constants.CookieLoginEmail, user.Email, constants.LoginMaxAge, "/", "", true, false) // Frontend relies on this cookie
 	if user.Admin {
-		c.SetCookie("is_admin", user.Email, constants.LoginMaxAge, "/", "", true, false) // Frontend relies on this cookie
+		c.SetCookie(constants.CookieIsAdmin, user.Email, constants.LoginMaxAge, "/", "", true, false) // Frontend relies on this cookie
 	}
 	c.JSON(http.StatusOK, gin.H{})
 }
 
 func Logout(c *gin.Context) {
-	email, _ := c.Cookie("login_email") // If no such cookie, first argument will be an empty string
-	token, _ := c.Cookie("login_token")
+	email, _ := c.Cookie(constants.CookieLoginEmail) // If no such cookie, first argument will be an empty string
+	token, _ := c.Cookie(constants.CookieLoginToken)
 	if email == "" {
 		// We'll reach here if user logout in one tab and re-logout on the another tab subsequently
 		// So don't regard this case as an error
-		c.Header("Location", constants.LandingPage)
+		c.Header("Location", constants.URLLandingPage)
 		c.JSON(http.StatusOK, gin.H{})
 		return
 	}
 
-	/*
-	 * Notice: Users may have multiple tokens based on different user agents they have logged in from, and those
-	 * tokens must be removed from DB when expired. For instance, the user has logged in from the cellphone and laptop.
-	 * When the user logged out on the laptop, we'll check whether the login token for the cellphone expired
-	 * It can be done at login, logout, or any other time. Currently, I'll do this task when the user logout
-	 */
+	// Notice: Users may have multiple tokens based on different user agents they have logged in from, and those
+	// tokens must be removed from DB when expired. For instance, the user has logged in from the cellphone and laptop.
+	// When the user logged out on the laptop, we'll check whether the login token for the cellphone expired
+	// It can be done at login, logout, or any other time. Currently, I'll do this task when the user logout
 	utils.ClearLoginToken(token)
 	user := databases.GetUser(email)
 	utils.ClearExpiredLoginTokens(user.ID)
 
-	c.SetCookie("login_token", "", 0, "/", "", true, true)
-	c.SetCookie("login_email", "", 0, "/", "", true, true)
-	c.SetCookie("is_admin", "", 0, "/", "", true, true)
+	c.SetCookie(constants.CookieLoginToken, "", 0, "/", "", true, true) // Set maxAge to 0 cause values on "Expires/Max-Age" cell on dev-tools's "Application" tab become "Session"
+	c.SetCookie(constants.CookieLoginEmail, "", 0, "/", "", true, false)
+	c.SetCookie(constants.CookieIsAdmin, "", 0, "/", "", true, false)
 
-	c.Header("Location", constants.LandingPage)
+	c.Header("Location", constants.URLLandingPage)
 	c.JSON(http.StatusResetContent, gin.H{})
 }

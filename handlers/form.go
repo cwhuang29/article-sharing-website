@@ -96,7 +96,7 @@ func getImagesInContent(files []*multipart.FileHeader) (fileNames []string, file
 		}
 
 		fileNames[i] = fileName
-		fileNamesMapping[file.Filename] = fileName[7:] // Get rid of "public/" prefix since we truncate the prefix in router.go router.Static()
+		fileNamesMapping[file.Filename] = fileName[len("public/"):] // Get rid of the prefix since we truncate it in router.Static()
 		writeFileLog(fileName, strconv.FormatInt(file.Size, 10), file.Header.Get("Content-Type"))
 	}
 	return
@@ -111,7 +111,7 @@ func getCoverPhoto(file *multipart.FileHeader) (coverPhotoName string, err error
 	return
 }
 
-func getFilesFromForm(c *gin.Context, files map[string][]*multipart.FileHeader) (fileNamesMapping map[string]string, coverPhotoURL string, err error) {
+func saveFilesFromForm(c *gin.Context, files map[string][]*multipart.FileHeader) (fileNamesMapping map[string]string, coverPhotoURL string, err error) {
 	defer func() {
 		if err := recover(); err != nil {
 			logrus.Errorf("Error occurred when retrieving files from the input form:", err)
@@ -135,19 +135,23 @@ func getFilesFromForm(c *gin.Context, files map[string][]*multipart.FileHeader) 
 		return
 	}
 
+	// All files were retrieved. Start saving them
+
 	if coverPhoto != nil { // User may not upload cover photo
 		_ = saveFile(c, coverPhoto, coverPhotoName)
-		coverPhotoURL = coverPhotoName[7:] // Get rid of "public/" prefix
+		coverPhotoURL = coverPhotoName[len("public/"):]
 	}
 
 	for i, name := range fileNames {
-		_ = saveFile(c, contentImages[i], name)
+		if err = saveFile(c, contentImages[i], name); err != nil {
+			return
+		}
 	}
 
 	return
 }
 
-func getValuesFromForm(c *gin.Context, formVal map[string][]string) models.Article {
+func getValuesFromForm(c *gin.Context, formVal map[string][]string) (*models.Article, error) {
 	defer func() {
 		if err := recover(); err != nil {
 			logrus.Errorf("Create article error when retrieving values from form:", err)
@@ -156,7 +160,7 @@ func getValuesFromForm(c *gin.Context, formVal map[string][]string) models.Artic
 
 	date, err := time.Parse("2006-01-02", formVal["date"][0])
 	if err != nil {
-		date = validator.OldestDate
+		return nil, err
 	}
 
 	auths := strings.Join(formVal["authors"], ",")
@@ -172,10 +176,10 @@ func getValuesFromForm(c *gin.Context, formVal map[string][]string) models.Artic
 
 	adminOnly, err := strconv.ParseBool(formVal["adminOnly"][0])
 	if err != nil {
-		adminOnly = true // Since there may be some unexpected errors, hide this article from non-admins
+		return nil, err
 	}
 
-	return models.Article{
+	return &models.Article{
 		AdminOnly:   adminOnly,
 		Title:       strings.TrimSpace(formVal["title"][0]), // If the form does not contain "title" field, the array's value extraction will panic
 		Subtitle:    strings.TrimSpace(formVal["subtitle"][0]),
@@ -185,10 +189,10 @@ func getValuesFromForm(c *gin.Context, formVal map[string][]string) models.Artic
 		Tags:        tags,
 		Outline:     formVal["outline"][0],
 		Content:     formVal["content"][0],
-	}
+	}, nil
 }
 
-func handleForm(c *gin.Context) (newArticle models.Article, invalids map[string]string, err error) {
+func handleForm(c *gin.Context) (newArticle *models.Article, invalids map[string]string, err error) {
 	var form *multipart.Form
 
 	form, err = c.MultipartForm() // form: &{map[authors:[Jasia] category:[Medication] ... title:[abcde]] map[uploadImages:[0xc0001f91d0 0xc0001f8000]]}
@@ -196,7 +200,10 @@ func handleForm(c *gin.Context) (newArticle models.Article, invalids map[string]
 		return
 	}
 
-	newArticle = getValuesFromForm(c, form.Value)
+	newArticle, err = getValuesFromForm(c, form.Value)
+	if err != nil {
+		return
+	}
 	if newArticle.Title == "" {
 		err = fmt.Errorf("Error occurred when extracting values from form.")
 		return
@@ -207,10 +214,11 @@ func handleForm(c *gin.Context) (newArticle models.Article, invalids map[string]
 		return
 	}
 
-	fileNamesMapping, coverPhotoURL, err := getFilesFromForm(c, form.File)
+	fileNamesMapping, coverPhotoURL, err := saveFilesFromForm(c, form.File)
 	if err != nil {
 		return
 	}
+
 	newArticle.Content = mapFilesName(newArticle.Content, fileNamesMapping)
 	newArticle.CoverPhoto = coverPhotoURL
 

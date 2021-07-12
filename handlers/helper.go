@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"strconv"
+	"fmt"
 	"time"
 
 	"github.com/cwhuang29/article-sharing-website/constants"
@@ -11,10 +11,55 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func isUserAdmin(c *gin.Context) bool {
+	status, _ := GetUserStatus(c)
+	return status >= IsAdmin
+}
+
+func getURLPara(c *gin.Context, key string) string {
+	return c.Param(key)
+}
+
+func getQueryPara(c *gin.Context, key string) string {
+	return c.DefaultQuery(key, "")
+}
+
+func getParamArticleID(c *gin.Context) (int, error) {
+	return utils.Str2PosInt(getURLPara(c, constants.ParamArticleID))
+}
+
+func getQueryArticleID(c *gin.Context) (int, error) {
+	return utils.Str2PosInt(getQueryPara(c, constants.QueryArticleID))
+}
+
+func getQueryOffset(c *gin.Context) (int, error) {
+	return utils.Str2Int(getQueryPara(c, constants.QueryOffset))
+}
+
+func getQueryLimit(c *gin.Context) (int, error) {
+	return utils.Str2PosInt(getQueryPara(c, constants.QueryLimit))
+}
+
+func getQueryLiked(c *gin.Context) (int, error) {
+	isLiked, err := utils.Str2Int(getQueryPara(c, constants.QueryLiked))
+	if err != nil || (isLiked != 0 && isLiked != 1) {
+		err = fmt.Errorf(constants.QueryLikedErr)
+	}
+	return isLiked, err
+}
+
+func getQueryBookmarked(c *gin.Context) (int, error) {
+	isBookmarked, err := utils.Str2Int(getQueryPara(c, constants.QueryBookmarked))
+	if err != nil || (isBookmarked != 0 && isBookmarked != 1) {
+		err = fmt.Errorf(constants.QueryBookmarkedErr)
+	}
+	return isBookmarked, err
+}
+
 func GetUserStatus(c *gin.Context) (status UserStatus, user models.User) {
-	cookieEmail, _ := c.Cookie("login_email") // If no such cookie, c.Cookie() returns empty string with error `named cookie not present`
-	cookieToken, _ := c.Cookie("login_token")
-	adminEmail, _ := c.Cookie("is_admin")
+	cookieEmail, _ := c.Cookie(constants.CookieLoginEmail) // If no such cookie, c.Cookie() returns empty string with error `named cookie not present`
+	cookieToken, _ := c.Cookie(constants.CookieLoginToken)
+	adminEmail, _ := c.Cookie(constants.CookieLoginEmail)
 
 	memberOrAdmin := IsMember
 	if adminEmail != "" && cookieEmail == adminEmail && databases.IsAdminUser(adminEmail) {
@@ -33,24 +78,6 @@ func GetUserStatus(c *gin.Context) (status UserStatus, user models.User) {
 
 	cookieEmail = ""
 	return
-}
-
-func isUserAdmin(c *gin.Context) bool {
-	status, _ := GetUserStatus(c)
-	return status >= IsAdmin
-}
-
-func getParaId(c *gin.Context, key string) int {
-	if c.Query(key) == "" {
-		return 0
-	}
-
-	id, err := strconv.Atoi(c.Query(key))
-	if err != nil || id <= 0 {
-		return 0
-	}
-
-	return id
 }
 
 func fetchData(types, query string, offset, limit int, isAdmin bool) (articleList []Article, err error) {
@@ -81,13 +108,4 @@ func fetchData(types, query string, offset, limit int, isAdmin bool) (articleLis
 		articleList[i] = articleFormatDBToOverview(a)
 	}
 	return
-}
-
-func getPasswordResetTokenInstance(token string) models.Password {
-	return databases.GetResetPasswordToken(token)
-}
-
-func doesUserHasEmailQuota(id int) bool {
-	count := databases.CountUserResetPasswordTokens(id)
-	return count < constants.ResetPasswordMaxRetry
 }

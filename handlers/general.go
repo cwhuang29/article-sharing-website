@@ -3,7 +3,6 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/cwhuang29/article-sharing-website/constants"
 	"github.com/cwhuang29/article-sharing-website/databases"
@@ -35,11 +34,11 @@ func Overview(c *gin.Context) {
 	// If frontend trigger this route via window.location.href="/articles/browse?articleId=1", then c.FullPath() is /articles/browse
 	title := ""
 	switch c.FullPath() {
-	case "/articles/weekly-update":
+	case constants.URLLandingPage:
 		title = "Weekly News"
-	case "/articles/medication":
+	case constants.URLTopicMed:
 		title = "Medication Related News"
-	case "/articles/pharma":
+	case constants.URLTopicPharma:
 		title = "Pharma News"
 	}
 
@@ -50,9 +49,9 @@ func Overview(c *gin.Context) {
 }
 
 func SearchTags(c *gin.Context) {
-	tag := c.Query("query") // Request via "/articles/tags?query=<value>"
+	tag := getQueryPara(c, constants.QueryTagSearch) // Request via "/articles/tags?q=<value>"
 	if tag == "" {
-		c.Redirect(http.StatusFound, "/articles/weekly-update")
+		c.Redirect(http.StatusFound, constants.URLLandingPage)
 	}
 
 	databases.UpdateTagsStats(tag)
@@ -63,13 +62,13 @@ func SearchTags(c *gin.Context) {
 }
 
 func CheckPermissionAndArticleExists(c *gin.Context) {
-	id := getParaId(c, "articleId")
-	if id == 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.ParameterArticleIDErr, "errBody": constants.TryAgain})
+	id, err := getQueryArticleID(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.QueryArticleIDErr, "errBody": constants.TryAgain})
 		return
 	}
 
-	if succeed := databases.IsArticleExists(id, true); succeed != true {
+	if succeed := databases.IsArticleExists(id, true); !succeed {
 		c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"errHead": constants.ArticleNotFound, "errBody": constants.TryAgain})
 		return
 	}
@@ -78,27 +77,27 @@ func CheckPermissionAndArticleExists(c *gin.Context) {
 }
 
 func FetchData(c *gin.Context) {
-	types := c.DefaultQuery("type", "")
+	types := getQueryPara(c, "type")
 	if types == "" {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.ParameterErr, "errBody": fmt.Sprintf(constants.ParameterEmptyErr, "type"), "size": 0})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.QueryErr, "errBody": fmt.Sprintf(constants.QueryEmptyErr, "type"), "size": 0})
 		return
 	}
 
-	query := c.DefaultQuery("query", "")
+	query := getQueryPara(c, "query")
 	if query == "" {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.ParameterErr, "errBody": fmt.Sprintf(constants.ParameterEmptyErr, "query"), "size": 0})
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.QueryErr, "errBody": fmt.Sprintf(constants.QueryEmptyErr, "query"), "size": 0})
 		return
 	}
 
-	offset, err := strconv.Atoi(c.Query("offset"))
-	if err != nil || offset < 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.ParameterErr, "errBody": "Parameter offset should be a non-negative integer", "size": 0})
+	offset, err := getQueryOffset(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.QueryErr, "errBody": constants.QueryOffsetErr, "size": 0})
 		return
 	}
 
-	limit, err := strconv.Atoi(c.Query("limit"))
-	if err != nil || limit <= 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.ParameterErr, "errBody": "Parameter limit should be a positive integer", "size": 0})
+	limit, err := getQueryLimit(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"errHead": constants.QueryErr, "errBody": constants.QueryLimitErr, "size": 0})
 		return
 	}
 
@@ -108,16 +107,16 @@ func FetchData(c *gin.Context) {
 }
 
 func Browse(c *gin.Context) {
-	if c.Query("articleId") == "" {
+	if getQueryPara(c, constants.QueryArticleID) == "" {
 		c.Redirect(http.StatusFound, "weekly-update")
 		return
 	}
 
-	id, err := strconv.Atoi(c.Query("articleId"))
-	if err != nil || id <= 0 {
+	id, err := getQueryArticleID(c)
+	if err != nil {
 		c.HTML(http.StatusBadRequest, "browse.html", gin.H{
 			"currPageCSS": "css/browse.css",
-			"errHead":     constants.ParameterArticleIDErr,
+			"errHead":     constants.QueryArticleIDErr,
 			"errBody":     constants.GobackAndRetry,
 		})
 		return
@@ -137,11 +136,11 @@ func Browse(c *gin.Context) {
 	article := articleFormatDBToDetailed(dbFormatArticle, true)
 
 	uuid := ""
-	cookieEmail, _ := c.Cookie("login_email")
-	adminEmail, _ := c.Cookie("is_admin")
+	cookieEmail, _ := c.Cookie(constants.CookieLoginEmail)
+	adminEmail, _ := c.Cookie(constants.CookieIsAdmin)
 	if adminEmail != "" && cookieEmail == adminEmail && databases.IsAdminUser(adminEmail) {
 		uuid = utils.GetUUID()
-		c.SetCookie("csrf_token", uuid, constants.CsrfTokenAge, "/", "", true, true)
+		c.SetCookie(constants.CookieCSRFToken, uuid, constants.CsrfTokenAge, "/", "", true, true)
 	}
 
 	c.HTML(http.StatusOK, "browse.html", gin.H{

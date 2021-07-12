@@ -1,7 +1,10 @@
 package constants
 
 const (
+	GeneralErr    = "Error"
 	UnexpectedErr = "Oops, this is unexpected"
+
+	PermissionDenied = "You are not allowed to perform this action"
 
 	TryAgain       = "Please try again"
 	ReloadAndRetry = "Please reload the page and try again"
@@ -22,10 +25,14 @@ const (
 	ArticleUpdateErr = "Update Article Failed"
 	ArticleDeleteErr = "Delete Article Failed"
 
-	ParameterErr          = "Invalid Parameter"
-	ParameterEmptyErr     = "Parameter %s can not be empty"
-	ParameterArticleIDErr = "Parameter articleId is a positive integer"
-	ParameterMissingErr   = "Some values are missing"
+	QueryErr           = "Invalid Parameter"
+	QueryEmptyErr      = "Parameter %s can not be empty"
+	QueryMissingErr    = "Some values are missing"
+	QueryArticleIDErr  = "Parameter articleId should be a positive integer"
+	QueryOffsetErr     = "Parameter offset should be a non-negative integer"
+	QueryLimitErr      = "Parameter limit should be a positive integer"
+	QueryBookmarkedErr = "Parameter bookmarked should be either 0 or 1"
+	QueryLikedErr      = "Parameter liked should be either 0 or 1"
 
 	EmailNotFound         = "Email Not Found"
 	EmailOccupied         = "This email is already registered"

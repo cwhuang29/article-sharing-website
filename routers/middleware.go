@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/cwhuang29/article-sharing-website/constants"
 	"github.com/cwhuang29/article-sharing-website/handlers"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -12,13 +13,10 @@ import (
 func CSRFProtection() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		csrfHeaders := c.Request.Header["X-Csrf-Token"]
-		csrfToken, _ := c.Cookie("csrf_token")
+		csrfToken, _ := c.Cookie(constants.CookieCSRFToken)
 
 		if len(csrfHeaders) != 1 || csrfToken == "" || csrfHeaders[0] != csrfToken {
-			errHead := "Error"
-			errBody := "You are not allowed to perform this action."
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"errHead": errHead, "errBody": errBody})
-			return
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"errHead": constants.GeneralErr, "errBody": constants.PermissionDenied})
 		}
 	}
 }
@@ -33,15 +31,13 @@ func AdminRequired() gin.HandlerFunc {
 			if userStatus == handlers.IsMember {
 				status = http.StatusForbidden
 			}
-
-			errHead := "Error"
-			errBody := "You are not allowed to perform this action."
-			c.AbortWithStatusJSON(status, gin.H{"errHead": errHead, "errBody": errBody}) // If use JSON(), handlers functions will be triggered subsequentlly
+			// If use JSON(), handler functions will be triggered subsequentlly
+			c.AbortWithStatusJSON(status, gin.H{"errHead": constants.GeneralErr, "errBody": constants.PermissionDenied})
 		}
 
 		c.Next()
 
-		cookieEmail, _ := c.Cookie("login_email")
+		cookieEmail, _ := c.Cookie(constants.CookieLoginEmail)
 		fields := map[string]interface{}{
 			"method":  c.Request.Method,
 			"url":     c.Request.URL.String(),

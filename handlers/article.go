@@ -13,7 +13,7 @@ import (
 
 func CreateArticleView(c *gin.Context) {
 	uuid := utils.GetUUID()
-	c.SetCookie("csrf_token", uuid, constants.CsrfTokenAge, "/", "", true, true)
+	c.SetCookie(constants.CookieCSRFToken, uuid, constants.CsrfTokenAge, "/", "", true, true)
 	c.HTML(http.StatusOK, "editor.html", gin.H{
 		"currPageCSS": "css/editor.css",
 		"csrfToken":   uuid,
@@ -23,11 +23,11 @@ func CreateArticleView(c *gin.Context) {
 }
 
 func UpdateArticleView(c *gin.Context) {
-	id := getParaId(c, "articleId")
-	if id == 0 {
+	id, err := getQueryArticleID(c)
+	if err != nil {
 		c.HTML(http.StatusBadRequest, "browse.html", gin.H{
 			"currPageCSS": "css/browse.css",
-			"errHead":     constants.ParameterArticleIDErr,
+			"errHead":     constants.QueryArticleIDErr,
 			"errBody":     constants.TryAgain,
 		})
 		return
@@ -46,7 +46,7 @@ func UpdateArticleView(c *gin.Context) {
 	article := articleFormatDBToDetailed(dbFormatArticle, false)
 	uuid := utils.GetUUID()
 
-	c.SetCookie("csrf_token", uuid, constants.CsrfTokenAge, "/", "", true, true)
+	c.SetCookie(constants.CookieCSRFToken, uuid, constants.CsrfTokenAge, "/", "", true, true)
 	c.HTML(http.StatusOK, "editor.html", gin.H{
 		"currPageCSS":  "css/editor.css",
 		"csrfToken":    uuid,
@@ -75,24 +75,25 @@ func CreateArticle(c *gin.Context) {
 		return
 	}
 
-	id, res := databases.SubmitArticle(newArticle, "create")
+	id, res := databases.SubmitArticle(*newArticle, "create")
 	if !res {
 		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "errHead": constants.ArticleCreateErr, "errBody": constants.DatabaseErr})
 		return
 	}
+
 	logrus.Infof("Create article with id %v", id)
 	c.Header("Location", "/articles/browse?articleId="+strconv.Itoa(id)) // With Location header and status code 3XX (not 2XX), response.redirected becomes true
 	c.JSON(http.StatusCreated, gin.H{"articleId": id})
 }
 
 func UpdateArticle(c *gin.Context) {
-	id := getParaId(c, "articleId")
-	if id == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"bindingError": false, "errHead": constants.ParameterArticleIDErr, "errBody": constants.TryAgain})
+	id, err := getQueryArticleID(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"bindingError": false, "errHead": constants.QueryArticleIDErr, "errBody": constants.TryAgain})
 		return
 	}
 
-	if succeed := databases.IsArticleExists(id, true); succeed != true {
+	if succeed := databases.IsArticleExists(id, true); !succeed {
 		c.JSON(http.StatusNotFound, gin.H{"bindingError": false, "errHead": constants.ArticleNotFound, "errBody": constants.TryAgain})
 		return
 	}
@@ -107,20 +108,21 @@ func UpdateArticle(c *gin.Context) {
 	}
 	newArticle.ID = id
 
-	id, res := databases.SubmitArticle(newArticle, "update")
+	id, res := databases.SubmitArticle(*newArticle, "update")
 	if !res {
 		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "errHead": constants.ArticleUpdateErr, "errBody": constants.DatabaseErr})
 		return
 	}
+
 	logrus.Infof("Update article with id %v", id)
-	c.Header("Location", "/articles/browse?articleId="+strconv.Itoa(id))
+	c.Header("Location", constants.URLBrowse+"?articleId="+strconv.Itoa(id))
 	c.JSON(http.StatusCreated, gin.H{"articleId": id})
 }
 
 func DeleteArticle(c *gin.Context) {
-	id := getParaId(c, "articleId")
-	if id == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"errHead": constants.ParameterArticleIDErr, "errBody": constants.TryAgain})
+	id, err := getQueryArticleID(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"errHead": constants.QueryArticleIDErr, "errBody": constants.TryAgain})
 		return
 	}
 
@@ -128,6 +130,7 @@ func DeleteArticle(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"bindingError": false, "errHead": constants.ArticleDeleteErr, "errBody": constants.TryAgain})
 		return
 	}
+
 	logrus.Infof("Delete article with id %v", id)
 	c.Status(http.StatusNoContent)
 }

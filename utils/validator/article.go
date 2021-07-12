@@ -11,7 +11,14 @@ var (
 	OldestDate, _ = time.Parse("2006-01-02", "1960-01-01")
 )
 
-func ValidateArticleForm(newArticle models.Article) (err map[string]string) {
+func ValidateArticleForm(newArticle *models.Article) (err map[string]string) {
+	/*
+	 * Note:
+	 * outline can be empty
+	 * In this function we are not checking the max length of outline and content fields due to the following reason:
+	 *     The outline is for overview only (not an important field) and the limit word count of content is 20,000 which is super large
+	 *     So if the input words count is really too large, just let the database truncate the content
+	 */
 	err = make(map[string]string)
 
 	if len(newArticle.Title) == 0 {
@@ -49,12 +56,6 @@ func ValidateArticleForm(newArticle models.Article) (err map[string]string) {
 	if len(newArticle.Content) == 0 {
 		err["content"] = errInputMsg["empty"]
 	}
-	/*
-	 * Note:
-	 * outline can be empty
-	 * In this function we are not checking the max length of outline and content fields due to the following reason:
-	 * The outline is for overview only (not an important field) and the limit word count of content is 20,000 which is super large
-	 * So if the input word count are really too large, just let the database truncate them
-	 */
+
 	return
 }
