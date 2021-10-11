@@ -59,7 +59,7 @@ func getQueryBookmarked(c *gin.Context) (int, error) {
 func GetUserStatus(c *gin.Context) (status UserStatus, user models.User) {
 	cookieEmail, _ := c.Cookie(constants.CookieLoginEmail) // If no such cookie, c.Cookie() returns empty string with error `named cookie not present`
 	cookieToken, _ := c.Cookie(constants.CookieLoginToken)
-	adminEmail, _ := c.Cookie(constants.CookieLoginEmail)
+	adminEmail, _ := c.Cookie(constants.CookieIsAdmin)
 
 	memberOrAdmin := IsMember
 	if adminEmail != "" && cookieEmail == adminEmail && databases.IsAdminUser(adminEmail) {

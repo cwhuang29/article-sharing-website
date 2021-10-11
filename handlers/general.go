@@ -24,7 +24,7 @@ func Home(c *gin.Context) {
 	ttlBookmarks := databases.CountUserBookmarks(user.ID)
 
 	c.HTML(http.StatusOK, "home.html", gin.H{
-		"currPageCSS":    "css/overview.css", // About 95% of code is copied from overview.html and overview.js
+		"currPageCSS":    "css/overview.css",
 		"title":          user.FirstName + " " + user.LastName,
 		"totalBookmarks": ttlBookmarks,
 	})

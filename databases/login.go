@@ -33,12 +33,8 @@ func InsertLoginToken(id int, token string, maxAge int) bool {
 	return true
 }
 
-func DeleteLoginToken(token string) {
-	// Too complicated (login token is not a critical field so we don't have to treat it such carefully).
-	// Besides, the probability of duplicate tokens is super small
-	// user := GetUser(email)
-	// db.Delete(&models.Login{}, "user_id = ? and token = ?", user.ID, token)
-	db.Delete(&models.Login{}, "token = ?", token)
+func DeleteLoginToken(userID int, token string) {
+	db.Delete(&models.Login{}, "user_id = ? and token = ?", userID, token)
 }
 
 func DeleteExpiredLoginTokens(id int) {

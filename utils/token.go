@@ -27,8 +27,8 @@ func StorePasswordResetToken(id, maxAge int) string {
 	return token
 }
 
-func ClearLoginToken(token string) {
-	databases.DeleteLoginToken(token)
+func ClearLoginToken(userID int, token string) {
+	databases.DeleteLoginToken(userID, token)
 }
 
 func ClearPasswordResetToken(token string) {

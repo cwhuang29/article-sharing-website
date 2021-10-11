@@ -116,12 +116,12 @@ func Logout(c *gin.Context) {
 		return
 	}
 
-	// Notice: Users may have multiple tokens based on different user agents they have logged in from, and those
-	// tokens must be removed from DB when expired. For instance, the user has logged in from the cellphone and laptop.
-	// When the user logged out on the laptop, we'll check whether the login token for the cellphone expired
-	// It can be done at login, logout, or any other time. Currently, I'll do this task when the user logout
-	utils.ClearLoginToken(token)
 	user := databases.GetUser(email)
+	utils.ClearLoginToken(user.ID, token)
+
+	// Notice: Users may have multiple tokens based on different user agents they have logged in from (e.g. cellphone and laptop),
+	// and those tokens must be removed from DB when expired
+	// TODO revise the clear expired tokens action into a go-routine which will execute periodically
 	utils.ClearExpiredLoginTokens(user.ID)
 
 	c.SetCookie(constants.CookieLoginToken, "", 0, "/", "", true, true) // Set maxAge to 0 cause values on "Expires/Max-Age" cell on dev-tools's "Application" tab become "Session"
