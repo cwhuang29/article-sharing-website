@@ -22,7 +22,7 @@ func StorePasswordResetToken(id, maxAge int) string {
 	token := GetUUID()
 
 	if ok := databases.InsertResetPasswordToken(id, token, maxAge); !ok {
-		return StorePasswordResetToken(id, maxAge) // Try again if we got duplicate tokens
+		token = StorePasswordResetToken(id, maxAge) // Try again if we got duplicate tokens
 	}
 	return token
 }
