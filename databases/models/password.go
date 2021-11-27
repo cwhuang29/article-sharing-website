@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// This table is used for the password reset feature
 type Password struct {
 	UserID    string
 	User      User      `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`

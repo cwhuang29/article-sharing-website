@@ -1,7 +1,10 @@
 package constants
 
 const (
-	CsrfTokenAge             = 6 * 60 * 60 // 6 hours
-	LoginMaxAge              = 30 * 86400  // 1 month
-	ResetPasswordTokenMaxAge = 60 * 60     // 1 hour
+	hour = 60 * 60
+	day  = 24 * hour
+
+	LoginMaxAge              = 30 * day
+	CsrfTokenAge             = 6 * hour
+	ResetPasswordTokenMaxAge = hour
 )

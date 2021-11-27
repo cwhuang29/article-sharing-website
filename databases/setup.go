@@ -59,9 +59,6 @@ func createConstraints() {
 	if !db.Migrator().HasConstraint(&models.Login{}, "User") {
 		db.Migrator().CreateConstraint(&models.Login{}, "User")
 	}
-	if !db.Migrator().HasConstraint(&models.Password{}, "User") {
-		db.Migrator().CreateConstraint(&models.Password{}, "User")
-	}
 }
 
 func registerAdminEmail(emails []string) {
