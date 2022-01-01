@@ -2,12 +2,12 @@ app:
   name: inews
   url: http://127.0.0.1 # Links inside reset password emails are generated based on this value
   httpPort: 80
-  # httpsPort: 443
+  httpsPort: 443
   debug: true
   log: log
 
 database:
-  driver: mysql # mysql, sqlite
+  driver: sqlite # mysql, sqlite
   host: 127.0.0.1
   port: 3306
   database: inews

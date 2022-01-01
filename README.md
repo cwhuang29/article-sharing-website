@@ -113,6 +113,7 @@ After setting up the certificates, copy `server.crt` and `server.key` to the `ce
 
 #### Install environment on AWS
 If you want to host the website on AWS EC2, run the following script to install Docker and MySQL
+Do note that installing docker takes about 1.5~2 GB space. You might want to create an EC2 with a larger disk space
 ```bash
 # Install Docker
 sudo yum update -y
