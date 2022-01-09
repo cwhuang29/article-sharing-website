@@ -2,7 +2,7 @@ app:
   name: inews
   url: http://127.0.0.1 # Links inside reset password emails are generated based on this value
   httpPort: 80
-  httpsPort: 443
+  # httpsPort: 443 # Uncomment this line when you need to enable https. Currently I set https certificate in AWS ALB (application load balancer)
   debug: true
   log: log
 
