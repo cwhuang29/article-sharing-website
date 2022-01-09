@@ -6,6 +6,7 @@ import (
 	"github.com/cwhuang29/article-sharing-website/config"
 	"github.com/cwhuang29/article-sharing-website/handlers"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -34,6 +35,8 @@ var (
 )
 
 func loadAssets() {
+	logrus.Infof("Loading assets ...")
+
 	router.Static("/upload/images", "public/upload/images")
 	router.Static("/js", "public/js")
 	router.Static("/css", "public/css") // Static serves files from the given file system root. Internally a http.FileServer is used
@@ -43,6 +46,8 @@ func loadAssets() {
 }
 
 func injectRoutes() {
+	logrus.Infof("Injecting routes ...")
+
 	admin := router.Group("/admin") // /overview/... -> /admin/overview/...
 	admin.Use(AdminRequired())
 	{
@@ -108,6 +113,7 @@ func serve() {
 	http := cfg.App.HttpPort
 	https := cfg.App.HttpsPort
 
+	logrus.Infof("Start serving (http port: %s, https port: %s)", http, https)
 	if http != "" && https != "" {
 		go router.Run(":" + http)
 		router.RunTLS(":"+https, "./certs/server.crt", "./certs/server.key")
@@ -121,6 +127,7 @@ func serve() {
 }
 
 func Router() {
+	logrus.Infof("Setting router ...")
 	// gin.SetMode(gin.ReleaseMode)
 	router.MaxMultipartMemory = 16 << 20 // Set a lower memory limit for multipart forms (default is 32 MiB)
 
