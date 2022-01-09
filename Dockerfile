@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         wget && \
     rm -rf /var/lib/apt/lists/*
 
-ENV GO_VERSION 1.15.6
+ENV GO_VERSION 1.16.3
 ENV GO_PATH /go
 RUN wget -nv -O - https://storage.googleapis.com/golang/go${GO_VERSION}.linux-amd64.tar.gz \
     | tar -C /usr/local -xz
@@ -14,6 +14,7 @@ ENV PATH $GO_PATH/bin:/usr/local/go/bin:$PATH
 
 WORKDIR /app
 COPY . .
+# RUN go build -ldflags "-w -s" -o web /app/cmd/main.go
 RUN go build -o web /app/cmd/main.go
 ENTRYPOINT ["/app/web"]
 
@@ -25,6 +26,7 @@ COPY --from=builder /app/config.yml /app/config.yml
 
 WORKDIR /app
 
+# You can override these envs by passing the "-e" args when running "docker run" command ...
 ENV GIN_MODE=release
 ENV WEB_APP_HTTP_PORT=80
 ENV WEB_DB_PORT=3306
