@@ -36,6 +36,10 @@ func Overview(c *gin.Context) {
 	switch c.FullPath() {
 	case constants.URLLandingPage:
 		title = "Weekly News"
+	case constants.URLTopicCovid19:
+		title = "Covid-19 News"
+	case constants.URLTopicResearch:
+		title = "Research Related News"
 	case constants.URLTopicMed:
 		title = "Medication Related News"
 	case constants.URLTopicPharma:

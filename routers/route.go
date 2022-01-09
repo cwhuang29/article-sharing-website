@@ -64,6 +64,8 @@ func injectRoutes() {
 		articles.GET("/", func(c *gin.Context) { c.Redirect(http.StatusFound, "/articles/weekly-update") })
 		articles.GET("/weekly-update", handlers.Overview) // The main page
 		articles.GET("/browse", handlers.Browse)
+		articles.GET("/covid19", handlers.Overview)
+		articles.GET("/research", handlers.Overview)
 		articles.GET("/medication", handlers.Overview)
 		articles.GET("/pharma", handlers.Overview)
 		articles.GET("/fetch", handlers.FetchData)

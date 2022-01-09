@@ -17,6 +17,8 @@ const (
 	CookieCSRFToken  = "csrf_token"
 
 	URLLandingPage   = "/articles/weekly-update"
+	URLTopicCovid19  = "/articles/covid19"
+	URLTopicResearch = "/articles/research"
 	URLTopicMed      = "/articles/medication"
 	URLTopicPharma   = "/articles/pharma"
 	URLBrowse        = "/articles/browse"

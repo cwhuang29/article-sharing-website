@@ -139,7 +139,7 @@ const fetchContent = async (count) => {
     query = new URLSearchParams(window.location.search).get('query');
   } else {
     type = 'category';
-    query = path; // Either "pharma" or "medication"
+    query = path; // Either "pharma" or "medication" or "research" or "covid19"
   }
 
   const baseURL = new URL(window.location.href);
