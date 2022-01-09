@@ -59,7 +59,7 @@ const getInputValue = () => {
   const outline = document.getElementsByName('outline')[0].value;
   const content = easyMDE.value();
 
-  return { adminOnly: adminOnly, title: title, subtitle: subtitle, date: date, authors: authors, category: category, tags: tags, outline: outline, content: content };
+  return { adminOnly, title, subtitle, date, authors, category, tags, outline, content };
 };
 
 const checkStatus = async (resp) => {
