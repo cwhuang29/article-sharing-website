@@ -114,6 +114,12 @@ const submitArticle = async (method, url, formData) => {
 const generateForm = ({ adminOnly, title, subtitle, date, authors, category, tags, outline, content } = values) => {
   const formData = new FormData();
 
+  if (category.toLocaleLowerCase().indexOf('covid') >= 0) {
+    category = 'covid19';
+  } else if (category.toLocaleLowerCase().indexOf('research') >= 0) {
+    category = 'research';
+  }
+
   formData.append('adminOnly', adminOnly);
   formData.append('title', title);
   formData.append('subtitle', subtitle);
