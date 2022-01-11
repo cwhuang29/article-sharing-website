@@ -45,9 +45,9 @@ func GetArticleWithoutTags(id int, isAdmin bool) (article models.Article) {
 func GetArticlesInATimePeriod(start, end time.Time, isAdmin bool) (articles []models.Article) {
 	switch isAdmin {
 	case true:
-		db.Preload("Tags").Order("id desc").Where("updated_at >= ? and updated_at < ?", start, end).Find(&articles)
+		db.Preload("Tags").Order("id desc").Where("created_at >= ? and created_at < ?", start, end).Find(&articles)
 	case false:
-		db.Preload("Tags").Order("id desc").Where("updated_at >= ? and updated_at < ? and admin_only = ?", start, end, false).Find(&articles)
+		db.Preload("Tags").Order("id desc").Where("created_at >= ? and created_at < ? and admin_only = ?", start, end, false).Find(&articles)
 	}
 	return
 }

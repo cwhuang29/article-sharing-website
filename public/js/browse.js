@@ -110,7 +110,7 @@ const switchIconStatus = (yes, yesIcon, noIcon) => {
 };
 
 const generateURL = (endpoint, paraKey, paraValue) => {
-  const articleId = new URLSearchParams(window.location.search).get('articleId');
+  const articleId = new URLSearchParams(window.location.search).get('articleId'); // http://127.0.0.1/articles/browse?articleId=1
   const baseURL = new URL(window.location.href);
   const url = new URL(endpoint + `/${articleId}`, baseURL);
 
@@ -166,6 +166,18 @@ const initialLike = async () => {
   likeParent.style.display = 'block';
 };
 
+const loginToUseBookmark = () => {
+  switchIconStatus(1, bookmarkIconYes, bookmarkIconNo);
+  setTimeout(() => switchIconStatus(0, bookmarkIconYes, bookmarkIconNo), 1200);
+  showNoticeMsg('You need to login to bookmark articles!');
+};
+
+const loginToUseLike = () => {
+  switchIconStatus(1, likeIconYes, likeIconNo);
+  setTimeout(() => switchIconStatus(0, likeIconYes, likeIconNo), 1200);
+  showNoticeMsg('You need to login to like articles!');
+};
+
 const browseHandler = () => {
   if (getCookie('login_email')) {
     bookmarkIconNo = document.getElementById('bookmarkIconNo');
@@ -180,6 +192,9 @@ const browseHandler = () => {
 
     initialBookmark();
     initialLike();
+  } else {
+    bookmarkParent.addEventListener('click', loginToUseBookmark);
+    likeParent.addEventListener('click', loginToUseLike);
   }
 
   if (getCookie('is_admin')) {
