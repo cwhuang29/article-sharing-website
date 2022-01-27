@@ -2,5 +2,5 @@
 public/upload/*/*
 certs/*
 .DS_Store
-demo/*
+demo
 tmp.db
