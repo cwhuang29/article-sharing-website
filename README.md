@@ -1,11 +1,10 @@
 # article-sharing-website
 An article sharing website developed by Go.
 
-Here is a live demo: [inews](https://www.inewsforpharm.com/) (hosting on AWS EC2 with Load Balancer, Route 53, SES, Certificate Manager.)
+~~Here is a live demo: [inews](https://www.inewsforpharm.com/) (hosting on AWS EC2 with Load Balancer, Route 53, SES, Certificate Manager.)~~
+The website has been closed due to the cost of maintenance being too high. See the **Demo** section at the end of the README.
 
 ## Overview
-This project does not rely on any frontend framework, so it is a good entry point for backend engineers who want to build a whole website. With basic knowledge of JavaScript, You can start developing!
-
 I choose [gin](https://github.com/gin-gonic/gin) as the backend web framework for its simplicity and high performance (it is also the most popular framework in Go, see [Top Go Web Frameworks](https://github.com/mingrammer/go-web-framework-stars)).
 
 For database ORM, I choose [gorm](https://github.com/go-gorm/gorm). It is a full-featured ORM with great community support and [easy to follow documentation](https://gorm.io/docs/).
@@ -16,12 +15,10 @@ The admin users are created by the following mechanism:
 2. Setup web server
 3. Register with these corresponding emails on the website
 
-If you are a novice to the database with no idea about the many-to-many relationship, the `databases/bookmark.go` is a good example. I utilize many-to-many relationship to implement features such as searching articles with tags and bookmarking articles.
+If you are a novice to the database with no idea about the **many-to-many relationship**, the `databases/bookmark.go` is a good example. I utilize many-to-many relationship to implement features such as searching articles with tags and bookmarking articles.
 
 ## Setup
-The credentials are stored in `config.yml`. Some of them are not yet implemented, but the most important fields are `app.httpPort`, `app.httpsPort`, `database`, and `admin.email`.  If set `database.driver` to `sqlite`, then `database.host` and `database.port` can be ignored.
-
-There are some environment variables that can be overwritten (inside `config/config.go`). Environment variables have a `WEB_` prefix. You might want to use some of them: `WEB_APP_HTTP_PORT`, `WEB_APP_HTTPS_PORT`, `WEB_DB_PORT`, and `WEB_DB_HOST`.
+The credentials are stored in `config.yml`. There are some environment variables that can be overwritten (inside `config/config.go`). Environment variables have a `WEB_` prefix. You might want to use some of them: `WEB_APP_HTTP_PORT`, `WEB_APP_HTTPS_PORT`, `WEB_DB_PORT`, and `WEB_DB_HOST`.
 
 To send reset password emails, see the **Others** section.
 
