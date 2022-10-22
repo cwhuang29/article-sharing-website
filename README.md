@@ -2,7 +2,7 @@
 An article sharing website developed by Go.
 
 ~~Here is a live demo: [inews](https://www.inewsforpharm.com/) (hosting on AWS EC2 with Load Balancer, Route 53, SES, Certificate Manager.)~~
-The website has been closed due to the cost of maintenance being too high. See the **Demo** section at the end of the README.
+<br>The website has been closed due to the cost of maintenance being too high. See the **Demo** section at the end of the README.
 
 ## Overview
 I choose [gin](https://github.com/gin-gonic/gin) as the backend web framework for its simplicity and high performance (it is also the most popular framework in Go, see [Top Go Web Frameworks](https://github.com/mingrammer/go-web-framework-stars)).
@@ -15,36 +15,36 @@ If you are a novice to the database with no idea about the **many-to-many relati
 ## Architecture
 The following diagram illustrates the architecture I built on AWS:
 ```
-                                                  │
-                                                  ▼
-                           ┌─────────────────────────────────────────────┐
-                           │   ALB (application load balancer, layer 7)  │
-                           └─────────────────────────────────────────────┘
-                                                  │
-                  ┌───────────────────────────────────────────────────────────────┐
-                  │                               │                               │
-                  ▼                               ▼                               ▼
-    ┌────────────────────────────┐  ┌────────────────────────────┐  ┌────────────────────────────┐ 
-    │  Listener (TCP, port8080)  │  │   Listener (TCP, port443)  │  │         Listener           │
-    └────────────────────────────┘  └────────────────────────────┘  └────────────────────────────┘
-                  │                               │                               │
-                  ▼                               ▼                               ▼
-    ┌────────────────────────────┐  ┌────────────────────────────┐  ┌────────────────────────────┐
-    │     Target Group (dev)     │  │     Target Group (prod)    │  │    Target Group (other)    │
-    │ ┌────────────────────────┐ │  │ ┌────────────────────────┐ │  │                            │
-    │ │  EC2 (Testing, AZ #1)  │ │  │ |       EC2 (AZ #1)      │ │  │                            │
-    │ └────────────────────────┘ │  │ └────────────────────────┘ │  │                            │
-    │ ┌────────────────────────┐ │  │ ┌────────────────────────┐ │  │                            │
-    │ │  EC2 (Staging, AZ #1)  │ │  │ │       EC2 (AZ #2)      │ │  │                            │
-    │ └────────────────────────┘ │  │ └────────────────────────┘ │  │                            │
-    └────────────────────────────┘  └────────────────────────────┘  └────────────────────────────┘
-                 ▲  │                           ▲  │
-                 |  ▼                           |  ▼
-    ┌────────────────────────────┐  ┌────────────────────────────┐ 
-    │                            │  │                            │
-    │         RDS (MySQL)        │  │         RDS (MySQL)        │ 
-    │                            │  │                            │
-    └────────────────────────────┘  └────────────────────────────┘ 
+                                             │
+                                             ▼
+                      ┌─────────────────────────────────────────────┐
+                      │   ALB (application load balancer, layer 7)  │
+                      └─────────────────────────────────────────────┘
+                                             │
+             ┌───────────────────────────────────────────────────────────────┐
+             │                               │                               │
+             ▼                               ▼                               ▼
+┌───────────────────────────┐  ┌───────────────────────────┐  ┌───────────────────────────┐ 
+│  Listener (HTTP, port80)  │  │ Listener (HTTPS, port443) │  │          Listener         │
+└───────────────────────────┘  └───────────────────────────┘  └───────────────────────────┘
+             │                               │                               │
+             ▼                               ▼                               ▼
+┌───────────────────────────┐  ┌───────────────────────────┐  ┌───────────────────────────┐
+│     Target Group (dev)    │  │    Target Group (prod)    │  │    Target Group (other)   │
+│ ┌───────────────────────┐ │  │ ┌───────────────────────┐ │  │                           │
+│ │  EC2 (Testing, AZ #1) │ │  │ |      EC2 (AZ #1)      │ │  │                           │
+│ └───────────────────────┘ │  │ └───────────────────────┘ │  │           .....           │
+│ ┌───────────────────────┐ │  │ ┌───────────────────────┐ │  │                           │
+│ │  EC2 (Staging, AZ #1) │ │  │ │      EC2 (AZ #2)      │ │  │                           │
+│ └───────────────────────┘ │  │ └───────────────────────┘ │  │                           │
+└───────────────────────────┘  └───────────────────────────┘  └───────────────────────────┘
+            ▲  │                           ▲  │
+            |  ▼                           |  ▼
+┌───────────────────────────┐  ┌───────────────────────────┐ 
+│                           │  │                           │
+│        RDS (MySQL)        │  │        RDS (MySQL)        │ 
+│                           │  │                           │
+└───────────────────────────┘  └───────────────────────────┘ 
 ```
 
 ## Setup
