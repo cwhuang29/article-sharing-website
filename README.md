@@ -10,15 +10,50 @@ I choose [gin](https://github.com/gin-gonic/gin) as the backend web framework fo
 For database ORM, I choose [gorm](https://github.com/go-gorm/gorm). It is a full-featured ORM with great community support and [easy to follow documentation](https://gorm.io/docs/).
 Besides, if you choose `sqlite` as the database driver, then you can get rid of the setting database burden (the data will be stored in a file `tmp.db` in the root of project) and focus on the backend development.
 
+If you are a novice to the database with no idea about the **many-to-many relationship**, the `databases/bookmark.go` is a good example. I utilize many-to-many relationship to implement features such as searching articles with tags and bookmarking articles.
+
+## Architecture
+The following diagram illustrates the architecture I built on AWS:
+```
+                                                  │
+                                                  ▼
+                           ┌─────────────────────────────────────────────┐
+                           │   ALB (application load balancer, layer 7)  │
+                           └─────────────────────────────────────────────┘
+                                                  │
+                  ┌───────────────────────────────────────────────────────────────┐
+                  │                               │                               │
+                  ▼                               ▼                               ▼
+    ┌────────────────────────────┐  ┌────────────────────────────┐  ┌────────────────────────────┐ 
+    │  Listener (TCP, port8080)  │  │   Listener (TCP, port443)  │  │         Listener           │
+    └────────────────────────────┘  └────────────────────────────┘  └────────────────────────────┘
+                  │                               │                               │
+                  ▼                               ▼                               ▼
+    ┌────────────────────────────┐  ┌────────────────────────────┐  ┌────────────────────────────┐
+    │     Target Group (dev)     │  │     Target Group (prod)    │  │    Target Group (other)    │
+    │ ┌────────────────────────┐ │  │ ┌────────────────────────┐ │  │                            │
+    │ │  EC2 (Testing, AZ #1)  │ │  │ |       EC2 (AZ #1)      │ │  │                            │
+    │ └────────────────────────┘ │  │ └────────────────────────┘ │  │                            │
+    │ ┌────────────────────────┐ │  │ ┌────────────────────────┐ │  │                            │
+    │ │  EC2 (Staging, AZ #1)  │ │  │ │       EC2 (AZ #2)      │ │  │                            │
+    │ └────────────────────────┘ │  │ └────────────────────────┘ │  │                            │
+    └────────────────────────────┘  └────────────────────────────┘  └────────────────────────────┘
+                 ▲  │                           ▲  │
+                 |  ▼                           |  ▼
+    ┌────────────────────────────┐  ┌────────────────────────────┐ 
+    │                            │  │                            │
+    │         RDS (MySQL)        │  │         RDS (MySQL)        │ 
+    │                            │  │                            │
+    └────────────────────────────┘  └────────────────────────────┘ 
+```
+
+## Setup
+The credentials are stored in `config.yml`. There are some environment variables that can be overwritten (inside `config/config.go`). Environment variables have a `WEB_` prefix. You might want to use some of them: `WEB_APP_HTTP_PORT`, `WEB_APP_HTTPS_PORT`, `WEB_DB_PORT`, and `WEB_DB_HOST`.
+
 The admin users are created by the following mechanism:
 1. Write down their emails in `config.yml`
 2. Setup web server
 3. Register with these corresponding emails on the website
-
-If you are a novice to the database with no idea about the **many-to-many relationship**, the `databases/bookmark.go` is a good example. I utilize many-to-many relationship to implement features such as searching articles with tags and bookmarking articles.
-
-## Setup
-The credentials are stored in `config.yml`. There are some environment variables that can be overwritten (inside `config/config.go`). Environment variables have a `WEB_` prefix. You might want to use some of them: `WEB_APP_HTTP_PORT`, `WEB_APP_HTTPS_PORT`, `WEB_DB_PORT`, and `WEB_DB_HOST`.
 
 To send reset password emails, see the **Others** section.
 
